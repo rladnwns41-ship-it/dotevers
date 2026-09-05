@@ -131,7 +131,7 @@
               <iconify-icon icon="lucide:plus" width="15"></iconify-icon><span>만들기</span>
             </button>
             <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px 4px 4px;border:1px solid #E3DCCC;border-radius:99px;background:#FFFFFF" style-hover="border-color:#2F6F5E">
-              <img ref="{{ meSpriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <img src="{{ meSprite }}" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
               <span style="font-size:13px;font-weight:600">{{ myNameText }}</span>
             </div>
           </div>
@@ -229,7 +229,7 @@
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
             <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
               <div style="aspect-ratio:1;background:#EFEADE;border:1px solid #CFC7B6;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:9px">
-                <img ref="{{ a.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
               </div>
             </sc-for>
           </div>
@@ -278,7 +278,7 @@
         <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="8">
           <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column" style-hover="border-color:#2F6F5E;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
             <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-              <img ref="{{ w.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ w.title }}" style="width:52%;height:52%;object-fit:contain;image-rendering:pixelated" />
+              <img src="{{ w.sprite }}" alt="{{ w.title }}" style="width:52%;height:52%;object-fit:contain;image-rendering:pixelated" />
               <span style="position:absolute;top:10px;left:10px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">{{ w.catName }}</span>
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:5px;background:rgba(47,111,94,0.92);color:#FFFFFF;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">
                 <span style="width:6px;height:6px;border-radius:99px;background:#6FD3C7"></span><span>{{ w.online }}</span>
@@ -288,7 +288,7 @@
               <h3 style="margin:0;font-size:15.5px;font-weight:700;line-height:1.35">{{ w.title }}</h3>
               <p style="margin:0;font-size:13px;color:#6E7480;line-height:1.55;flex:1;text-wrap:pretty">{{ w.summary }}</p>
               <div style="display:flex;align-items:center;gap:7px">
-                <img ref="{{ w.authorSpriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+                <img src="{{ w.authorSprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
                 <span onClick="{{ w.goUser }}" style="font-size:12.5px;font-weight:500;color:#2A2D36;cursor:pointer" style-hover="color:#2F6F5E;text-decoration:underline">{{ w.author }}</span>
                 <span style="font-size:11.5px;color:#A0A6AF">· {{ w.ago }}</span>
               </div>
@@ -328,7 +328,7 @@
         </sc-if>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px" style-hover="border-color:#8D6BD8">
-            <img ref="{{ c.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img src="{{ c.sprite }}" alt="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px">
                 <span onClick="{{ c.goUser }}" style="font-size:15px;font-weight:700;cursor:pointer" style-hover="color:#8D6BD8;text-decoration:underline">{{ c.name }}</span>
@@ -361,7 +361,7 @@
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
           <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px;cursor:pointer" style-hover="border-color:#4A5FD1">
-            <img ref="{{ c.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img src="{{ c.sprite }}" alt="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:13.5px;font-weight:700">{{ c.author }}</span>
@@ -426,7 +426,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#E0653A">
             <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/16px 16px;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:14px">
-              <img ref="{{ a.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             </div>
             <div style="display:flex;flex-direction:column;gap:5px">
               <span style="font-size:14px;font-weight:700">{{ a.name }}</span>
@@ -513,7 +513,7 @@
         <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px">
           <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="3">
             <div onClick="{{ goStudio }}" style="border:1px solid #EFEADE;border-radius:13px;padding:14px;display:flex;gap:12px;cursor:pointer;background:#F7F5EF" style-hover="border-color:#2F6F5E;background:#FFFFFF">
-              <img ref="{{ d.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0" />
+              <img src="{{ d.sprite }}" alt="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                 <span style="font-size:14px;font-weight:700">{{ d.title }}</span>
                 <span style="font-size:12px;color:#8A9099">{{ d.meta }}</span>
@@ -557,7 +557,7 @@
           <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="6">
             <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;overflow:hidden;cursor:pointer" style-hover="border-color:#2F6F5E">
               <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-                <img ref="{{ w.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48%;height:48%;object-fit:contain;image-rendering:pixelated" />
+                <img src="{{ w.sprite }}" alt="" style="width:48%;height:48%;object-fit:contain;image-rendering:pixelated" />
                 <span style="position:absolute;bottom:9px;left:9px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11px;font-weight:600;border-radius:6px;padding:3px 7px">{{ w.catName }}</span>
               </div>
               <div style="padding:13px;display:flex;flex-direction:column;gap:8px">
@@ -580,7 +580,7 @@
         <div style="display:flex;flex-direction:column;gap:12px">
           <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
             <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:16px;display:flex;gap:13px;cursor:pointer" style-hover="border-color:#4A5FD1">
-              <img ref="{{ c.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+              <img src="{{ c.sprite }}" alt="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
                 <span style="font-size:13px;color:#8A9099"><b style="color:#16181D;font-size:13.5px">{{ c.author }}</b> · {{ c.world }} · {{ c.ago }}</span>
                 <span style="font-size:13.5px;line-height:1.6;color:#2A2D36">{{ c.body }}</span>
@@ -598,7 +598,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img ref="{{ meSpriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <img src="{{ meSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
           <span style="display:flex;flex-direction:column;gap:2px">
             <span style="font-size:15px;font-weight:700">{{ myNameText }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ myHandleText }}</span>
@@ -622,7 +622,7 @@
         </div>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="display:flex;gap:11px;align-items:center">
-            <img ref="{{ c.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img src="{{ c.sprite }}" alt="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13.5px;font-weight:600">{{ c.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">팔로워 {{ c.followersK }} · 월드 {{ c.worlds }}</span>
@@ -695,7 +695,7 @@
           <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
             <sc-for list="{{ g.items }}" as="w" hint-placeholder-count="4">
               <div onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;gap:12px;cursor:pointer" style-hover="border-color:#2F6F5E">
-                <img ref="{{ w.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0" />
+                <img src="{{ w.sprite }}" alt="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0" />
                 <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                   <span style="font-size:14px;font-weight:700;line-height:1.35">{{ w.title }}</span>
                   <span style="font-size:11.5px;color:#8A9099">{{ w.author }}</span>
@@ -727,7 +727,7 @@
 
       <div style="position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#DFE9E4,#EFEADE);border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center">
         <div style="position:absolute;inset:0;opacity:0.5;background-image:linear-gradient(#CFC7B6 1px,transparent 1px),linear-gradient(90deg,#CFC7B6 1px,transparent 1px);background-size:32px 32px"></div>
-        <img ref="{{ world.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
+        <img src="{{ world.sprite }}" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
         <button onClick="{{ playWorld }}" style="position:absolute;bottom:20px;left:20px;display:flex;align-items:center;gap:9px;background:#16181D;color:#FFFFFF;border:0;border-radius:12px;padding:15px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
           <iconify-icon icon="lucide:play" width="17"></iconify-icon><span>새 탭에서 플레이</span>
         </button>
@@ -785,7 +785,7 @@
         </div>
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;gap:12px">
-            <img ref="{{ meSpriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img src="{{ meSprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <textarea value="{{ draft }}" onChange="{{ setDraft }}" placeholder="이 월드에 대해 이야기해 주세요. 스포일러는 접어서 적어주시면 좋습니다." style="flex:1;min-width:0;min-height:64px;resize:vertical;background:#F7F5EF;border:1px solid #E3DCCC;border-radius:11px;padding:12px;font-family:inherit;font-size:14px;line-height:1.6;outline:none"></textarea>
           </div>
           <div style="display:flex;align-items:center;gap:12px">
@@ -807,7 +807,7 @@
         </sc-if>
         <sc-for list="{{ threadComments }}" as="c" hint-placeholder-count="4">
           <div style="display:flex;gap:12px;margin-left:{{ c.indent }};background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px">
-            <img ref="{{ c.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img src="{{ c.sprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:14px;font-weight:700">{{ c.author }}</span>
@@ -844,7 +844,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img ref="{{ world.authorSpriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <img src="{{ world.authorSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
           <span onClick="{{ world.goUser }}" style="display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer">
             <span style="font-size:15px;font-weight:700" style-hover="color:#2F6F5E">{{ world.author }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ world.handle }}</span>
@@ -865,7 +865,7 @@
         <span style="font-size:14.5px;font-weight:700">이 월드에 쓰인 공유 오브젝트</span>
         <sc-for list="{{ usedAssets }}" as="a" hint-placeholder-count="4">
           <div style="display:flex;gap:11px;align-items:center">
-            <img ref="{{ a.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0" />
+            <img src="{{ a.sprite }}" alt="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0" />
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13px;font-weight:600">{{ a.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">@{{ a.handle }} · {{ a.license }}</span>
@@ -891,7 +891,7 @@
     <!-- 툴바 -->
     <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:13px;padding:9px 13px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:9px">
-        <img ref="{{ world.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px" />
+        <img src="{{ world.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px" />
         <span style="display:flex;flex-direction:column">
           <span style="font-size:14.5px;font-weight:700">{{ studioTitle }}</span>
         </span>
@@ -963,7 +963,7 @@
             <div onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#E7EFE9;border:1px solid #EFEADE">
               <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
                 <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-                  <img ref="{{ stageBgRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+                  <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
                 </sc-if>
                 <sc-if value="{{ noStageBg }}" hint-placeholder-val="{{ true }}">
                   <span style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,24,29,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,29,0.05) 1px,transparent 1px);background-size:12.5% 16.6%"></span>
@@ -974,7 +974,7 @@
                     <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
                     </sc-if>
-                    <img ref="{{ pp.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+                    <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
                     <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
                   </span>
                 </sc-for>
@@ -983,7 +983,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img ref="{{ pp.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -996,7 +996,7 @@
                       <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSize }};line-height:1.3">{{ o.text }}</span>
                     </sc-if>
                     <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                      <img ref="{{ o.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                      <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
                     </sc-if>
                   </span>
                 </sc-for>
@@ -1071,7 +1071,7 @@
                 <span onClick="{{ o.toggle }}" style="width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ o.eyeColor }};cursor:pointer" style-hover="background:#EFEADE">
                   <iconify-icon icon="{{ o.eye }}" width="14"></iconify-icon>
                 </span>
-                <img ref="{{ o.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+                <img src="{{ o.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:13px;font-weight:600">{{ o.name }}</span>
                   <span style="font-family:Galmuri11,monospace;font-size:10px;color:#8A9099">X {{ o.x }} · Y {{ o.y }} · {{ o.scale }} · {{ o.layer }}</span>
@@ -1260,7 +1260,7 @@
         <div style="display:flex;flex-direction:column;gap:6px">
           <sc-for list="{{ shapes }}" as="sh" hint-placeholder-count="2">
             <span onClick="{{ sh.go }}" style="display:flex;align-items:center;gap:9px;border:1px solid {{ sh.bd }};background:{{ sh.bg }};border-radius:9px;padding:7px 9px;cursor:pointer" style-hover="border-color:#2F6F5E">
-              <img ref="{{ sh.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0" />
+              <img src="{{ sh.sprite }}" alt="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
                 <span style="font-size:12px;font-weight:600">{{ sh.name }}</span>
                 <span style="font-family:Galmuri11,monospace;font-size:9.5px;color:#8A9099">{{ sh.frames }}프레임</span>
@@ -1301,7 +1301,7 @@
           <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-bottom:6px">
             <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="4">
               <span onClick="{{ fr.go }}" style="width:62px;height:62px;flex-shrink:0;border-radius:9px;border:{{ fr.border }};background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/12px 12px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">
-                <img ref="{{ fr.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:84%;height:84%;object-fit:contain;image-rendering:pixelated" />
+                <img src="{{ fr.sprite }}" alt="" style="width:84%;height:84%;object-fit:contain;image-rendering:pixelated" />
                 <span style="position:absolute;bottom:2px;right:3px;font-family:Galmuri11,monospace;font-size:9px;color:#8A9099">{{ fr.n }}</span>
                 <span onClick="{{ fr.remove }}" style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:99px;background:#FFFFFF;border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center;color:#C0392B" style-hover="background:#C0392B;color:#FFFFFF"><iconify-icon icon="lucide:x" width="9"></iconify-icon></span>
               </span>
@@ -1438,7 +1438,7 @@
             <sc-for list="{{ panelObjects }}" as="o" hint-placeholder-count="6">
               <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:11px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:10px;padding:9px 11px;cursor:pointer" style-hover="border-color:#2F6F5E">
                 <span style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:#F7F5EF;display:flex;align-items:center;justify-content:center;padding:5px">
-                  <img ref="{{ o.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                  <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
                 </span>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:12.5px;font-weight:600;color:#16181D">{{ o.name }}</span>
@@ -1675,7 +1675,7 @@
       <sc-for list="{{ filteredAssets }}" as="a" hint-placeholder-count="8">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;display:flex;flex-direction:column" style-hover="border-color:#E0653A;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
           <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/18px 18px;display:flex;align-items:center;justify-content:center;padding:20px;position:relative">
-            <img ref="{{ a.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+            <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             <span style="position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;background:rgba(22,24,29,0.82);color:#F4F1EA;border-radius:6px;padding:4px 8px">{{ a.kindName }}</span>
             <sc-if value="{{ a.animated }}" hint-placeholder-val="{{ false }}">
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:rgba(224,101,58,0.9);color:#FFF;border-radius:6px;padding:4px 8px">
@@ -1808,7 +1808,7 @@
             </span>
             <span style="font-size:16px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ p.title }}</span>
             <span style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A9099">
-              <img ref="{{ p.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <img src="{{ p.sprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
               <span style="font-weight:600;color:#3A3F49">{{ p.author }}</span>
               <span>· {{ p.ago }}</span>
               <span onClick="{{ p.open }}" style="display:flex;align-items:center;gap:4px;color:#4A5FD1;font-weight:600;background:#EEF1FB;border-radius:7px;padding:4px 9px;cursor:pointer" style-hover="background:#4A5FD1;color:#FFFFFF"><iconify-icon icon="lucide:message-circle" width="13"></iconify-icon><span>댓글 {{ p.comments }}</span></span>
@@ -1888,7 +1888,7 @@
 
       <div style="padding:0 26px 22px;display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;margin-top:-44px">
         <span style="position:relative;flex-shrink:0">
-          <img ref="{{ me.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:96px;height:96px;border-radius:22px;background:#F7F5EF;border:3px solid #FFFFFF;image-rendering:pixelated;object-fit:cover" />
+          <img src="{{ me.sprite }}" alt="" style="width:96px;height:96px;border-radius:22px;background:#F7F5EF;border:3px solid #FFFFFF;image-rendering:pixelated;object-fit:cover" />
           <sc-if value="{{ me.isMine }}" hint-placeholder-val="{{ true }}">
             <label style="position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:99px;background:#16181D;color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #FFFFFF" style-hover="background:#2F6F5E">
               <iconify-icon icon="lucide:camera" width="13"></iconify-icon>
@@ -2031,7 +2031,7 @@
         <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="0">
           <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
             <span style="padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:0">
-              <img ref="{{ w.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+              <img src="{{ w.sprite }}" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                 <span style="font-size:13.5px;font-weight:600">{{ w.title }}</span>
                 <span style="font-size:11.5px;color:#8A9099">{{ w.catName }} · {{ w.ago }}</span>
@@ -2063,7 +2063,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:9px" style-hover="border-color:#E0653A">
             <span style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/14px 14px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:11px">
-              <img ref="{{ a.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <img src="{{ a.sprite }}" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             </span>
             <span style="font-size:12.5px;font-weight:600;line-height:1.4">{{ a.name }}</span>
             <span style="font-size:11.5px;color:#8A9099">사용 {{ a.usesK }} · ♥ {{ a.likesK }}</span>
@@ -2091,7 +2091,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <sc-for list="{{ avatarChoices }}" as="av" hint-placeholder-count="5">
               <span onClick="{{ av.go }}" style="width:52px;height:52px;border-radius:12px;border:2px solid {{ av.bd }};background:#F7F5EF;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:5px">
-                <img ref="{{ av.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                <img src="{{ av.sprite }}" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
               </span>
             </sc-for>
           </div>
@@ -2205,7 +2205,7 @@
     <div onClick="{{ closePv }}" style="position:fixed;inset:0;z-index:95;background:rgba(22,24,29,0.55);display:flex;align-items:center;justify-content:center;padding:32px">
       <div onClick="{{ stopIt }}" style="width:min(760px,100%);background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,0.5);display:grid;grid-template-columns:minmax(0,1fr) 280px">
         <div style="background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/22px 22px;display:flex;align-items:center;justify-content:center;padding:40px;min-height:360px">
-          <img ref="{{ pv.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated" />
+          <img src="{{ pv.sprite }}" alt="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated" />
         </div>
         <div style="padding:22px;display:flex;flex-direction:column;gap:14px;border-left:1px solid #EFEADE">
           <div style="display:flex;align-items:flex-start;gap:10px">
@@ -2252,7 +2252,7 @@
       <div onClick="{{ stageClick }}" style="position:relative;width:min(94vw,calc((100vh - 170px) * 4 / 3));aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#E7EFE9;box-shadow:0 30px 70px -20px rgba(0,0,0,0.7)">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-            <img ref="{{ stageBgRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+            <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
@@ -2260,7 +2260,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img ref="{{ pp.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -2273,7 +2273,7 @@
                 <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSizeBig }};line-height:1.3">{{ o.text }}</span>
               </sc-if>
               <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                <img ref="{{ o.spriteRef }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
               </sc-if>
             </span>
           </sc-for>
@@ -6443,7 +6443,7 @@ class Component extends DCLogic {
           name: c ? c.name : (st.dbLoaded ? "손님" : "밤샘개발자"),
           handle: c ? c.handle : (st.dbLoaded ? "guest" : "nightowl"),
           memo: c ? (c.memo || "소개를 적어보세요.") : (st.dbLoaded ? "소개를 적어보세요." : "새벽 3시에 만든 건 다 방탈출이 된다."),
-          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl)) || spr((c && c.art) || st.avatarArt || "slime"),
+          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl)) || spr((c && c.art) || st.avatarArt || "slime") || spr("slime"),
           bannerBg: (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : (c && c.bannerUrl))
             ? "url(" + (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : c.bannerUrl) + ")"
             : "linear-gradient(120deg,#2F6F5E 0%,#6FD3C7 100%)",
