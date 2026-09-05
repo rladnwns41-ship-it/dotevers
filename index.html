@@ -132,7 +132,7 @@
             </button>
             <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px 4px 4px;border:1px solid #E3DCCC;border-radius:99px;background:#FFFFFF" style-hover="border-color:#2F6F5E">
               <img src="{{ meSprite }}" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
-              <span style="font-size:13px;font-weight:600">밤샘개발자</span>
+              <span style="font-size:13px;font-weight:600">{{ myNameText }}</span>
             </div>
           </div>
         </sc-if>
@@ -595,8 +595,8 @@
         <div style="display:flex;gap:12px;align-items:center">
           <img src="{{ meSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
           <span style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:15px;font-weight:700">밤샘개발자</span>
-            <span style="font-size:12px;color:#8A9099">@nightowl</span>
+            <span style="font-size:15px;font-weight:700">{{ myNameText }}</span>
+            <span style="font-size:12px;color:#8A9099">@{{ myHandleText }}</span>
           </span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
@@ -1876,6 +1876,13 @@
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+      <sc-if value="{{ noKpis }}" hint-placeholder-val="{{ false }}">
+        <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:38px 18px;text-align:center;background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:15px">
+          <iconify-icon icon="lucide:sparkles" width="24" style="color:#CFC7B6"></iconify-icon>
+          <span style="font-size:13.5px;font-weight:700;color:#3A3F49">첫 작품을 만들어 보세요</span>
+          <span style="font-size:12.5px;color:#8A9099;line-height:1.6">작품을 게시하면 플레이 수와 좋아요가 여기에 표시됩니다.</span>
+        </div>
+      </sc-if>
       <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:11px">
           <span style="display:flex;align-items:center;gap:9px">
@@ -1898,7 +1905,14 @@
           <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6E7480"><span style="width:9px;height:9px;border-radius:3px;background:#F2B23E"></span><span>플레이</span></span>
         </div>
         <div style="display:flex;align-items:flex-end;gap:14px;height:210px;padding:0 4px">
-          <sc-for list="{{ chartDays }}" as="d" hint-placeholder-count="7">
+          <sc-if value="{{ noDays }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:44px 18px;text-align:center;width:100%">
+          <iconify-icon icon="lucide:bar-chart-3" width="24" style="color:#CFC7B6"></iconify-icon>
+          <span style="font-size:13px;font-weight:700;color:#3A3F49">아직 플레이 기록이 없습니다</span>
+          <span style="font-size:12px;color:#8A9099;line-height:1.6">작품을 게시하고 누군가 플레이하면 여기에 쌓입니다.</span>
+        </div>
+      </sc-if>
+      <sc-for list="{{ chartDays }}" as="d" hint-placeholder-count="7">
             <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
               <span style="display:flex;align-items:flex-end;gap:5px;height:172px;width:100%;justify-content:center">
                 <span style="width:38%;border-radius:5px 5px 0 0;background:#2F6F5E;height:{{ d.hv }};transform-origin:bottom;animation:dv-grow-up 620ms cubic-bezier(0.16,1,0.3,1) forwards;animation-delay:{{ d.delay }}"></span>
@@ -2914,7 +2928,7 @@ class Component extends DCLogic {
       mpStart: (room, self) => this.mpStart(room, self),
       mpStop: () => this.mpStop(),
       mpNick: (n) => this.mpNick(n),
-      myName: () => "밤샘개발자",
+      myName: () => (this.state.liveMe && this.state.liveMe.name) || "손님",
       now: (u) => {
         const d = new Date();
         return { "시": d.getHours(), "분": d.getMinutes(), "초": d.getSeconds(),
@@ -2939,7 +2953,7 @@ class Component extends DCLogic {
       dbRows: async (tbl) => ((this._rows && this._rows[tbl]) || []).length,
       dbAddRow: async (tbl, v) => {
         this._rows = this._rows || {};
-        (this._rows[tbl] = this._rows[tbl] || []).push({ 점수: v, 이름: "밤샘개발자" });
+        (this._rows[tbl] = this._rows[tbl] || []).push({ 점수: v, 이름: (this.state.liveMe && this.state.liveMe.name) || "손님" });
         await this.dbWrite(tbl + ".점수", v, true);
       },
       // 블록으로 테이블·컬럼을 정의한다
@@ -3328,7 +3342,7 @@ class Component extends DCLogic {
     const list = (this.state.comments || thread).slice();
     const parent = list[idx];
     const item = {
-      author: "밤샘개발자", handle: "nightowl", body: body, ago: "방금",
+      author: (this.state.liveMe && this.state.liveMe.name) || "손님", handle: (this.state.liveMe && this.state.liveMe.handle) || "guest", body: body, ago: "방금",
       likes: 0, dislikes: 0, depth: Math.min(2, (parent && parent.depth || 0) + 1), owner: true,
     };
     list.splice(idx + 1, 0, item);
@@ -3520,7 +3534,7 @@ class Component extends DCLogic {
     const id = "p" + Date.now().toString(36);
     const post = {
       id: id, board: (S().boards || []).find((b) => b.slug === this.state.board),
-      title: t, body: body, author: "밤샘개발자", ago: "방금",
+      title: t, body: body, author: (this.state.liveMe && this.state.liveMe.name) || "손님", ago: "방금",
       likes: 0, comments: 0, mine: true, slug: this.state.board,
       poll: this.state.pollOn && (this.state.pollQ || "").trim()
         ? { q: filterText(this.state.pollQ).out.trim(),
@@ -3557,7 +3571,7 @@ class Component extends DCLogic {
     }
     this.setState((p) => ({
       threads: Object.assign({}, p.threads, {
-        [postId]: (p.threads[postId] || []).concat([{ author: "밤샘개발자", body: b, ago: "방금" }]),
+        [postId]: (p.threads[postId] || []).concat([{ author: (this.state.liveMe && this.state.liveMe.name) || "손님", body: b, ago: "방금" }]),
       }),
       commentDraft: "",
     pollOn: false,
@@ -4468,6 +4482,7 @@ class Component extends DCLogic {
         art: x.avatar_art || "slime", memo: x.memo || "",
         followers: ((cstat || {})[x.id] || {}).followers || 0,
         worlds: ((cstat || {})[x.id] || {}).worlds || 0,
+        growth: "NEW",
       }));
       next.liveComments = (rc || []).map((x) => ({
         world: (x.worlds && x.worlds.title) || "월드",
@@ -4482,8 +4497,8 @@ class Component extends DCLogic {
         color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E" }[n.kind] || "#2F6F5E",
         t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
       }));
+      next.signedIn = !!mp;
       if (mp) {
-        next.signedIn = true;
         const ms = await window.DotDB.creatorStats([mp.id]);
         next.liveMe = {
           id: mp.id, name: mp.display_name || "플레이어", handle: mp.handle,
@@ -4494,11 +4509,11 @@ class Component extends DCLogic {
       }
       if (db) {
         next.liveKpis = [
-          { t: "내 작품", v: String(db.worlds), d: "게시·초안 합계" },
-          { t: "총 플레이", v: String(db.plays), d: "누적 실행 수" },
-          { t: "받은 좋아요", v: String(db.likes), d: "작품 전체" },
-          { t: "댓글", v: String(db.comments), d: "작품에 달린 수" },
-          { t: "평균 플레이", v: db.avgSeconds + "초", d: "한 번 들어와 머문 시간" },
+          { icon: "lucide:layout-grid", label: "내 작품", value: String(db.worlds), delta: "게시·초안 합계" },
+          { icon: "lucide:play", label: "총 플레이", value: String(db.plays), delta: "누적 실행 수" },
+          { icon: "lucide:heart", label: "받은 좋아요", value: String(db.likes), delta: "작품 전체" },
+          { icon: "lucide:message-square", label: "댓글", value: String(db.comments), delta: "작품에 달린 수" },
+          { icon: "lucide:timer", label: "평균 플레이", value: db.avgSeconds + "초", delta: "한 번에 머문 시간" },
         ];
       }
       if (fl) {
@@ -4942,7 +4957,7 @@ class Component extends DCLogic {
     const creators = this.memo("creators", [needCreators, st.follows, st.sprites, creatorsSrc], () => (needCreators ? creatorsSrc : []).map((c) => {
       const on = !!st.follows[c.handle];
       return {
-        name: c.name, handle: c.handle, memo: c.memo, growth: c.growth, worlds: c.worlds,
+        name: c.name, handle: c.handle, memo: c.memo || "", growth: c.growth || "CREATOR", worlds: c.worlds || 0,
         followersK: kfmt(c.followers + (on ? 1 : 0)), sprite: spr(c.art),
         goUser: (e) => { e.stopPropagation(); this.go("profile", { viewUser: c.handle })(); },
         btnLabel: on ? "팔로잉" : "팔로우",
@@ -5002,12 +5017,20 @@ class Component extends DCLogic {
       goReport: this.go("terms", { legalDoc: "report" }),
       goProfile: this.go("profile"), goHome: this.go("home"),
       goLogin: this.go("auth", { authMode: "login" }), goSignup: this.go("auth", { authMode: "signup" }),
+      signOut: async () => {
+        if (window.DotDB && window.DotDB.isLive) await window.DotDB.signOut();
+        this.setState({ signedIn: false, liveMe: null, route: "landing", follows: {} });
+        window.scrollTo(0, 0);
+        this.say("로그아웃했습니다.");
+      },
       closeMenu: () => {
         clearTimeout(this._menuT);
         this._menuT = setTimeout(() => this.setState({ menu: null }), 180);
       },
       navs,
       signedIn: st.signedIn, signedOut: !st.signedIn,
+      myNameText: (st.liveMe && st.liveMe.name) || (st.dbLoaded ? "손님" : "밤샘개발자"),
+      myHandleText: (st.liveMe && st.liveMe.handle) || (st.dbLoaded ? "guest" : "nightowl"),
       notifOpen: st.notifOpen, toggleNotif: () => this.setState((p) => ({ notifOpen: !p.notifOpen })),
       notifCount: (st.dbLoaded ? (st.liveNotifs || []) : (s.notifs || [])).filter((n) => !n.read).length,
       notifs: st.dbLoaded ? (st.liveNotifs || []) : (s.notifs || []),
@@ -5278,7 +5301,7 @@ class Component extends DCLogic {
         if (!t) return;
         const f = filterText(t);
         this.setState({
-          comments: [{ author: "밤샘개발자", handle: "nightowl", body: f.out, ago: "방금", likes: 0, dislikes: 0, depth: 0, owner: true }].concat(baseThread),
+          comments: [{ author: (st.liveMe && st.liveMe.name) || "손님", handle: (st.liveMe && st.liveMe.handle) || "guest", body: f.out, ago: "방금", likes: 0, dislikes: 0, depth: 0, owner: true }].concat(baseThread),
           draft: "", lastFiltered: f.hit,
         });
         this.say(f.hit ? "필터에 걸린 표현을 가려서 등록했습니다." : "댓글을 등록했습니다.");
