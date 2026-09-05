@@ -350,22 +350,17 @@
       if (!c) return null;
       const u = await this.me();
       if (!u) return null;
-      let { data, error } = await c.from("reports")
-        .select("ticket,subject_type,subject_label,reason,status,created_at")
-        .eq("reporter_id", u.id)
-        .order("created_at", { ascending: false })
-        .limit(30);
-      if (error) {
-        // schema.sql 5차를 아직 실행하지 않은 경우
-        const r = await c.from("reports")
-          .select("id,subject_type,reason,status,created_at")
-          .eq("reporter_id", u.id)
-          .order("created_at", { ascending: false })
-          .limit(30);
-        if (r.error) return null;
-        data = (r.data || []).map((x) => Object.assign({ ticket: "R-" + x.id, subject_label: null }, x));
-      }
-      return data || null;
+      const { data, error } = await c.from("reports").select("*").limit(50);
+      if (error) return [];
+      return (data || [])
+        .filter((x) => !x.reporter_id || x.reporter_id === u.id)
+        .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
+        .slice(0, 30)
+        .map((x) => ({
+          ticket: x.ticket || ("R-" + (x.id || "")),
+          subject_type: x.subject_type || "", subject_label: x.subject_label || null,
+          reason: x.reason || "", status: x.status || "open", created_at: x.created_at,
+        }));
     },
     // ── 작품 게시 ────────────────────────────────────────────
     // 저장 전에 작품 행이 있는지 확인하고 없으면 만든다 (없으면 RLS 가 403)
@@ -390,7 +385,16 @@
         id: worldId, owner_id: u.id, status: "published",
         published_at: new Date().toISOString(),
       }, fields || {});
-      const { error } = await c.from("worlds").upsert(row, { onConflict: "id" });
+      let { error } = await c.from("worlds").upsert(row, { onConflict: "id" });
+      if (error) {
+        const safe = {
+          id: worldId, owner_id: u.id, status: "published",
+          published_at: new Date().toISOString(),
+          title: row.title || "이름 없는 월드",
+        };
+        const r = await c.from("worlds").upsert(safe, { onConflict: "id" });
+        error = r.error;
+      }
       return error ? { ok: false, reason: error.message } : { ok: true };
     },
     async countPlay(worldId) {
