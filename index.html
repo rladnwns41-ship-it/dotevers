@@ -88,7 +88,7 @@
       <nav style="display:flex;align-items:center;gap:2px;flex-shrink:0">
         <sc-for list="{{ navs }}" as="nav" hint-placeholder-count="4">
           <div onMouseEnter="{{ nav.enter }}" onMouseLeave="{{ closeMenu }}" style="position:relative">
-            <button style="display:flex;align-items:center;gap:5px;background:transparent;border:0;font-family:inherit;font-size:14.5px;font-weight:500;color:#2A2D36;padding:10px 11px;border-radius:9px;cursor:pointer;white-space:nowrap;flex-shrink:0" style-hover="background:#F0ECE1;color:#16181D">
+            <button onClick="{{ nav.enter }}" style="display:flex;align-items:center;gap:5px;background:transparent;border:0;font-family:inherit;font-size:14.5px;font-weight:500;color:#2A2D36;padding:10px 11px;border-radius:9px;cursor:pointer;white-space:nowrap;flex-shrink:0" style-hover="background:#F0ECE1;color:#16181D">
               <span>{{ nav.label }}</span>
               <iconify-icon icon="lucide:chevron-down" width="14" style="opacity:0.5"></iconify-icon>
             </button>
@@ -161,7 +161,7 @@
           </div>
         </sc-if>
           <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
-            <div style="display:flex;gap:11px;padding:11px;border-radius:11px;cursor:pointer" style-hover="background:#F4F1EA">
+            <div onClick="{{ n.go }}" style="display:flex;gap:11px;padding:11px;border-radius:11px;cursor:pointer" style-hover="background:#F4F1EA">
               <span style="width:30px;height:30px;flex-shrink:0;border-radius:8px;background:#F0ECE1;display:flex;align-items:center;justify-content:center;color:#2F6F5E">
                 <iconify-icon icon="{{ n.icon }}" width="16"></iconify-icon>
               </span>
@@ -535,7 +535,7 @@
           </div>
           <div style="display:flex;gap:6px">
             <sc-for list="{{ feedFilters }}" as="f" hint-placeholder-count="3">
-              <span style="font-size:12.5px;font-weight:600;color:#6E7480;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:99px;padding:7px 12px;cursor:pointer" style-hover="border-color:#4A5FD1;color:#4A5FD1">{{ f }}</span>
+              <span onClick="{{ f.go }}" style="font-size:12.5px;font-weight:600;color:{{ f.fg }};background:{{ f.bg }};border:1px solid #E3DCCC;border-radius:99px;padding:7px 12px;cursor:pointer" style-hover="border-color:#4A5FD1;color:#4A5FD1">{{ f }}</span>
             </sc-for>
           </div>
         </div>
@@ -755,7 +755,7 @@
           <button onClick="{{ remakeWorld }}" style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#8D6BD8;color:#8D6BD8">
             <iconify-icon icon="lucide:git-fork" width="16"></iconify-icon><span>리메이크</span>
           </button>
-          <button style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#2F6F5E">
+          <button onClick="{{ shareWorld }}" style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#2F6F5E">
             <iconify-icon icon="lucide:share-2" width="16"></iconify-icon><span>공유</span>
           </button>
           <button onClick="{{ reportWorld }}" style="margin-left:auto;display:flex;align-items:center;gap:7px;background:transparent;border:0;font-family:inherit;font-size:13px;color:#8A9099;cursor:pointer" style-hover="color:#B8496F">
@@ -849,7 +849,7 @@
             <span style="font-size:15px;font-weight:700" style-hover="color:#2F6F5E">{{ world.author }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ world.handle }}</span>
           </span>
-          <button style="margin-left:auto;background:#16181D;color:#FFFFFF;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">팔로우</button>
+          <button onClick="{{ world.followAuthor }}" style="margin-left:auto;background:{{ world.followBg }};color:#FFFFFF;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ world.followText }}</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px">
           <sc-for list="{{ world.stats }}" as="s" hint-placeholder-count="4">
@@ -919,8 +919,8 @@
         <button onClick="{{ loadStudio }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:folder-open" width="15"></iconify-icon><span>불러오기</span>
         </button>
-        <button style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:undo-2" width="16"></iconify-icon></button>
-        <button style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:redo-2" width="16"></iconify-icon></button>
+        <button onClick="{{ undoAll }}" title="되돌리기" style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:undo-2" width="16"></iconify-icon></button>
+        <button onClick="{{ redoAll }}" title="다시하기" style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:redo-2" width="16"></iconify-icon></button>
         <button onClick="{{ goPublish }}" style="display:flex;align-items:center;gap:7px;background:#F2B23E;color:#16181D;border:0;border-radius:10px;padding:10px 15px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" style-hover="background:#16181D;color:#FFFFFF">
           <iconify-icon icon="lucide:upload" width="15"></iconify-icon><span>게시하기</span>
         </button>
@@ -1392,7 +1392,7 @@
           <span style="width:26px;height:1px;background:#EFEADE;margin:6px 0"></span>
           <span onClick="{{ zoomIn }}" style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5B616C;flex-shrink:0" style-hover="background:#F0ECE1;color:#16181D"><iconify-icon icon="lucide:zoom-in" width="16"></iconify-icon></span>
           <span onClick="{{ zoomOut }}" style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5B616C;flex-shrink:0" style-hover="background:#F0ECE1;color:#16181D"><iconify-icon icon="lucide:zoom-out" width="16"></iconify-icon></span>
-          <span style="margin-top:auto;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5B616C" style-hover="background:#F0ECE1;color:#16181D"><iconify-icon icon="lucide:help-circle" width="16"></iconify-icon></span>
+          <span onClick="{{ mapHelp }}" title="도움말" style="margin-top:auto;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5B616C" style-hover="background:#F0ECE1;color:#16181D"><iconify-icon icon="lucide:help-circle" width="16"></iconify-icon></span>
         </div>
 
         <!-- 캔버스 -->
@@ -1653,9 +1653,9 @@
           <iconify-icon icon="{{ k.ic }}" width="14"></iconify-icon><span>{{ k.t }}</span>
         </span>
       </sc-for>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:9px 13px;cursor:pointer">
+      <div onClick="{{ cycleSort }}" style="margin-left:auto;display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:9px 13px;cursor:pointer">
         <iconify-icon icon="lucide:arrow-down-up" width="14" style="color:#8A9099"></iconify-icon>
-        <span style="font-size:13px;font-weight:600">많이 쓰인 순</span>
+        <span style="font-size:13px;font-weight:600">{{ sortLabel }}</span>
         <iconify-icon icon="lucide:chevron-down" width="14" style="color:#8A9099"></iconify-icon>
       </div>
     </div>
@@ -1864,26 +1864,51 @@
   <!-- ══════════ 프로필 / 대시보드 ══════════ -->
   <sc-if value="{{ r_profile }}" hint-placeholder-val="{{ false }}">
   <section style="max-width:1360px;margin:0 auto;padding:32px 32px 72px;display:flex;flex-direction:column;gap:24px">
-    <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:20px;padding:26px;display:flex;gap:22px;align-items:center;flex-wrap:wrap">
-      <img data-src="{{ me.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:88px;height:88px;border-radius:20px;background:#F7F5EF;image-rendering:pixelated" />
-      <div style="display:flex;flex-direction:column;gap:7px;min-width:0;flex:1">
-        <div style="display:flex;align-items:center;gap:10px">
-          <h1 style="margin:0;font-size:26px;font-weight:700">{{ me.name }}</h1>
-          <span style="font-family:Galmuri11,monospace;font-size:11px;background:#E4EFE9;color:#2F6F5E;border-radius:6px;padding:3px 8px">{{ me.badge }}</span>
-        </div>
-        <span style="font-size:13.5px;color:#8A9099">@{{ me.handle }} · 팔로워 {{ me.followersK }} · 월드 {{ me.worlds }}</span>
-        <p style="margin:0;font-size:14px;color:#3A3F49;background:#F7F5EF;border-left:3px solid #F2B23E;border-radius:0 8px 8px 0;padding:9px 12px;max-width:520px">{{ me.memo }}</p>
+    <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:20px;overflow:hidden">
+      <!-- 배너 -->
+      <div style="position:relative;height:168px;background:{{ me.bannerBg }};background-size:cover;background-position:center">
+        <sc-if value="{{ me.isMine }}" hint-placeholder-val="{{ true }}">
+          <label style="position:absolute;right:14px;top:14px;display:flex;align-items:center;gap:7px;background:rgba(22,24,29,0.62);color:#F4F1EA;border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;backdrop-filter:blur(2px)" style-hover="background:rgba(22,24,29,0.82)">
+            <iconify-icon icon="lucide:image-plus" width="14"></iconify-icon><span>배너 바꾸기</span>
+            <input type="file" accept="image/*" onChange="{{ uploadBanner }}" style="display:none" />
+          </label>
+        </sc-if>
       </div>
-      <sc-if value="{{ me.canFollow }}" hint-placeholder-val="{{ false }}">
-      <button onClick="{{ me.follow }}" style="align-self:flex-start;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">{{ me.followLabel }}</button>
-      </sc-if>
-      <div style="display:flex;gap:10px">
-        <sc-for list="{{ profileTabs }}" as="t" hint-placeholder-count="4">
-          <span style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
-        </sc-for>
+
+      <div style="padding:0 26px 22px;display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;margin-top:-44px">
+        <span style="position:relative;flex-shrink:0">
+          <img data-src="{{ me.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:96px;height:96px;border-radius:22px;background:#F7F5EF;border:3px solid #FFFFFF;image-rendering:pixelated;object-fit:cover" />
+          <sc-if value="{{ me.isMine }}" hint-placeholder-val="{{ true }}">
+            <label style="position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:99px;background:#16181D;color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #FFFFFF" style-hover="background:#2F6F5E">
+              <iconify-icon icon="lucide:camera" width="13"></iconify-icon>
+              <input type="file" accept="image/*" onChange="{{ uploadAvatar }}" style="display:none" />
+            </label>
+          </sc-if>
+        </span>
+
+        <div style="display:flex;flex-direction:column;gap:7px;min-width:0;flex:1;padding-top:48px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <h1 style="margin:0;font-size:26px;font-weight:700">{{ me.name }}</h1>
+            <span style="font-family:Galmuri11,monospace;font-size:11px;background:#E4EFE9;color:#2F6F5E;border-radius:6px;padding:3px 8px">{{ me.badge }}</span>
+          </div>
+          <span style="font-size:13.5px;color:#8A9099">@{{ me.handle }} · 팔로워 {{ me.followersK }} · 월드 {{ me.worlds }}</span>
+          <p style="margin:0;font-size:14px;color:#3A3F49;background:#F7F5EF;border-left:3px solid #F2B23E;border-radius:0 8px 8px 0;padding:9px 12px;max-width:520px">{{ me.memo }}</p>
+        </div>
+
+        <span style="display:flex;flex-direction:column;gap:12px;align-items:flex-end;padding-top:48px">
+          <sc-if value="{{ me.canFollow }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ me.follow }}" style="background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">{{ me.followLabel }}</button>
+          </sc-if>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <sc-for list="{{ profileTabs }}" as="t" hint-placeholder-count="4">
+              <span onClick="{{ t.go }}" style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
+            </sc-for>
+          </div>
+        </span>
       </div>
     </div>
 
+    <sc-if value="{{ p_dash }}" hint-placeholder-val="{{ true }}">
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
       <sc-if value="{{ noKpis }}" hint-placeholder-val="{{ false }}">
         <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:38px 18px;text-align:center;background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:15px">
@@ -1969,19 +1994,30 @@
         </sc-for>
       </div>
     </div>
+    </sc-if>
 
+    <sc-if value="{{ p_worlds }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:15px">
       <div style="display:flex;align-items:center;gap:12px">
         <h2 style="margin:0;font-size:20px;font-weight:700">내 월드</h2>
-        <span style="font-size:13px;color:#8A9099">38개 · 게시 31 · 초안 7</span>
+        <span style="font-size:13px;color:#8A9099">{{ myWorldsSummary }}</span>
+        <span onClick="{{ goStudioNew }}" style="margin-left:auto;font-size:13px;font-weight:700;color:#2F6F5E;cursor:pointer">+ 새 월드 만들기</span>
       </div>
+      <sc-if value="{{ noMyWorlds }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:16px;padding:52px 24px">
+          <iconify-icon icon="lucide:layout-grid" width="26" style="color:#CFC7B6"></iconify-icon>
+          <span style="font-size:15px;font-weight:700;color:#3A3F49">만든 작품이 없습니다</span>
+          <span style="font-size:13px;color:#8A9099;line-height:1.7;max-width:360px">스튜디오에서 블록을 조립하고 «저장»을 누르면 여기에 나타납니다.</span>
+          <button onClick="{{ goStudioNew }}" style="margin-top:4px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">만들기 시작</button>
+        </div>
+      </sc-if>
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden">
         <div style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));font-size:12.5px;font-weight:700;color:#6E7480;background:#F7F5EF;border-bottom:1px solid #EFEADE">
           <span style="padding:13px 16px">작품</span><span style="padding:13px 12px">상태</span>
           <span style="padding:13px 12px">접속자</span><span style="padding:13px 12px">현재</span>
           <span style="padding:13px 12px">좋아요/싫어요</span><span style="padding:13px 12px">댓글</span>
         </div>
-        <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="8">
+        <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="0">
           <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
             <span style="padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:0">
               <img data-src="{{ w.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
@@ -1990,7 +2026,7 @@
                 <span style="font-size:11.5px;color:#8A9099">{{ w.catName }} · {{ w.ago }}</span>
               </span>
             </span>
-            <span style="padding:13px 12px"><span style="font-size:11.5px;font-weight:700;background:#E4EFE9;color:#2F6F5E;border-radius:6px;padding:4px 8px">게시 중</span></span>
+            <span style="padding:13px 12px"><span style="font-size:11.5px;font-weight:700;background:{{ w.stBg }};color:{{ w.stFg }};border-radius:6px;padding:4px 8px">{{ w.stText }}</span></span>
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px">{{ w.playsK }}</span>
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px;color:#2F6F5E">{{ w.online }}</span>
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px">{{ w.likes }} / {{ w.dislikes }}</span>
@@ -2000,6 +2036,9 @@
       </div>
     </div>
 
+    </sc-if>
+
+    <sc-if value="{{ p_assets }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:15px">
       <h2 style="margin:0;font-size:20px;font-weight:700">내가 공유한 오브젝트</h2>
       <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px">
@@ -2021,6 +2060,46 @@
         </sc-for>
       </div>
     </div>
+    </sc-if>
+
+    <sc-if value="{{ p_settings }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
+      <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px">
+        <h2 style="margin:0;font-size:17px;font-weight:700">프로필 설정</h2>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:12.5px;font-weight:700;color:#16181D">닉네임</span>
+          <input value="{{ setName }}" onChange="{{ onSetName }}" placeholder="2~24자" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13.5px;outline:none" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:12.5px;font-weight:700;color:#16181D">소개</span>
+          <textarea value="{{ setMemo }}" onChange="{{ onSetMemo }}" placeholder="어떤 걸 만드는지 한두 줄로" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13.5px;line-height:1.7;min-height:90px;resize:vertical;outline:none"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:12.5px;font-weight:700;color:#16181D">기본 아바타</span>
+          <span style="font-size:11.5px;color:#8A9099">사진을 올리지 않으면 이 도트가 쓰입니다.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ avatarChoices }}" as="av" hint-placeholder-count="5">
+              <span onClick="{{ av.go }}" style="width:52px;height:52px;border-radius:12px;border:2px solid {{ av.bd }};background:#F7F5EF;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:5px">
+                <img data-src="{{ av.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ doSaveProfile }}" style="align-self:flex-start;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:12px 20px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">프로필 저장</button>
+      </div>
+
+      <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:14px">
+        <h2 style="margin:0;font-size:17px;font-weight:700">계정</h2>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <span style="display:flex;justify-content:space-between;font-size:13px;color:#3A3F49"><span>핸들</span><b>@{{ me.handle }}</b></span>
+          <span style="display:flex;justify-content:space-between;font-size:13px;color:#3A3F49"><span>연결 상태</span><b>{{ dbStatusText }}</b></span>
+          <span style="display:flex;justify-content:space-between;font-size:13px;color:#3A3F49"><span>공유 오브젝트</span><b>{{ myAssetCount }}개</b></span>
+        </div>
+        <span style="font-size:12px;color:#8A9099;line-height:1.7;border-top:1px solid #EFEADE;padding-top:13px">계정 삭제나 개인정보 열람·정정 요청은 <b style="color:#2F6F5E">rladnwns54@gmail.com</b> 으로 보내주세요. 요청 후 10일 내 처리합니다.</span>
+        <button onClick="{{ signOut }}" style="align-self:flex-start;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;color:#C0392B" style-hover="border-color:#C0392B">로그아웃</button>
+      </div>
+    </div>
+    </sc-if>
   </section>
   </sc-if>
 
@@ -2083,7 +2162,7 @@
         <p style="margin:0;font-size:13px;line-height:1.7;max-width:320px;text-wrap:pretty">2D 픽셀 메타버스를 블록으로 만들고, 도트로 찍고, 같이 플레이하는 곳. UI는 픽셀이 아니고, 세계는 픽셀입니다.</p>
         <div style="display:flex;gap:8px;margin-top:4px">
           <sc-for list="{{ socials }}" as="s" hint-placeholder-count="4">
-            <span style="width:34px;height:34px;border-radius:9px;border:1px solid rgba(244,241,234,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#6FD3C7;color:#6FD3C7">
+            <span onClick="{{ socialHint }}" style="width:34px;height:34px;border-radius:9px;border:1px solid rgba(244,241,234,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#6FD3C7;color:#6FD3C7">
               <iconify-icon icon="{{ s }}" width="16"></iconify-icon>
             </span>
           </sc-for>
@@ -2515,6 +2594,13 @@ class Component extends DCLogic {
     reportEmail: "",
     reportTicket: null,
     myReports: [],
+    profileTab: 0,
+    setName: "",
+    setMemo: "",
+    bannerUrl: null,
+    avatarUrl: null,
+    avatarArt: "slime",
+    liveMyWorlds: [],
     // 올린 소리 (이름 · 데이터 URL)
     soundsDef: [],
     // 커뮤니티 · 약관
@@ -3457,6 +3543,60 @@ class Component extends DCLogic {
       this.say("«" + ((sc && sc.name) || "장면") + "» 을 지웠습니다.");
     });
   };
+
+  // 배너 · 아바타 사진 올리기 (Storage 에 올려 링크만 저장)
+  uploadProfileImage = (file, kind) => {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = async () => {
+      const img = new Image();
+      img.onload = async () => {
+        const W = kind === "banner" ? 1200 : 256;
+        const H = kind === "banner" ? 300 : 256;
+        const c = document.createElement("canvas");
+        c.width = W; c.height = H;
+        const g = c.getContext("2d");
+        const sr = Math.min(img.width / W, img.height / H);
+        const sw = W * sr, sh = H * sr;
+        g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+        let data = "";
+        try { data = c.toDataURL("image/jpeg", 0.82); } catch (e) { return; }
+        this.setState(kind === "banner" ? { bannerUrl: data } : { avatarUrl: data });
+        let url = data;
+        if (window.DotDB && window.DotDB.isLive) {
+          const me = await window.DotDB.me();
+          if (me) {
+            const up = await window.DotDB.uploadMedia("profile-" + me.id, kind, data);
+            if (up) url = up;
+            await window.DotDB.updateProfile(kind === "banner" ? { banner_url: url } : { avatar_url: url });
+            this.loadLive();
+          }
+        }
+        this.say(kind === "banner" ? "배너를 바꿨습니다." : "프로필 사진을 바꿨습니다.");
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  };
+
+  uploadBanner = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "banner"); e.target.value = ""; };
+  uploadAvatar = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "avatar"); e.target.value = ""; };
+
+  // 내가 만든 작품을 읽는다
+  async loadMyWorlds() {
+    if (!window.DotDB || !window.DotDB.isLive) return;
+    const rows = await window.DotDB.myWorlds();
+    if (!rows) return;
+    this.setState({
+      liveMyWorlds: rows.map((x) => ({
+        id: x.id, title: x.title || "이름 없는 월드",
+        catName: x.category || "실험실", ago: this.agoText(x.created_at),
+        plays: x.play_count || 0, likes: x.like_count || 0,
+        dislikes: x.dislike_count || 0, comments: x.comment_count || 0,
+        status: x.status || "draft", art: "portal",
+      })),
+    });
+  }
 
   addTag = () => {
     const t = filterText(this.state.tagDraft || "").out.trim().replace(/^#/, "");
@@ -4566,6 +4706,7 @@ class Component extends DCLogic {
       next.liveCreators = (cr || []).map((x) => ({
         id: x.id, name: x.display_name || "손님", handle: x.handle,
         art: x.avatar_art || "slime", memo: x.memo || "",
+        avatarUrl: x.avatar_url || null, bannerUrl: x.banner_url || null,
         followers: ((cstat || {})[x.id] || {}).followers || 0,
         worlds: ((cstat || {})[x.id] || {}).worlds || 0,
         growth: "NEW",
@@ -4589,6 +4730,7 @@ class Component extends DCLogic {
         next.liveMe = {
           id: mp.id, name: mp.display_name || "플레이어", handle: mp.handle,
           art: mp.avatar_art || "slime", memo: mp.memo || "",
+          avatarUrl: mp.avatar_url || null, bannerUrl: mp.banner_url || null,
           followers: ((ms || {})[mp.id] || {}).followers || 0,
           worlds: ((ms || {})[mp.id] || {}).worlds || 0,
         };
@@ -4615,7 +4757,7 @@ class Component extends DCLogic {
         status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
         color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
       }));
-      this.setState(next, () => { this.loadPosts(); });
+      this.setState(next, () => { this.loadPosts(); this.loadMyWorlds(); });
     } catch (e) { /* 연결이 안 되면 예시 데이터로 둘러본다 */ }
   }
 
@@ -5128,7 +5270,23 @@ class Component extends DCLogic {
       myHandleText: (st.liveMe && st.liveMe.handle) || (st.dbLoaded ? "guest" : "nightowl"),
       notifOpen: st.notifOpen, toggleNotif: () => this.setState((p) => ({ notifOpen: !p.notifOpen })),
       notifCount: (st.dbLoaded ? (st.liveNotifs || []) : (s.notifs || [])).filter((n) => !n.read).length,
-      notifs: st.dbLoaded ? (st.liveNotifs || []) : (s.notifs || []),
+      notifs: (st.dbLoaded ? (st.liveNotifs || []) : (s.notifs || [])).map((n) => Object.assign({}, n, {
+        go: () => {
+          this.setState({ notifOpen: false });
+          if (window.DotDB && window.DotDB.isLive && window.DotDB.readNotifications) {
+            window.DotDB.readNotifications().then(() => this.loadLive());
+          }
+          if (n.link && n.link.indexOf("/world/") === 0) {
+            const id = n.link.replace("/world/", "");
+            this.go("world", { worldId: id })();
+            this.loadWorldThread(id);
+          } else if (n.link && n.link.indexOf("/post/") === 0) {
+            this.go("community", { postOpen: n.link.replace("/post/", "") })();
+          } else {
+            this.go("profile")();
+          }
+        },
+      })),
       noNotifs: st.dbLoaded && !(st.liveNotifs || []).length,
       meSprite: spr("slime"),
       q: st.q,
@@ -5179,6 +5337,40 @@ class Component extends DCLogic {
         { name: "전시", icon: "lucide:image" },
       ]).map((c) => ({ name: c.name, icon: c.icon, go: this.go("search") })),
       socials: ["lucide:github", "lucide:youtube", "lucide:twitter", "lucide:message-circle"],
+      socialHint: () => this.say("아직 준비 중입니다. 문의는 rladnwns54@gmail.com"),
+      sortLabel: st.assetSort || "많이 쓰인 순",
+      cycleSort: () => {
+        const opts = ["많이 쓰인 순", "최신 순", "이름 순"];
+        const i = opts.indexOf(st.assetSort || opts[0]);
+        this.setState({ assetSort: opts[(i + 1) % opts.length] });
+      },
+      mapHelp: () => this.say("빈 곳을 끌면 화면 이동 · Alt+드래그도 이동 · 휠은 확대/축소입니다."),
+      shareWorld: async () => {
+        const url = (typeof location !== "undefined" ? location.href.split("#")[0] : "") + "#w=" + st.worldId;
+        try {
+          if (navigator.share) { await navigator.share({ title: "Dotverse", url: url }); return; }
+          await navigator.clipboard.writeText(url);
+          this.say("공유 링크를 복사했습니다.");
+        } catch (e) { this.say("공유 링크: " + url); }
+      },
+      undoAll: () => {
+        const hist = this._wsHist || [];
+        if (!hist.length) return this.say("되돌릴 작업이 없습니다.");
+        const prev = hist.pop();
+        this._wsRedo = (this._wsRedo || []).concat([JSON.stringify(this.allBlocks())]);
+        this._model = JSON.parse(prev);
+        this.setState({ wsBy: JSON.parse(prev), wsRev: (st.wsRev || 0) + 1 });
+        this.say("되돌렸습니다.");
+      },
+      redoAll: () => {
+        const r = this._wsRedo || [];
+        if (!r.length) return this.say("다시 할 작업이 없습니다.");
+        const next = r.pop();
+        this._wsHist = (this._wsHist || []).concat([JSON.stringify(this.allBlocks())]);
+        this._model = JSON.parse(next);
+        this.setState({ wsBy: JSON.parse(next), wsRev: (st.wsRev || 0) + 1 });
+        this.say("다시 했습니다.");
+      },
       footerCols: [
         { title: "만들기", links: [
           { t: "메타버스 만들기", r: "studio" }, { t: "도트 편집기", r: "studio" },
@@ -5257,7 +5449,12 @@ class Component extends DCLogic {
         { title: "야간 산책 리메이크", meta: "블록 96 · 어제", pct: "41%", sprite: spr("lamp") },
         { title: "온실 갤러리 2관", meta: "블록 38 · 지난주", pct: "18%", sprite: spr("pot") },
       ],
-      feedFilters: ["전체", "새 작품", "리메이크"],
+      feedFilters: ["전체", "새 작품", "리메이크"].map((t) => ({
+        t: t,
+        bg: (st.feedFilter || "전체") === t ? "#16181D" : "#FFFFFF",
+        fg: (st.feedFilter || "전체") === t ? "#FFFFFF" : "#6E7480",
+        go: () => this.setState({ feedFilter: t }),
+      })),
       meStats: [{ v: "38", k: "월드" }, { v: "2.4만", k: "팔로워" }, { v: "126", k: "오브젝트" }],
 
       // ───────── 검색
@@ -5274,7 +5471,7 @@ class Component extends DCLogic {
         fg: (st.searchTab || "world") === t.k ? "#FFFFFF" : "#2A2D36",
         go: () => this.setState({ searchTab: t.k }),
       })),
-      searchGroups: st.route !== "search" ? [] : (() => {
+      searchGroups: st.route !== "search" ? (this._lastSearchGroups = [], []) : (this._lastSearchGroups = (() => {
         const tab = st.searchTab || "world";
         if (tab === "asset") {
           return [{ name: "공유 오브젝트", icon: "lucide:box", count: assets.length, all: this.go("assets"),
@@ -5303,13 +5500,14 @@ class Component extends DCLogic {
             sprite: spr(w.art), go: this.go("world", { worldId: w.id }),
           })),
         }));
-      })(),
-
+      })()),
+      noSearch: st.route === "search" && !(this._lastSearchGroups || []).length,
       // ───────── 월드 상세
       world: (() => {
         const src = (st.liveWorlds && st.liveWorlds.length) ? st.liveWorlds : [];
         const w = src.find((x) => x.id === st.worldId) || src[0] || {};
         const r = st.reacts["w:" + w.id];
+        const fOn = !!st.follows[w.handle];
         return {
           title: w.title, summary: w.summary, author: w.author, handle: w.handle,
           catName: w.catName, tags: w.tags || [], online: w.online,
@@ -5319,9 +5517,16 @@ class Component extends DCLogic {
           sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || w.art),
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
+          followAuthor: () => {
+            if (st.liveMe && st.liveMe.handle === w.handle) return this.say("내 작품입니다.");
+            this.setState((p) => ({ follows: Object.assign({}, p.follows, { [w.handle]: !fOn }) }));
+            if (window.DotDB && window.DotDB.isLive) window.DotDB.follow(w.handle, !fOn);
+          },
+          followBg: fOn ? "#2F6F5E" : "#16181D",
+          followText: fOn ? "팔로잉" : "팔로우",
           stats: [
             { v: kfmt(w.plays || 0), k: "누적 플레이" }, { v: String(w.online || 0), k: "현재 접속" },
-            { v: kfmt(w.likes || 0), k: "좋아요" }, { v: "31", k: "리메이크" },
+            { v: kfmt(w.likes || 0), k: "좋아요" }, { v: String(w.remakes || 0), k: "리메이크" },
           ],
         };
       })(),
@@ -6197,7 +6402,10 @@ class Component extends DCLogic {
           name: c ? c.name : (st.dbLoaded ? "손님" : "밤샘개발자"),
           handle: c ? c.handle : (st.dbLoaded ? "guest" : "nightowl"),
           memo: c ? (c.memo || "소개를 적어보세요.") : (st.dbLoaded ? "소개를 적어보세요." : "새벽 3시에 만든 건 다 방탈출이 된다."),
-          sprite: spr(c ? c.art : "slime"),
+          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl)) || spr((c && c.art) || st.avatarArt || "slime"),
+          bannerBg: (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : (c && c.bannerUrl))
+            ? "url(" + (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : c.bannerUrl) + ")"
+            : "linear-gradient(120deg,#2F6F5E 0%,#6FD3C7 100%)",
           followersK: kfmt(c ? (c.followers || 0) : (st.dbLoaded ? 0 : 24100)),
           worlds: c ? (c.worlds || 0) : (st.dbLoaded ? 0 : 38),
           isMine: mine,
@@ -6227,6 +6435,42 @@ class Component extends DCLogic {
         this.say(ok ? "프로필을 저장했습니다." : "저장하지 못했습니다.");
         if (ok) this.loadLive();
       },
+      p_dash: (st.profileTab || 0) === 0,
+      p_worlds: (st.profileTab || 0) === 1,
+      p_assets: (st.profileTab || 0) === 2,
+      p_settings: (st.profileTab || 0) === 3,
+      uploadBanner: this.uploadBanner,
+      uploadAvatar: this.uploadAvatar,
+      goStudioNew: () => { this.setState({ route: "studio", tab: "blocks" }); window.scrollTo(0, 0); },
+      setName: st.setName || (st.liveMe && st.liveMe.name) || "",
+      setMemo: st.setMemo !== "" ? st.setMemo : ((st.liveMe && st.liveMe.memo) || ""),
+      onSetName: (e) => this.setState({ setName: e.target.value }),
+      onSetMemo: (e) => this.setState({ setMemo: e.target.value }),
+      avatarChoices: ["slime", "chest", "portal", "key", "torch"].map((k) => ({
+        sprite: spr(k),
+        bd: (st.avatarArt || "slime") === k ? "#2F6F5E" : "#EFEADE",
+        go: () => this.setState({ avatarArt: k }),
+      })),
+      doSaveProfile: async () => {
+        if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없습니다.");
+        const name = filterText(st.setName || (st.liveMe && st.liveMe.name) || "플레이어").out.trim();
+        if (name.length < 2) return this.say("닉네임은 2자 이상으로 적어주세요.");
+        const ok = await window.DotDB.updateProfile({
+          display_name: name,
+          memo: filterText(st.setMemo || "").out,
+          avatar_art: st.avatarArt || "slime",
+        });
+        this.say(ok ? "프로필을 저장했습니다." : "저장하지 못했습니다.");
+        if (ok) this.loadLive();
+      },
+      dbStatusText: st.live ? (st.dbLoaded ? "서버 연결됨" : "연결 중") : "환경 변수 없음",
+      myAssetCount: (st.imgArts || []).length + (st.shapes || []).length,
+      myWorldsSummary: (() => {
+        const src = st.liveMyWorlds || [];
+        const pub = src.filter((w) => w.status === "published").length;
+        return src.length + "개 · 게시 " + pub + " · 초안 " + (src.length - pub);
+      })(),
+      noMyWorlds: st.dbLoaded && !(st.liveMyWorlds || []).length,
       myReports: st.myReports || [],
       hasReports: !!(st.myReports || []).length,
       noReports: !(st.myReports || []).length,
@@ -6244,7 +6488,25 @@ class Component extends DCLogic {
         }));
       })(),
       noDays: st.dbLoaded && !(st.liveDays || []).length,
-      myWorlds: worlds,
+      myWorlds: (st.dbLoaded ? (st.liveMyWorlds || []) : worlds).map((w) => ({
+        title: w.title, catName: w.catName, ago: w.ago,
+        sprite: spr(w.art || "portal"),
+        playsK: kfmt(w.plays || 0), online: w.online || 0,
+        likes: kfmt(w.likes || 0), dislikes: w.dislikes || 0,
+        comments: kfmt(w.comments || 0),
+        stText: w.status === "published" ? "게시 중" : "초안",
+        stBg: w.status === "published" ? "#E4EFE9" : "#F0ECE1",
+        stFg: w.status === "published" ? "#2F6F5E" : "#8A9099",
+        go: () => {
+          if (w.status === "published") {
+            this.go("world", { worldId: w.id })();
+            this.loadWorldThread(w.id);
+          } else {
+            this.setState({ route: "studio", tab: "blocks", worldId: w.id }, () => this.loadStudio());
+            window.scrollTo(0, 0);
+          }
+        },
+      })),
 
       // ───────── 약관
       legalDocs: LEGAL.map((d) => ({
