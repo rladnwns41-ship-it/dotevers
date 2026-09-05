@@ -357,7 +357,8 @@
       const c = init();
       if (!c) return null;
       const u = await this.me();
-      if (!u) return null;
+      // 익명 세션(글쓰기용 임시 계정)은 로그인으로 보지 않는다
+      if (!u || u.is_anonymous) return null;
       const { data } = await c.from("profiles").select("*").eq("id", u.id).single();
       return data || null;
     },
