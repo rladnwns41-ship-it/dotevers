@@ -131,7 +131,7 @@
               <iconify-icon icon="lucide:plus" width="15"></iconify-icon><span>만들기</span>
             </button>
             <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px 4px 4px;border:1px solid #E3DCCC;border-radius:99px;background:#FFFFFF" style-hover="border-color:#2F6F5E">
-              <img src="{{ meSprite }}" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <img data-src="{{ meSprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
               <span style="font-size:13px;font-weight:600">{{ myNameText }}</span>
             </div>
           </div>
@@ -229,7 +229,7 @@
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
             <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
               <div style="aspect-ratio:1;background:#EFEADE;border:1px solid #CFC7B6;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:9px">
-                <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                <img data-src="{{ a.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
               </div>
             </sc-for>
           </div>
@@ -278,7 +278,7 @@
         <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="8">
           <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column" style-hover="border-color:#2F6F5E;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
             <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-              <img src="{{ w.sprite }}" alt="{{ w.title }}" style="width:52%;height:52%;object-fit:contain;image-rendering:pixelated" />
+              <img data-src="{{ w.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ w.title }}" style="width:52%;height:52%;object-fit:contain;image-rendering:pixelated" />
               <span style="position:absolute;top:10px;left:10px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">{{ w.catName }}</span>
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:5px;background:rgba(47,111,94,0.92);color:#FFFFFF;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">
                 <span style="width:6px;height:6px;border-radius:99px;background:#6FD3C7"></span><span>{{ w.online }}</span>
@@ -288,7 +288,7 @@
               <h3 style="margin:0;font-size:15.5px;font-weight:700;line-height:1.35">{{ w.title }}</h3>
               <p style="margin:0;font-size:13px;color:#6E7480;line-height:1.55;flex:1;text-wrap:pretty">{{ w.summary }}</p>
               <div style="display:flex;align-items:center;gap:7px">
-                <img src="{{ w.authorSprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+                <img data-src="{{ w.authorSprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
                 <span onClick="{{ w.goUser }}" style="font-size:12.5px;font-weight:500;color:#2A2D36;cursor:pointer" style-hover="color:#2F6F5E;text-decoration:underline">{{ w.author }}</span>
                 <span style="font-size:11.5px;color:#A0A6AF">· {{ w.ago }}</span>
               </div>
@@ -328,7 +328,7 @@
         </sc-if>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px" style-hover="border-color:#8D6BD8">
-            <img src="{{ c.sprite }}" alt="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img data-src="{{ c.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px">
                 <span onClick="{{ c.goUser }}" style="font-size:15px;font-weight:700;cursor:pointer" style-hover="color:#8D6BD8;text-decoration:underline">{{ c.name }}</span>
@@ -339,7 +339,12 @@
               <div style="display:flex;align-items:center;gap:14px;margin-top:2px">
                 <span style="font-size:12.5px;color:#6E7480">팔로워 <b style="color:#16181D">{{ c.followersK }}</b></span>
                 <span style="font-size:12.5px;color:#6E7480">월드 <b style="color:#16181D">{{ c.worlds }}</b></span>
+                <sc-if value="{{ c.cantFollow }}" hint-placeholder-val="{{ false }}">
+                  <span style="margin-left:auto;font-family:Galmuri11,monospace;font-size:11px;color:#8A9099;background:#F0ECE1;border-radius:7px;padding:5px 9px">나</span>
+                </sc-if>
+                <sc-if value="{{ c.canFollow }}" hint-placeholder-val="{{ true }}">
                 <button onClick="{{ c.follow }}" style="margin-left:auto;background:{{ c.btnBg }};color:{{ c.btnFg }};border:1px solid #E3DCCC;border-radius:9px;padding:7px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ c.btnLabel }}</button>
+                </sc-if>
               </div>
             </div>
           </div>
@@ -356,7 +361,7 @@
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
           <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px;cursor:pointer" style-hover="border-color:#4A5FD1">
-            <img src="{{ c.sprite }}" alt="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img data-src="{{ c.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:13.5px;font-weight:700">{{ c.author }}</span>
@@ -421,7 +426,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#E0653A">
             <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/16px 16px;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:14px">
-              <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <img data-src="{{ a.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             </div>
             <div style="display:flex;flex-direction:column;gap:5px">
               <span style="font-size:14px;font-weight:700">{{ a.name }}</span>
@@ -508,7 +513,7 @@
         <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px">
           <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="3">
             <div onClick="{{ goStudio }}" style="border:1px solid #EFEADE;border-radius:13px;padding:14px;display:flex;gap:12px;cursor:pointer;background:#F7F5EF" style-hover="border-color:#2F6F5E;background:#FFFFFF">
-              <img src="{{ d.sprite }}" alt="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0" />
+              <img data-src="{{ d.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                 <span style="font-size:14px;font-weight:700">{{ d.title }}</span>
                 <span style="font-size:12px;color:#8A9099">{{ d.meta }}</span>
@@ -552,7 +557,7 @@
           <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="6">
             <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;overflow:hidden;cursor:pointer" style-hover="border-color:#2F6F5E">
               <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-                <img src="{{ w.sprite }}" alt="" style="width:48%;height:48%;object-fit:contain;image-rendering:pixelated" />
+                <img data-src="{{ w.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48%;height:48%;object-fit:contain;image-rendering:pixelated" />
                 <span style="position:absolute;bottom:9px;left:9px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11px;font-weight:600;border-radius:6px;padding:3px 7px">{{ w.catName }}</span>
               </div>
               <div style="padding:13px;display:flex;flex-direction:column;gap:8px">
@@ -575,7 +580,7 @@
         <div style="display:flex;flex-direction:column;gap:12px">
           <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
             <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:16px;display:flex;gap:13px;cursor:pointer" style-hover="border-color:#4A5FD1">
-              <img src="{{ c.sprite }}" alt="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+              <img data-src="{{ c.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
                 <span style="font-size:13px;color:#8A9099"><b style="color:#16181D;font-size:13.5px">{{ c.author }}</b> · {{ c.world }} · {{ c.ago }}</span>
                 <span style="font-size:13.5px;line-height:1.6;color:#2A2D36">{{ c.body }}</span>
@@ -593,7 +598,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img src="{{ meSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <img data-src="{{ meSprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
           <span style="display:flex;flex-direction:column;gap:2px">
             <span style="font-size:15px;font-weight:700">{{ myNameText }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ myHandleText }}</span>
@@ -617,12 +622,14 @@
         </div>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="display:flex;gap:11px;align-items:center">
-            <img src="{{ c.sprite }}" alt="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img data-src="{{ c.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13.5px;font-weight:600">{{ c.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">팔로워 {{ c.followersK }} · 월드 {{ c.worlds }}</span>
             </span>
+            <sc-if value="{{ c.canFollow }}" hint-placeholder-val="{{ true }}">
             <button onClick="{{ c.follow }}" style="background:{{ c.btnBg }};color:{{ c.btnFg }};border:1px solid #E3DCCC;border-radius:8px;padding:6px 11px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">{{ c.btnLabel }}</button>
+            </sc-if>
           </div>
         </sc-for>
       </div>
@@ -688,7 +695,7 @@
           <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
             <sc-for list="{{ g.items }}" as="w" hint-placeholder-count="4">
               <div onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;gap:12px;cursor:pointer" style-hover="border-color:#2F6F5E">
-                <img src="{{ w.sprite }}" alt="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0" />
+                <img data-src="{{ w.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0" />
                 <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                   <span style="font-size:14px;font-weight:700;line-height:1.35">{{ w.title }}</span>
                   <span style="font-size:11.5px;color:#8A9099">{{ w.author }}</span>
@@ -720,7 +727,7 @@
 
       <div style="position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#DFE9E4,#EFEADE);border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center">
         <div style="position:absolute;inset:0;opacity:0.5;background-image:linear-gradient(#CFC7B6 1px,transparent 1px),linear-gradient(90deg,#CFC7B6 1px,transparent 1px);background-size:32px 32px"></div>
-        <img src="{{ world.sprite }}" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
+        <img data-src="{{ world.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
         <button onClick="{{ playWorld }}" style="position:absolute;bottom:20px;left:20px;display:flex;align-items:center;gap:9px;background:#16181D;color:#FFFFFF;border:0;border-radius:12px;padding:15px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
           <iconify-icon icon="lucide:play" width="17"></iconify-icon><span>새 탭에서 플레이</span>
         </button>
@@ -778,7 +785,7 @@
         </div>
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;gap:12px">
-            <img src="{{ meSprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img data-src="{{ meSprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <textarea value="{{ draft }}" onChange="{{ setDraft }}" placeholder="이 월드에 대해 이야기해 주세요. 스포일러는 접어서 적어주시면 좋습니다." style="flex:1;min-width:0;min-height:64px;resize:vertical;background:#F7F5EF;border:1px solid #E3DCCC;border-radius:11px;padding:12px;font-family:inherit;font-size:14px;line-height:1.6;outline:none"></textarea>
           </div>
           <div style="display:flex;align-items:center;gap:12px">
@@ -800,7 +807,7 @@
         </sc-if>
         <sc-for list="{{ threadComments }}" as="c" hint-placeholder-count="4">
           <div style="display:flex;gap:12px;margin-left:{{ c.indent }};background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px">
-            <img src="{{ c.sprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <img data-src="{{ c.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:14px;font-weight:700">{{ c.author }}</span>
@@ -837,7 +844,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img src="{{ world.authorSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <img data-src="{{ world.authorSprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
           <span onClick="{{ world.goUser }}" style="display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer">
             <span style="font-size:15px;font-weight:700" style-hover="color:#2F6F5E">{{ world.author }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ world.handle }}</span>
@@ -858,7 +865,7 @@
         <span style="font-size:14.5px;font-weight:700">이 월드에 쓰인 공유 오브젝트</span>
         <sc-for list="{{ usedAssets }}" as="a" hint-placeholder-count="4">
           <div style="display:flex;gap:11px;align-items:center">
-            <img src="{{ a.sprite }}" alt="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0" />
+            <img data-src="{{ a.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0" />
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13px;font-weight:600">{{ a.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">@{{ a.handle }} · {{ a.license }}</span>
@@ -884,7 +891,7 @@
     <!-- 툴바 -->
     <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:13px;padding:9px 13px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:9px">
-        <img src="{{ world.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px" />
+        <img data-src="{{ world.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px" />
         <span style="display:flex;flex-direction:column">
           <span style="font-size:14.5px;font-weight:700">심야 도서관 방탈출</span>
         </span>
@@ -929,7 +936,7 @@
         <sc-for list="{{ scenes }}" as="sc" hint-placeholder-count="2">
           <span onClick="{{ sc.go }}" style="display:flex;align-items:center;gap:8px;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;background:{{ sc.bg }};color:{{ sc.fg }}">
             <span>{{ sc.name }}</span>
-            <iconify-icon icon="lucide:x" width="12" style="opacity:0.5"></iconify-icon>
+            <span onClick="{{ sc.remove }}" title="장면 삭제" style="display:flex;opacity:0.55;cursor:pointer" style-hover="opacity:1;color:#C0392B"><iconify-icon icon="lucide:x" width="12"></iconify-icon></span>
           </span>
         </sc-for>
         <span onClick="{{ addScene }}" style="width:32px;height:32px;border-radius:9px;border:1px dashed #CFC7B6;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8A9099" style-hover="border-color:#2F6F5E;color:#2F6F5E">
@@ -956,7 +963,7 @@
             <div onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#E7EFE9;border:1px solid #EFEADE">
               <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
                 <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-                  <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+                  <img data-src="{{ stageBg }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
                 </sc-if>
                 <sc-if value="{{ noStageBg }}" hint-placeholder-val="{{ true }}">
                   <span style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,24,29,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,29,0.05) 1px,transparent 1px);background-size:12.5% 16.6%"></span>
@@ -967,7 +974,7 @@
                     <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
                     </sc-if>
-                    <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+                    <img data-src="{{ pp.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
                     <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
                   </span>
                 </sc-for>
@@ -976,7 +983,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <img data-src="{{ pp.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -989,7 +996,7 @@
                       <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSize }};line-height:1.3">{{ o.text }}</span>
                     </sc-if>
                     <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                      <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                      <img data-src="{{ o.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
                     </sc-if>
                   </span>
                 </sc-for>
@@ -1064,7 +1071,7 @@
                 <span onClick="{{ o.toggle }}" style="width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ o.eyeColor }};cursor:pointer" style-hover="background:#EFEADE">
                   <iconify-icon icon="{{ o.eye }}" width="14"></iconify-icon>
                 </span>
-                <img src="{{ o.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+                <img data-src="{{ o.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:13px;font-weight:600">{{ o.name }}</span>
                   <span style="font-family:Galmuri11,monospace;font-size:10px;color:#8A9099">X {{ o.x }} · Y {{ o.y }} · {{ o.scale }} · {{ o.layer }}</span>
@@ -1253,7 +1260,7 @@
         <div style="display:flex;flex-direction:column;gap:6px">
           <sc-for list="{{ shapes }}" as="sh" hint-placeholder-count="2">
             <span onClick="{{ sh.go }}" style="display:flex;align-items:center;gap:9px;border:1px solid {{ sh.bd }};background:{{ sh.bg }};border-radius:9px;padding:7px 9px;cursor:pointer" style-hover="border-color:#2F6F5E">
-              <img src="{{ sh.sprite }}" alt="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0" />
+              <img data-src="{{ sh.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
                 <span style="font-size:12px;font-weight:600">{{ sh.name }}</span>
                 <span style="font-family:Galmuri11,monospace;font-size:9.5px;color:#8A9099">{{ sh.frames }}프레임</span>
@@ -1294,7 +1301,7 @@
           <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-bottom:6px">
             <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="4">
               <span onClick="{{ fr.go }}" style="width:62px;height:62px;flex-shrink:0;border-radius:9px;border:{{ fr.border }};background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/12px 12px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">
-                <img src="{{ fr.sprite }}" alt="" style="width:84%;height:84%;object-fit:contain;image-rendering:pixelated" />
+                <img data-src="{{ fr.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:84%;height:84%;object-fit:contain;image-rendering:pixelated" />
                 <span style="position:absolute;bottom:2px;right:3px;font-family:Galmuri11,monospace;font-size:9px;color:#8A9099">{{ fr.n }}</span>
                 <span onClick="{{ fr.remove }}" style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:99px;background:#FFFFFF;border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center;color:#C0392B" style-hover="background:#C0392B;color:#FFFFFF"><iconify-icon icon="lucide:x" width="9"></iconify-icon></span>
               </span>
@@ -1431,7 +1438,7 @@
             <sc-for list="{{ panelObjects }}" as="o" hint-placeholder-count="6">
               <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:11px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:10px;padding:9px 11px;cursor:pointer" style-hover="border-color:#2F6F5E">
                 <span style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:#F7F5EF;display:flex;align-items:center;justify-content:center;padding:5px">
-                  <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                  <img data-src="{{ o.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
                 </span>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:12.5px;font-weight:600;color:#16181D">{{ o.name }}</span>
@@ -1657,7 +1664,7 @@
       <sc-for list="{{ filteredAssets }}" as="a" hint-placeholder-count="8">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;display:flex;flex-direction:column" style-hover="border-color:#E0653A;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
           <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/18px 18px;display:flex;align-items:center;justify-content:center;padding:20px;position:relative">
-            <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+            <img data-src="{{ a.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             <span style="position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;background:rgba(22,24,29,0.82);color:#F4F1EA;border-radius:6px;padding:4px 8px">{{ a.kindName }}</span>
             <sc-if value="{{ a.animated }}" hint-placeholder-val="{{ false }}">
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:rgba(224,101,58,0.9);color:#FFF;border-radius:6px;padding:4px 8px">
@@ -1790,7 +1797,7 @@
             </span>
             <span style="font-size:16px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ p.title }}</span>
             <span style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A9099">
-              <img src="{{ p.sprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <img data-src="{{ p.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
               <span style="font-weight:600;color:#3A3F49">{{ p.author }}</span>
               <span>· {{ p.ago }}</span>
               <span onClick="{{ p.open }}" style="display:flex;align-items:center;gap:4px;color:#4A5FD1;font-weight:600;background:#EEF1FB;border-radius:7px;padding:4px 9px;cursor:pointer" style-hover="background:#4A5FD1;color:#FFFFFF"><iconify-icon icon="lucide:message-circle" width="13"></iconify-icon><span>댓글 {{ p.comments }}</span></span>
@@ -1858,7 +1865,7 @@
   <sc-if value="{{ r_profile }}" hint-placeholder-val="{{ false }}">
   <section style="max-width:1360px;margin:0 auto;padding:32px 32px 72px;display:flex;flex-direction:column;gap:24px">
     <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:20px;padding:26px;display:flex;gap:22px;align-items:center;flex-wrap:wrap">
-      <img src="{{ me.sprite }}" alt="" style="width:88px;height:88px;border-radius:20px;background:#F7F5EF;image-rendering:pixelated" />
+      <img data-src="{{ me.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:88px;height:88px;border-radius:20px;background:#F7F5EF;image-rendering:pixelated" />
       <div style="display:flex;flex-direction:column;gap:7px;min-width:0;flex:1">
         <div style="display:flex;align-items:center;gap:10px">
           <h1 style="margin:0;font-size:26px;font-weight:700">{{ me.name }}</h1>
@@ -1867,7 +1874,9 @@
         <span style="font-size:13.5px;color:#8A9099">@{{ me.handle }} · 팔로워 {{ me.followersK }} · 월드 {{ me.worlds }}</span>
         <p style="margin:0;font-size:14px;color:#3A3F49;background:#F7F5EF;border-left:3px solid #F2B23E;border-radius:0 8px 8px 0;padding:9px 12px;max-width:520px">{{ me.memo }}</p>
       </div>
+      <sc-if value="{{ me.canFollow }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ me.follow }}" style="align-self:flex-start;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">{{ me.followLabel }}</button>
+      </sc-if>
       <div style="display:flex;gap:10px">
         <sc-for list="{{ profileTabs }}" as="t" hint-placeholder-count="4">
           <span style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
@@ -1924,6 +1933,27 @@
         </div>
       </div>
 
+      <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px">
+        <h2 style="margin:0;font-size:17px;font-weight:700">내 신고 내역</h2>
+        <sc-if value="{{ hasReports }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ myReports }}" as="r" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;gap:10px;background:#F7F5EF;border-radius:10px;padding:11px 13px">
+                <span style="font-family:Galmuri11,monospace;font-size:11px;color:#6E7480;flex-shrink:0">{{ r.ticket }}</span>
+                <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+                  <span style="font-size:13px;font-weight:600;color:#16181D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.label }}</span>
+                  <span style="font-size:11.5px;color:#8A9099">{{ r.reason }} · {{ r.ago }}</span>
+                </span>
+                <span style="font-size:12px;font-weight:700;color:{{ r.color }};flex-shrink:0">{{ r.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noReports }}" hint-placeholder-val="{{ true }}">
+          <span style="font-size:13px;color:#8A9099;line-height:1.7;text-align:center;padding:18px 0">접수한 신고가 없습니다. 문의는 <b style="color:#2F6F5E">rladnwns54@gmail.com</b></span>
+        </sc-if>
+      </div>
+
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
         <h2 style="margin:0;font-size:17px;font-weight:700">내 작품에서 일어난 활동</h2>
         <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
@@ -1954,7 +1984,7 @@
         <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="8">
           <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
             <span style="padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:0">
-              <img src="{{ w.sprite }}" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+              <img data-src="{{ w.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                 <span style="font-size:13.5px;font-weight:600">{{ w.title }}</span>
                 <span style="font-size:11.5px;color:#8A9099">{{ w.catName }} · {{ w.ago }}</span>
@@ -1983,7 +2013,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:9px" style-hover="border-color:#E0653A">
             <span style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/14px 14px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:11px">
-              <img src="{{ a.sprite }}" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <img data-src="{{ a.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
             </span>
             <span style="font-size:12.5px;font-weight:600;line-height:1.4">{{ a.name }}</span>
             <span style="font-size:11.5px;color:#8A9099">사용 {{ a.usesK }} · ♥ {{ a.likesK }}</span>
@@ -2085,7 +2115,7 @@
     <div onClick="{{ closePv }}" style="position:fixed;inset:0;z-index:95;background:rgba(22,24,29,0.55);display:flex;align-items:center;justify-content:center;padding:32px">
       <div onClick="{{ stopIt }}" style="width:min(760px,100%);background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,0.5);display:grid;grid-template-columns:minmax(0,1fr) 280px">
         <div style="background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/22px 22px;display:flex;align-items:center;justify-content:center;padding:40px;min-height:360px">
-          <img src="{{ pv.sprite }}" alt="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated" />
+          <img data-src="{{ pv.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated" />
         </div>
         <div style="padding:22px;display:flex;flex-direction:column;gap:14px;border-left:1px solid #EFEADE">
           <div style="display:flex;align-items:flex-start;gap:10px">
@@ -2132,7 +2162,7 @@
       <div onClick="{{ stageClick }}" style="position:relative;width:min(94vw,calc((100vh - 170px) * 4 / 3));aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#E7EFE9;box-shadow:0 30px 70px -20px rgba(0,0,0,0.7)">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-            <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+            <img data-src="{{ stageBg }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
@@ -2140,7 +2170,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <img data-src="{{ pp.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -2153,7 +2183,7 @@
                 <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSizeBig }};line-height:1.3">{{ o.text }}</span>
               </sc-if>
               <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                <img data-src="{{ o.sprite }}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="{{ o.name }}" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
               </sc-if>
             </span>
           </sc-for>
@@ -2223,9 +2253,20 @@
           <span style="font-size:12.5px;font-weight:700;color:#16181D">자세한 내용</span>
           <textarea value="{{ reportDetail }}" onChange="{{ setReportDetail }}" placeholder="언제, 어디서, 무엇이 문제였는지 적어 주세요. 원본 링크가 있으면 함께 넣어 주세요." style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;line-height:1.7;min-height:96px;resize:vertical;outline:none"></textarea>
         </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:12.5px;font-weight:700;color:#16181D">회신받을 이메일</span>
+          <input type="email" value="{{ reportEmail }}" onChange="{{ setReportEmail }}" placeholder="you@example.com" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;outline:none" />
+          <span style="font-size:11.5px;color:#8A9099;line-height:1.6">처리 결과를 이 주소로 알려드립니다. 급한 사안은 <b style="color:#2F6F5E">rladnwns54@gmail.com</b> 으로 직접 보내주세요.</span>
+        </div>
+        <sc-if value="{{ reportTicket }}" hint-placeholder-val="{{ false }}">
+          <span style="display:flex;align-items:center;gap:8px;background:#F1F7F4;border:1px solid #CFE3DA;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#2F6F5E">
+            <iconify-icon icon="lucide:check-circle-2" width="15"></iconify-icon>
+            <span>접수번호 <b style="font-family:Galmuri11,monospace">{{ reportTicket }}</b> · 프로필 &gt; 신고 내역에서 상태를 볼 수 있습니다.</span>
+          </span>
+        </sc-if>
         <div style="display:flex;gap:8px">
           <button onClick="{{ sendReport }}" style="flex:1;background:#C0392B;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">신고 접수</button>
-          <button onClick="{{ closeReport }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:12px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">취소</button>
+          <button onClick="{{ closeReport }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:12px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>
         </div>
       </div>
     </div>
@@ -2298,7 +2339,7 @@ const LEGAL = [
       { no: "05", title: "이용자의 권리", items: [
         "열람·정정·삭제·처리정지를 언제든 요청할 수 있습니다. 요청 후 10일 내 조치합니다.",
         "만 14세 미만은 법정대리인의 동의를 받아 가입합니다.",
-        "요청은 프로필 > 계정 또는 개인정보 보호책임자 연락처로 보내주세요.",
+        "요청은 프로필 > 계정 또는 rladnwns54@gmail.com 으로 보내주세요.",
       ] },
     ] },
   { k: "guideline", t: "커뮤니티 가이드라인", ic: "lucide:users", kicker: "COMMUNITY GUIDELINES",
@@ -2335,7 +2376,7 @@ const LEGAL = [
       ] },
       { no: "03", title: "보호자·교사 지원", items: [
         "학급 코드로 만든 계정은 보호자·교사가 플레이 시간과 게시 내역을 볼 수 있습니다.",
-        "청소년 보호책임자에게 접수된 사안은 24시간 내 1차 검토 결과를 알립니다.",
+        "청소년 보호책임자(rladnwns54@gmail.com)에게 접수된 사안은 24시간 내 1차 검토 결과를 알립니다.",
       ] },
     ] },
   { k: "report", t: "신고센터", ic: "lucide:flag", kicker: "REPORT CENTER",
@@ -2344,7 +2385,7 @@ const LEGAL = [
       { no: "01", title: "신고하는 방법", items: [
         "작품 상세의 «신고» 버튼, 댓글 오른쪽 «…» > 신고, 프로필의 «신고» 로 접수합니다.",
         "권리침해(도트·소리·코드 무단 사용)는 원본 링크와 게시 시각을 함께 적어 주세요.",
-        "긴급한 사안(개인정보 유포, 자·타해 위험)은 신고센터 연락처로 바로 보내주세요.",
+        "긴급한 사안(개인정보 유포, 자·타해 위험)은 rladnwns54@gmail.com 으로 바로 보내주세요.",
       ] },
       { no: "02", title: "처리 절차와 기간", items: [
         "접수 → 24시간 내 1차 검토 → 필요 시 소명 요청(3일) → 조치와 결과 통보.",
@@ -2471,6 +2512,9 @@ class Component extends DCLogic {
     reportOn: null,
     reportReason: "욕설·비하 표현",
     reportDetail: "",
+    reportEmail: "",
+    reportTicket: null,
+    myReports: [],
     // 올린 소리 (이름 · 데이터 URL)
     soundsDef: [],
     // 커뮤니티 · 약관
@@ -3360,22 +3404,58 @@ class Component extends DCLogic {
   REPORT_REASONS = ["욕설·비하 표현", "다른 사람의 작품 무단 사용", "개인정보 유포", "성인물·폭력 묘사", "광고·도박 유도", "기타"];
 
   openReport = (type, id, label) => {
-    this.setState({ reportOn: { type: type, id: id, label: label }, reportReason: this.REPORT_REASONS[0], reportDetail: "" });
+    this.setState({
+      reportOn: { type: type, id: id, label: label },
+      reportReason: this.REPORT_REASONS[0],
+      reportDetail: "", reportTicket: null,
+      reportEmail: this.state.reportEmail || "",
+    });
   };
 
   sendReport = async () => {
     const r = this.state.reportOn;
     if (!r) return;
     const detail = filterText(this.state.reportDetail || "").out.trim();
-    let ok = false;
-    if (window.DotDB && window.DotDB.isLive) {
-      const res = await window.DotDB.report(r.type, r.id, this.state.reportReason, detail);
-      ok = !!(res && res.ok);
+    const email = (this.state.reportEmail || "").trim();
+    if (!detail) return this.say("자세한 내용을 적어주세요.");
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return this.say("회신받을 이메일을 정확히 적어주세요.");
+    if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없어 접수할 수 없습니다. rladnwns54@gmail.com 으로 보내주세요.");
+    const res = await window.DotDB.report({
+      subjectType: r.type, subjectId: r.id, subjectLabel: r.label,
+      reason: this.state.reportReason, detail: detail, email: email,
+      url: (typeof location !== "undefined" ? location.href : ""),
+    });
+    if (res && res.ok) {
+      this.setState({ reportTicket: res.ticket || "접수 완료", reportDetail: "" });
+      this.say("신고를 접수했습니다. 접수번호 " + (res.ticket || "") + " · 24시간 내 검토합니다.");
+      this.loadLive();
+    } else {
+      this.say("접수하지 못했습니다: " + ((res && res.reason) || "알 수 없는 오류") + " · rladnwns54@gmail.com 으로 보내주세요.");
     }
-    this.setState({ reportOn: null, reportDetail: "" });
-    this.say(ok
-      ? "신고를 접수했습니다. 24시간 내 1차 검토 결과를 알려드립니다."
-      : "신고를 보내지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  };
+
+  // 장면 삭제 — 그 장면의 오브젝트와 블록도 함께 지운다
+  removeScene = (id) => {
+    if ((this.state.scenes || []).length <= 1) return this.say("마지막 장면은 지울 수 없습니다.");
+    const sc = (this.state.scenes || []).find((x) => x.id === id);
+    this.setState((p) => {
+      const scenes = p.scenes.filter((x) => x.id !== id);
+      const objectsBy = Object.assign({}, p.objectsBy);
+      delete objectsBy[id];
+      const wsBy = Object.assign({}, p.wsBy);
+      Object.keys(wsBy).forEach((k) => { if (k.indexOf(id + ":") === 0) delete wsBy[k]; });
+      if (this._model) Object.keys(this._model).forEach((k) => { if (k.indexOf(id + ":") === 0) delete this._model[k]; });
+      const nextId = p.sceneId === id ? scenes[0].id : p.sceneId;
+      const first = (objectsBy[nextId] || [])[0];
+      return {
+        scenes: scenes, objectsBy: objectsBy, wsBy: wsBy,
+        sceneId: nextId, objId: first ? first.id : null,
+        wsRev: (p.wsRev || 0) + 1,
+      };
+    }, () => {
+      this.persistMap();
+      this.say("«" + ((sc && sc.name) || "장면") + "» 을 지웠습니다.");
+    });
   };
 
   addTag = () => {
@@ -3800,7 +3880,11 @@ class Component extends DCLogic {
     }).join(";");
     const blocks = this.allBlocks();
     if (window.DotDB && window.DotDB.isLive) {
-      try { await window.DotDB.saveBlocks(this.state.worldId, blocks); } catch (e) {}
+      // 작품 행이 없으면 블록·저장본을 쓸 권한이 없다 — 먼저 만든다
+      try {
+        await window.DotDB.ensureWorld(this.state.worldId, (this.state.scenes[0] || {}).name);
+        await window.DotDB.saveBlocks(this.state.worldId, blocks);
+      } catch (e) {}
     }
     const payload = {
       wsBy: blocks,
@@ -4412,6 +4496,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    clearInterval(this._imgT);
     clearInterval(this._t); clearInterval(this._anim);
     clearTimeout(this._toast); clearTimeout(this._menuT);
     if (this._onMouse) {
@@ -4426,7 +4511,7 @@ class Component extends DCLogic {
   async loadLive() {
     if (!window.DotDB || !window.DotDB.isLive) return;
     try {
-      const [w, a, t, cr, rc, cnt, mp, nt, db, fl, bc, dp] = await Promise.all([
+      const [w, a, t, cr, rc, cnt, mp, nt, db, fl, bc, dp, rp] = await Promise.all([
         window.DotDB.recentWorlds(12),
         window.DotDB.sharedAssets({ limit: 24 }),
         window.DotDB.listTables(this.state.worldId),
@@ -4439,6 +4524,7 @@ class Component extends DCLogic {
         window.DotDB.myFollows(),
         window.DotDB.boardCounts(),
         window.DotDB.dailyPlays(),
+        window.DotDB.myReports(),
       ]);
       const next = { dbLoaded: true };
       next.liveWorlds = [];
@@ -4523,6 +4609,12 @@ class Component extends DCLogic {
       }
       if (bc) next.boardCounts = bc;
       if (dp) next.liveDays = dp;
+      next.myReports = (rp || []).map((r) => ({
+        ticket: r.ticket, label: r.subject_label || r.subject_type,
+        reason: r.reason, ago: this.agoText(r.created_at),
+        status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
+        color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
+      }));
       this.setState(next, () => { this.loadPosts(); });
     } catch (e) { /* 연결이 안 되면 예시 데이터로 둘러본다 */ }
   }
@@ -4956,7 +5048,10 @@ class Component extends DCLogic {
     const creatorsSrc = st.dbLoaded ? (st.liveCreators || []) : (s.creators || []);
     const creators = this.memo("creators", [needCreators, st.follows, st.sprites, creatorsSrc], () => (needCreators ? creatorsSrc : []).map((c) => {
       const on = !!st.follows[c.handle];
+      const isMe = !!(st.liveMe && st.liveMe.handle === c.handle);
       return {
+        canFollow: !isMe,
+        cantFollow: isMe,
         name: c.name, handle: c.handle, memo: c.memo || "", growth: c.growth || "CREATOR", worlds: c.worlds || 0,
         followersK: kfmt(c.followers + (on ? 1 : 0)), sprite: spr(c.art),
         goUser: (e) => { e.stopPropagation(); this.go("profile", { viewUser: c.handle })(); },
@@ -5288,8 +5383,11 @@ class Component extends DCLogic {
       })),
       reportDetail: st.reportDetail || "",
       setReportDetail: (e) => this.setState({ reportDetail: e.target.value }),
+      reportEmail: st.reportEmail || "",
+      setReportEmail: (e) => this.setState({ reportEmail: e.target.value }),
+      reportTicket: st.reportTicket || "",
       sendReport: this.sendReport,
-      closeReport: () => this.setState({ reportOn: null }),
+      closeReport: () => this.setState({ reportOn: null, reportTicket: null }),
       replyDraft: st.replyDraft || "",
       setReplyDraft: (e) => this.setState({ replyDraft: e.target.value }),
       draft: st.draft,
@@ -5391,6 +5489,7 @@ class Component extends DCLogic {
         bg: st.sceneId === sc.id ? "#16181D" : "#F7F5EF",
         fg: st.sceneId === sc.id ? "#FFFFFF" : "#3A3F49",
         go: () => this.gotoScene(sc.id),
+        remove: (e) => { e.stopPropagation(); this.removeScene(sc.id); },
       })),
       sceneHint: st.running ? "실행 중 — 정지를 누르면 처음 상태로 돌아갑니다" : "장면마다 오브젝트와 블록이 따로 저장됩니다",
       addScene: () => {
@@ -6092,7 +6191,8 @@ class Component extends DCLogic {
       me: (() => {
         const h = st.viewUser;
         const c = h ? creatorsSrc.find((x) => x.handle === h) : (st.dbLoaded ? (st.liveMe || null) : null);
-        const mine = !c;
+        // 보고 있는 핸들이 없거나 내 핸들이면 «내 프로필»
+        const mine = !h || (st.liveMe && st.liveMe.handle === h);
         return {
           name: c ? c.name : (st.dbLoaded ? "손님" : "밤샘개발자"),
           handle: c ? c.handle : (st.dbLoaded ? "guest" : "nightowl"),
@@ -6101,7 +6201,8 @@ class Component extends DCLogic {
           followersK: kfmt(c ? (c.followers || 0) : (st.dbLoaded ? 0 : 24100)),
           worlds: c ? (c.worlds || 0) : (st.dbLoaded ? 0 : 38),
           isMine: mine,
-          badge: mine ? "CREATOR" : (st.follows[h] ? "FOLLOWING" : "CREATOR"),
+          canFollow: !mine,
+          badge: mine ? "ME" : (st.follows[h] ? "FOLLOWING" : "CREATOR"),
           followLabel: mine ? "프로필 편집" : (st.follows[h] ? "팔로잉" : "팔로우"),
           follow: () => {
             if (mine) { this.say("프로필 편집은 설정에서 할 수 있습니다."); return; }
@@ -6126,6 +6227,9 @@ class Component extends DCLogic {
         this.say(ok ? "프로필을 저장했습니다." : "저장하지 못했습니다.");
         if (ok) this.loadLive();
       },
+      myReports: st.myReports || [],
+      hasReports: !!(st.myReports || []).length,
+      noReports: !(st.myReports || []).length,
       kpis: st.dbLoaded ? (st.liveKpis || []) : ((s.dashboard || {}).kpis || []),
       noKpis: st.dbLoaded && !(st.liveKpis || []).length,
       chartDays: (() => {
@@ -6158,9 +6262,9 @@ class Component extends DCLogic {
             : (LEGAL.find((d) => d.k === st.legalDoc) || {}).chapters || [])
         : [],
       legalContacts: [
-        { k: "CONTACT", v: "help@dotverse.example", d: "이용 문의와 계정 관련 요청은 영업일 2일 내 답변합니다." },
-        { k: "PRIVACY", v: "개인정보 보호책임자", d: "수집 항목 열람·정정·삭제 요청을 처리합니다. 요청 후 10일 내 조치합니다." },
-        { k: "REPORT", v: "권리침해 · 신고센터", d: "접수 후 24시간 내 1차 검토, 결과는 알림으로 통지하며 이의신청이 가능합니다." },
+        { k: "CONTACT", v: "rladnwns54@gmail.com", d: "이용 문의와 계정 관련 요청은 영업일 2일 내 답변합니다." },
+        { k: "PRIVACY", v: "rladnwns54@gmail.com", d: "개인정보 열람·정정·삭제 요청을 처리합니다. 요청 후 10일 내 조치합니다." },
+        { k: "REPORT", v: "rladnwns54@gmail.com", d: "권리침해·신고 접수. 24시간 내 1차 검토하고 결과를 알림과 이메일로 보냅니다." },
       ],
     };
   }
