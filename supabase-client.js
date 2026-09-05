@@ -331,7 +331,17 @@
         page_url: url || null,
         status: "open",
       }).select("ticket").single();
-      if (error) return { ok: false, reason: error.message };
+      if (error) {
+        // ticket 컬럼이 없는 경우: 그냥 저장한다
+        const r = await c.from("reports").insert({
+          reporter_id: u ? u.id : null,
+          subject_type: subjectType, subject_id: String(subjectId),
+          reason: reason, detail: (detail || "") + (email ? "\n회신: " + email : ""),
+          status: "open",
+        }).select("id").single();
+        if (r.error) return { ok: false, reason: r.error.message };
+        return { ok: true, ticket: "R-" + (r.data && r.data.id) };
+      }
       return { ok: true, ticket: data && data.ticket };
     },
     // 내가 낸 신고 내역
@@ -340,11 +350,21 @@
       if (!c) return null;
       const u = await this.me();
       if (!u) return null;
-      const { data } = await c.from("reports")
+      let { data, error } = await c.from("reports")
         .select("ticket,subject_type,subject_label,reason,status,created_at")
         .eq("reporter_id", u.id)
         .order("created_at", { ascending: false })
         .limit(30);
+      if (error) {
+        // schema.sql 5차를 아직 실행하지 않은 경우
+        const r = await c.from("reports")
+          .select("id,subject_type,reason,status,created_at")
+          .eq("reporter_id", u.id)
+          .order("created_at", { ascending: false })
+          .limit(30);
+        if (r.error) return null;
+        data = (r.data || []).map((x) => Object.assign({ ticket: "R-" + x.id, subject_label: null }, x));
+      }
       return data || null;
     },
     // ── 작품 게시 ────────────────────────────────────────────
@@ -384,7 +404,7 @@
       const c = init();
       if (!c) return null;
       const { data, error } = await c.from("profiles")
-        .select("id,handle,display_name,avatar_art,avatar_url,banner_url,memo,created_at")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
       return error ? null : data;
@@ -395,7 +415,7 @@
       const u = await this.me();
       // 익명 세션(글쓰기용 임시 계정)은 로그인으로 보지 않는다
       if (!u || u.is_anonymous) return null;
-      const { data } = await c.from("profiles").select("*").eq("id", u.id).single();
+      const { data } = await c.from("profiles").select("*").eq("id", u.id).maybeSingle();
       return data || null;
     },
     async profileByHandle(handle) {
@@ -409,7 +429,17 @@
       if (!c) return false;
       const u = await this.me();
       if (!u) return false;
-      const { error } = await c.from("profiles").update(fields).eq("id", u.id);
+      let { error } = await c.from("profiles").update(fields).eq("id", u.id);
+      if (error) {
+        // 아직 없는 컬럼(avatar_url·banner_url)은 빼고 다시 시도한다
+        const safe = {};
+        ["display_name", "memo", "avatar_art"].forEach((k) => {
+          if (fields[k] !== undefined) safe[k] = fields[k];
+        });
+        if (!Object.keys(safe).length) return false;
+        const r = await c.from("profiles").update(safe).eq("id", u.id);
+        error = r.error;
+      }
       return !error;
     },
     async myWorlds() {
