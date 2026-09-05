@@ -57,6 +57,11 @@
     // ── 스튜디오 저장/불러오기 (world_versions.scene / blocks)
     async saveStudio(worldId, payload) {
       const c = init();
+      // 작품 행이 없으면 쓸 권한이 없다 — 먼저 만든다
+      if (c) {
+        const r = await this.ensureWorld(worldId, (payload && payload.scenes && payload.scenes[0] && payload.scenes[0].name) || null);
+        if (!r.ok) return { ok: false, reason: r.reason || "auth" };
+      }
       if (!c) return { ok: false, reason: "env" };
       const { data: last } = await c
         .from("world_versions")
@@ -229,7 +234,7 @@
       const c = init();
       if (!c) return null;
       let q = c.from("posts")
-        .select("id,board,title,body,poll,pinned,answered,like_count,created_at,profiles(display_name,handle)")
+        .select("id,board,title,body,poll,pinned,answered,like_count,created_at,profiles!posts_author_id_fkey(display_name,handle)")
         .order("pinned", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -252,7 +257,7 @@
       const c = init();
       if (!c) return null;
       let q = c.from("comments")
-        .select("id,body,parent_id,created_at,profiles(display_name,handle)")
+        .select("id,body,parent_id,created_at,profiles!comments_author_id_fkey(display_name,handle)")
         .order("created_at", { ascending: true })
         .limit(200);
       q = postId ? q.eq("post_id", postId) : q.eq("world_id", worldId);
@@ -313,18 +318,49 @@
       return error ? null : data;
     },
     // ── 신고 ─────────────────────────────────────────────────
-    async report(subjectType, subjectId, reason, detail) {
+    async report({ subjectType, subjectId, subjectLabel, reason, detail, email, url }) {
       const c = init();
       if (!c) return { ok: false, reason: "env" };
       const u = await this.ensureUser();
-      const { error } = await c.from("reports").insert({
+      const { data, error } = await c.from("reports").insert({
         reporter_id: u ? u.id : null,
+        reporter_email: email || null,
         subject_type: subjectType, subject_id: String(subjectId),
+        subject_label: subjectLabel || null,
         reason: reason, detail: detail || null,
+        page_url: url || null,
+        status: "open",
+      }).select("ticket").single();
+      if (error) return { ok: false, reason: error.message };
+      return { ok: true, ticket: data && data.ticket };
+    },
+    // 내가 낸 신고 내역
+    async myReports() {
+      const c = init();
+      if (!c) return null;
+      const u = await this.me();
+      if (!u) return null;
+      const { data } = await c.from("reports")
+        .select("ticket,subject_type,subject_label,reason,status,created_at")
+        .eq("reporter_id", u.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      return data || null;
+    },
+    // ── 작품 게시 ────────────────────────────────────────────
+    // 저장 전에 작품 행이 있는지 확인하고 없으면 만든다 (없으면 RLS 가 403)
+    async ensureWorld(worldId, title) {
+      const c = init();
+      if (!c) return { ok: false, reason: "env" };
+      const u = await this.ensureUser();
+      if (!u) return { ok: false, reason: "auth" };
+      const { data } = await c.from("worlds").select("id,owner_id").eq("id", worldId).maybeSingle();
+      if (data) return { ok: data.owner_id === u.id, reason: data.owner_id === u.id ? null : "not_owner" };
+      const { error } = await c.from("worlds").insert({
+        id: worldId, owner_id: u.id, title: title || "이름 없는 월드", status: "draft",
       });
       return error ? { ok: false, reason: error.message } : { ok: true };
     },
-    // ── 작품 게시 ────────────────────────────────────────────
     async publishWorld(worldId, fields) {
       const c = init();
       if (!c) return { ok: false, reason: "env" };
@@ -397,11 +433,26 @@
     async recentComments(limit = 6) {
       const c = init();
       if (!c) return null;
-      const { data, error } = await c.from("comments")
-        .select("id,body,created_at,world_id,profiles(display_name,handle),worlds(title)")
+      let { data, error } = await c.from("comments")
+        .select("id,body,created_at,world_id,profiles!comments_author_id_fkey(display_name,handle)")
+        .not("world_id", "is", null)
         .order("created_at", { ascending: false })
         .limit(limit);
-      return error ? null : data;
+      if (error) {
+        const r = await c.from("comments")
+          .select("id,body,created_at,world_id")
+          .order("created_at", { ascending: false }).limit(limit);
+        if (r.error) return null;
+        data = r.data;
+      }
+      // 월드 제목을 따로 붙인다 (조인 없이)
+      const ids = Array.from(new Set((data || []).map((x) => x.world_id).filter(Boolean)));
+      let titles = {};
+      if (ids.length) {
+        const { data: ws } = await c.from("worlds").select("id,title").in("id", ids);
+        (ws || []).forEach((w) => { titles[w.id] = w.title; });
+      }
+      return (data || []).map((x) => Object.assign({}, x, { worlds: { title: titles[x.world_id] || "월드" } }));
     },
     // 전체 개수 (검색 화면 요약)
     async counts() {
