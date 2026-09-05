@@ -384,7 +384,7 @@
       const c = init();
       if (!c) return null;
       const { data, error } = await c.from("profiles")
-        .select("id,handle,display_name,avatar_art,memo,created_at")
+        .select("id,handle,display_name,avatar_art,avatar_url,banner_url,memo,created_at")
         .order("created_at", { ascending: false })
         .limit(limit);
       return error ? null : data;
