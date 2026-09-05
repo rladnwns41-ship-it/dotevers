@@ -692,6 +692,15 @@
       (ws || []).forEach((r) => { if (out[r.owner_id]) out[r.owner_id].worlds++; });
       return out;
     },
+    async readNotifications() {
+      const c = init();
+      if (!c) return false;
+      const u = await this.me();
+      if (!u) return false;
+      const { error } = await c.from("notifications").update({ read_at: new Date().toISOString() })
+        .eq("user_id", u.id).is("read_at", null);
+      return !error;
+    },
     async notifications() {
       const c = init();
       if (!c) return null;
