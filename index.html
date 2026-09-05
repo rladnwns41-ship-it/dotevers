@@ -3560,7 +3560,8 @@ class Component extends DCLogic {
         const sw = W * sr, sh = H * sr;
         g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
         let data = "";
-        try { data = c.toDataURL("image/jpeg", 0.82); } catch (e) { return; }
+        try { data = c.toDataURL("image/jpeg", 0.82); } catch (e) { data = ""; }
+        if (!/^data:image\/[a-z]+;base64,.+/.test(data)) return this.say("이미지를 읽지 못했습니다. 다른 파일로 시도해 주세요.");
         this.setState(kind === "banner" ? { bannerUrl: data } : { avatarUrl: data });
         let url = data;
         if (window.DotDB && window.DotDB.isLive) {
@@ -4576,8 +4577,27 @@ class Component extends DCLogic {
     if (!w) this.say("팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.");
   };
 
+  // 값이 채워지기 전 자리표시자 주소를 요청하지 않도록, 채워진 뒤에 옮긴다
+  syncImages = () => {
+    if (typeof document === "undefined") return;
+    const list = document.querySelectorAll("img[data-src]");
+    for (let i = 0; i < list.length; i++) {
+      const el = list[i];
+      const v = el.getAttribute("data-src");
+      if (!v || v.indexOf("{{") >= 0) continue;
+      const ok = /^https?:\/\//.test(v) || /^data:[^;]+;base64,.{8,}/.test(v) || /^\.?\//.test(v);
+      if (!ok) { el.removeAttribute("data-src"); continue; }
+      if (el.getAttribute("src") !== v) el.setAttribute("src", v);
+      el.removeAttribute("data-src");
+    }
+  };
+
+  componentDidUpdate() { this.syncImages(); }
+
   componentDidMount() {
     const s = SEED();
+    setTimeout(this.syncImages, 0);
+    this._imgT = setInterval(this.syncImages, 350);
     const sprites = {};
     this._spriteCanvas = {};
     Object.keys(s.art || {}).forEach((k) => {
