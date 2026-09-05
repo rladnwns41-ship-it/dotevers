@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: dotverse
+    runtime: static
+    staticPublishPath: .
+    buildCommand: printf 'window.__ENV={SUPABASE_URL:"%s",SUPABASE_PUBLISHABLE_KEY:"%s"};' "$SUPABASE_URL" "$SUPABASE_PUBLISHABLE_KEY" > env.js
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
