@@ -38,6 +38,9 @@
   @keyframes dv-toast-in { from { opacity: 0; transform: translate(-50%, 24px) scale(0.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
   @keyframes dv-slide-right { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes dv-grow-up { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes dv-reel { 0% { filter: blur(0); } 35% { filter: blur(1.4px); } 100% { filter: blur(0); } }
+  .dv-reel { transition: transform 760ms cubic-bezier(0.2,1.34,0.42,1) !important; }
+  .dv-reel > * { animation: dv-reel 760ms ease-out; }
   /* 인터랙션 전환: 클릭 가능한 모든 요소에 공통 적용 */
   [style*="cursor: pointer"], [style*="cursor:pointer"], button, input, textarea, a {
     transition: background-color 180ms cubic-bezier(0.16,1,0.3,1),
@@ -49,11 +52,18 @@
   }
   [style*="cursor: pointer"]:active, button:active { transform: scale(0.975); }
   article[style*="cursor: pointer"]:hover { transform: translateY(-4px); }
-  img[style*="pixelated"] { transition: transform 260ms cubic-bezier(0.16,1,0.3,1); }
-  article:hover img[style*="pixelated"], [style*="cursor: pointer"]:hover > img[style*="pixelated"] { transform: scale(1.08) rotate(-2deg); }
+  [role="img"][style*="pixelated"], img[style*="pixelated"] { transition: transform 260ms cubic-bezier(0.16,1,0.3,1); }
+  article:hover [role="img"][style*="pixelated"],
+  [style*="cursor: pointer"]:hover > [role="img"][style*="pixelated"],
+  [style*="cursor:pointer"]:hover > [role="img"][style*="pixelated"] { transform: scale(1.08) rotate(-2deg); }
   /* 화면 전환: 라우트 최상위 블록이 아래에서 올라온다 */
   main > div, main > section { animation: dv-fade-up 420ms cubic-bezier(0.16,1,0.3,1) forwards; }
   main section { animation: dv-fade-up 460ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  /* 스튜디오 탭 전환 */
+  .dv-pane { animation: dv-fade-up 340ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  /* 팝업·서랍·모달 전환 */
+  .dv-pop { animation: dv-pop 260ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  .dv-slide { animation: dv-slide-right 300ms cubic-bezier(0.16,1,0.3,1) forwards; }
   /* 카드 그리드 순차 등장 */
   main [style*="display:grid"] > *, main [style*="display: grid"] > * { animation: dv-pop 380ms cubic-bezier(0.16,1,0.3,1) forwards; }
   main [style*="grid"] > *:nth-child(2) { animation-delay: 40ms; }
@@ -131,7 +141,9 @@
               <iconify-icon icon="lucide:plus" width="15"></iconify-icon><span>만들기</span>
             </button>
             <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px 4px 4px;border:1px solid #E3DCCC;border-radius:99px;background:#FFFFFF" style-hover="border-color:#2F6F5E">
-              <img src="{{ meSprite }}" alt="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <sc-if value="{{ spritesReady }}" hint-placeholder-val="{{ false }}">
+                <span role="img" aria-label="내 아바타" style="width:28px;height:28px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ meSprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+              </sc-if>
               <span style="font-size:13px;font-weight:600">{{ myNameText }}</span>
             </div>
           </div>
@@ -193,7 +205,7 @@
           <h1 style="margin:0;font-size:60px;line-height:1.16;font-weight:700;letter-spacing:-0.02em;text-wrap:pretty">
             <span style="display:inline-flex;align-items:baseline;gap:2px">
               <span style="display:inline-block;height:72px;width:{{ rollW }};overflow:hidden;vertical-align:bottom;transition:width 620ms cubic-bezier(0.16,1,0.3,1)">
-                <span style="display:flex;flex-direction:column;align-items:flex-start;transition:transform 620ms cubic-bezier(0.16,1,0.3,1);transform:translateY({{ rollY }})">
+                <span class="dv-reel" style="display:flex;flex-direction:column;align-items:flex-start;transform:translateY({{ rollY }})">
                   <sc-for list="{{ rollWords }}" as="w" hint-placeholder-count="9">
                     <span style="height:72px;line-height:72px;font-family:Galmuri11,monospace;font-size:52px;color:#F2B23E;white-space:nowrap">{{ w }}</span>
                   </sc-for>
@@ -229,7 +241,9 @@
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
             <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
               <div style="aspect-ratio:1;background:#EFEADE;border:1px solid #CFC7B6;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:9px">
-                <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                <sc-if value="{{ a.sprite }}" hint-placeholder-val="{{ false }}">
+                  <span role="img" aria-label="{{ a.name }}" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                </sc-if>
               </div>
             </sc-for>
           </div>
@@ -278,7 +292,7 @@
         <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="8">
           <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column" style-hover="border-color:#2F6F5E;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
             <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-              <img src="{{ w.sprite }}" alt="{{ w.title }}" style="width:52%;height:52%;object-fit:contain;image-rendering:pixelated" />
+              <span role="img" aria-label="{{ w.title }}" style="width:52%;height:52%;image-rendering:pixelated;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="position:absolute;top:10px;left:10px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">{{ w.catName }}</span>
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:5px;background:rgba(47,111,94,0.92);color:#FFFFFF;font-size:11.5px;font-weight:600;border-radius:7px;padding:4px 8px">
                 <span style="width:6px;height:6px;border-radius:99px;background:#6FD3C7"></span><span>{{ w.online }}</span>
@@ -288,7 +302,7 @@
               <h3 style="margin:0;font-size:15.5px;font-weight:700;line-height:1.35">{{ w.title }}</h3>
               <p style="margin:0;font-size:13px;color:#6E7480;line-height:1.55;flex:1;text-wrap:pretty">{{ w.summary }}</p>
               <div style="display:flex;align-items:center;gap:7px">
-                <img src="{{ w.authorSprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+                <span role="img" aria-label="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ w.authorSprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span onClick="{{ w.goUser }}" style="font-size:12.5px;font-weight:500;color:#2A2D36;cursor:pointer" style-hover="color:#2F6F5E;text-decoration:underline">{{ w.author }}</span>
                 <span style="font-size:11.5px;color:#A0A6AF">· {{ w.ago }}</span>
               </div>
@@ -328,7 +342,7 @@
         </sc-if>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px" style-hover="border-color:#8D6BD8">
-            <img src="{{ c.sprite }}" alt="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <span role="img" aria-label="{{ c.name }}" style="width:56px;height:56px;border-radius:14px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ c.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px">
                 <span onClick="{{ c.goUser }}" style="font-size:15px;font-weight:700;cursor:pointer" style-hover="color:#8D6BD8;text-decoration:underline">{{ c.name }}</span>
@@ -361,7 +375,7 @@
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
         <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
           <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;gap:14px;cursor:pointer" style-hover="border-color:#4A5FD1">
-            <img src="{{ c.sprite }}" alt="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <span role="img" aria-label="" style="width:46px;height:46px;border-radius:11px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ c.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:13.5px;font-weight:700">{{ c.author }}</span>
@@ -426,7 +440,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#E0653A">
             <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/16px 16px;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:14px">
-              <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <span role="img" aria-label="{{ a.name }}" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             </div>
             <div style="display:flex;flex-direction:column;gap:5px">
               <span style="font-size:14px;font-weight:700">{{ a.name }}</span>
@@ -513,7 +527,7 @@
         <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px">
           <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="3">
             <div onClick="{{ goStudio }}" style="border:1px solid #EFEADE;border-radius:13px;padding:14px;display:flex;gap:12px;cursor:pointer;background:#F7F5EF" style-hover="border-color:#2F6F5E;background:#FFFFFF">
-              <img src="{{ d.sprite }}" alt="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0" />
+              <span role="img" aria-label="" style="width:44px;height:44px;image-rendering:pixelated;background:#FFFFFF;border-radius:9px;flex-shrink:0;background-image:{{ d.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                 <span style="font-size:14px;font-weight:700">{{ d.title }}</span>
                 <span style="font-size:12px;color:#8A9099">{{ d.meta }}</span>
@@ -557,7 +571,7 @@
           <sc-for list="{{ worlds }}" as="w" hint-placeholder-count="6">
             <article onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;overflow:hidden;cursor:pointer" style-hover="border-color:#2F6F5E">
               <div style="position:relative;aspect-ratio:16/10;background:linear-gradient(160deg,#EFEADE,#DFE9E4);display:flex;align-items:center;justify-content:center">
-                <img src="{{ w.sprite }}" alt="" style="width:48%;height:48%;object-fit:contain;image-rendering:pixelated" />
+                <span role="img" aria-label="" style="width:48%;height:48%;image-rendering:pixelated;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span style="position:absolute;bottom:9px;left:9px;background:rgba(22,24,29,0.82);color:#F4F1EA;font-size:11px;font-weight:600;border-radius:6px;padding:3px 7px">{{ w.catName }}</span>
               </div>
               <div style="padding:13px;display:flex;flex-direction:column;gap:8px">
@@ -580,7 +594,7 @@
         <div style="display:flex;flex-direction:column;gap:12px">
           <sc-for list="{{ topComments }}" as="c" hint-placeholder-count="4">
             <div onClick="{{ c.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:16px;display:flex;gap:13px;cursor:pointer" style-hover="border-color:#4A5FD1">
-              <img src="{{ c.sprite }}" alt="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+              <span role="img" aria-label="" style="width:40px;height:40px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ c.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1">
                 <span style="font-size:13px;color:#8A9099"><b style="color:#16181D;font-size:13.5px">{{ c.author }}</b> · {{ c.world }} · {{ c.ago }}</span>
                 <span style="font-size:13.5px;line-height:1.6;color:#2A2D36">{{ c.body }}</span>
@@ -598,7 +612,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img src="{{ meSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <span role="img" aria-label="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ meSprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
           <span style="display:flex;flex-direction:column;gap:2px">
             <span style="font-size:15px;font-weight:700">{{ myNameText }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ myHandleText }}</span>
@@ -622,7 +636,7 @@
         </div>
         <sc-for list="{{ creators }}" as="c" hint-placeholder-count="6">
           <div style="display:flex;gap:11px;align-items:center">
-            <img src="{{ c.sprite }}" alt="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <span role="img" aria-label="" style="width:36px;height:36px;border-radius:9px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ c.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13.5px;font-weight:600">{{ c.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">팔로워 {{ c.followersK }} · 월드 {{ c.worlds }}</span>
@@ -695,7 +709,7 @@
           <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
             <sc-for list="{{ g.items }}" as="w" hint-placeholder-count="4">
               <div onClick="{{ w.go }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;gap:12px;cursor:pointer" style-hover="border-color:#2F6F5E">
-                <img src="{{ w.sprite }}" alt="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0" />
+                <span role="img" aria-label="" style="width:52px;height:52px;image-rendering:pixelated;background:#F7F5EF;border-radius:10px;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
                   <span style="font-size:14px;font-weight:700;line-height:1.35">{{ w.title }}</span>
                   <span style="font-size:11.5px;color:#8A9099">{{ w.author }}</span>
@@ -727,7 +741,7 @@
 
       <div style="position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#DFE9E4,#EFEADE);border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center">
         <div style="position:absolute;inset:0;opacity:0.5;background-image:linear-gradient(#CFC7B6 1px,transparent 1px),linear-gradient(90deg,#CFC7B6 1px,transparent 1px);background-size:32px 32px"></div>
-        <img src="{{ world.sprite }}" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
+        <span role="img" aria-label="" style="position:relative;width:26%;height:26%;image-rendering:pixelated;flex-shrink:0;background-image:{{ world.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
         <button onClick="{{ playWorld }}" style="position:absolute;bottom:20px;left:20px;display:flex;align-items:center;gap:9px;background:#16181D;color:#FFFFFF;border:0;border-radius:12px;padding:15px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
           <iconify-icon icon="lucide:play" width="17"></iconify-icon><span>새 탭에서 플레이</span>
         </button>
@@ -785,7 +799,7 @@
         </div>
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;gap:12px">
-            <img src="{{ meSprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <span role="img" aria-label="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ meSprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <textarea value="{{ draft }}" onChange="{{ setDraft }}" placeholder="이 월드에 대해 이야기해 주세요. 스포일러는 접어서 적어주시면 좋습니다." style="flex:1;min-width:0;min-height:64px;resize:vertical;background:#F7F5EF;border:1px solid #E3DCCC;border-radius:11px;padding:12px;font-family:inherit;font-size:14px;line-height:1.6;outline:none"></textarea>
           </div>
           <div style="display:flex;align-items:center;gap:12px">
@@ -807,7 +821,7 @@
         </sc-if>
         <sc-for list="{{ threadComments }}" as="c" hint-placeholder-count="4">
           <div style="display:flex;gap:12px;margin-left:{{ c.indent }};background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px">
-            <img src="{{ c.sprite }}" alt="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0" />
+            <span role="img" aria-label="" style="width:38px;height:38px;border-radius:10px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ c.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <div style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <span style="font-size:14px;font-weight:700">{{ c.author }}</span>
@@ -844,7 +858,7 @@
     <aside style="display:flex;flex-direction:column;gap:18px;position:sticky;top:96px">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:center">
-          <img src="{{ world.authorSprite }}" alt="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated" />
+          <span role="img" aria-label="" style="width:48px;height:48px;border-radius:12px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ world.authorSprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
           <span onClick="{{ world.goUser }}" style="display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer">
             <span style="font-size:15px;font-weight:700" style-hover="color:#2F6F5E">{{ world.author }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ world.handle }}</span>
@@ -865,7 +879,7 @@
         <span style="font-size:14.5px;font-weight:700">이 월드에 쓰인 공유 오브젝트</span>
         <sc-for list="{{ usedAssets }}" as="a" hint-placeholder-count="4">
           <div style="display:flex;gap:11px;align-items:center">
-            <img src="{{ a.sprite }}" alt="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0" />
+            <span role="img" aria-label="" style="width:38px;height:38px;image-rendering:pixelated;background:#F7F5EF;border-radius:9px;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
               <span style="font-size:13px;font-weight:600">{{ a.name }}</span>
               <span style="font-size:11.5px;color:#8A9099">@{{ a.handle }} · {{ a.license }}</span>
@@ -891,7 +905,7 @@
     <!-- 툴바 -->
     <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:13px;padding:9px 13px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:9px">
-        <img src="{{ world.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px" />
+        <span role="img" aria-label="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0;background-image:{{ world.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
         <span style="display:flex;flex-direction:column">
           <span style="font-size:14.5px;font-weight:700">{{ studioTitle }}</span>
         </span>
@@ -929,7 +943,7 @@
 
     <!-- 블록 탭 (엔트리형: 장면 · 실행화면 · 오브젝트 목록 · 블록 꾸러미 · 블록 조립소) -->
     <sc-if value="{{ t_blocks }}" hint-placeholder-val="{{ true }}">
-    <div style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0">
+    <div class="dv-pane" style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0">
       <!-- 장면 탭 -->
       <div style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:12px;padding:6px 9px;flex-shrink:0">
         <span style="font-size:12px;font-weight:700;color:#8A9099;padding-right:4px">장면</span>
@@ -960,10 +974,13 @@
                 <button onClick="{{ stopScript }}" style="width:30px;height:30px;border-radius:8px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#C0392B;color:#C0392B"><iconify-icon icon="lucide:square" width="12"></iconify-icon></button>
               </span>
             </div>
-            <div onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#E7EFE9;border:1px solid #EFEADE">
+            <div onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:{{ stageColor }};border:1px solid #EFEADE">
+              <sc-if value="{{ flashOn }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;z-index:40;pointer-events:none;background:{{ flashColor }};opacity:0.72"></span>
+              </sc-if>
               <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
                 <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-                  <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+                  <span role="img" aria-label="" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ stageBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
                 </sc-if>
                 <sc-if value="{{ noStageBg }}" hint-placeholder-val="{{ true }}">
                   <span style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,24,29,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,29,0.05) 1px,transparent 1px);background-size:12.5% 16.6%"></span>
@@ -974,7 +991,7 @@
                     <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
                     </sc-if>
-                    <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+                    <span role="img" aria-label="" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9));flex-shrink:0;background-image:{{ pp.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                     <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
                   </span>
                 </sc-for>
@@ -983,7 +1000,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <span role="img" aria-label="" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9));flex-shrink:0;background-image:{{ pp.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -996,7 +1013,7 @@
                       <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSize }};line-height:1.3">{{ o.text }}</span>
                     </sc-if>
                     <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                      <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                      <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                     </sc-if>
                   </span>
                 </sc-for>
@@ -1048,14 +1065,15 @@
           </sc-if>
 
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:9px">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:13px;font-weight:700">오브젝트 목록</span>
-              <span style="margin-left:auto;display:flex;gap:9px">
-                <span style="font-size:12px;font-weight:600;color:#D97706;cursor:pointer" onClick="{{ addTextObject }}">+ 글상자</span>
-                <span style="font-size:12px;font-weight:600;color:#2F6F5E;cursor:pointer" onClick="{{ goAssets }}">+ 오브젝트</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:13px;font-weight:700;white-space:nowrap">오브젝트 목록</span>
+              <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                <span style="font-size:12px;font-weight:600;color:#D97706;cursor:pointer;white-space:nowrap" onClick="{{ addTextObject }}">+ 글상자</span>
+                <span style="font-size:12px;font-weight:600;color:#2F6F5E;cursor:pointer;white-space:nowrap" onClick="{{ goDotTab }}">+ 도트</span>
+                <span style="font-size:12px;font-weight:600;color:#8A9099;cursor:pointer;white-space:nowrap" onClick="{{ goAssets }}">+ 가져오기</span>
               </span>
             </div>
-            <span style="font-size:11px;color:#A0A6AF;line-height:1.5">목록 위쪽이 화면에서 앞에 보입니다</span>
+            <span style="font-size:11px;color:#A0A6AF;line-height:1.5">목록 위쪽이 화면에서 앞에 보입니다 · {{ buildTag }}</span>
             <sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
               <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;background:#F7F5EF;border-radius:10px;padding:9px">
                 <sc-for list="{{ selFields }}" as="ff" hint-placeholder-count="4">
@@ -1065,13 +1083,34 @@
                   </span>
                 </sc-for>
               </div>
+              <sc-if value="{{ selText }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:7px;background:#FFF7E6;border:1px solid #F3E2BE;border-radius:10px;padding:10px">
+                  <span style="font-size:11px;font-weight:700;color:#D97706">글상자 속성</span>
+                  <input value="{{ textVal }}" onChange="{{ setTextVal }}" placeholder="글상자에 보일 내용" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:7px 9px;font-family:inherit;font-size:12px;outline:none" />
+                  <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+                    <span style="display:flex;align-items:center;gap:5px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 8px">
+                      <span style="font-size:10px;color:#8A9099">크기</span>
+                      <input value="{{ textSize }}" onChange="{{ setTextSize }}" style="width:44px;background:transparent;border:0;outline:none;text-align:center;font-family:Galmuri11,monospace;font-size:11px" />
+                    </span>
+                    <sc-for list="{{ textColors }}" as="tc" hint-placeholder-count="6">
+                      <span onClick="{{ tc.go }}" title="{{ tc.name }}" style="width:22px;height:22px;border-radius:6px;background:{{ tc.c }};border:2px solid {{ tc.bd }};cursor:pointer"></span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <div style="display:flex;align-items:flex-start;gap:8px;background:#F7F5EF;border-radius:10px;padding:9px 10px">
+                <span onClick="{{ togglePlayerObj }}" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;font-weight:700;color:{{ playerFg }};flex-shrink:0">
+                  <iconify-icon icon="{{ playerIcon }}" width="13"></iconify-icon><span>{{ playerLabel }}</span>
+                </span>
+                <span style="font-size:10.5px;color:#A0A6AF;line-height:1.5">플레이어로 지정하면 멀티플레이에서 이 오브젝트로 함께 돌아다닙니다. 지정하지 않으면 기본 코스튬이 쓰입니다.</span>
+              </div>
             </sc-if>
             <sc-for list="{{ sceneObjects }}" as="o" hint-placeholder-count="3">
               <div onClick="{{ o.go }}" style="display:flex;align-items:center;gap:9px;border:1px solid {{ o.bd }};background:{{ o.bg }};border-radius:11px;padding:9px 10px;cursor:pointer;opacity:{{ o.opacity }};transition:border-color 140ms,background 140ms,opacity 140ms" style-hover="border-color:#2F6F5E">
                 <span onClick="{{ o.toggle }}" style="width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ o.eyeColor }};cursor:pointer" style-hover="background:#EFEADE">
                   <iconify-icon icon="{{ o.eye }}" width="14"></iconify-icon>
                 </span>
-                <img src="{{ o.sprite }}" alt="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+                <span role="img" aria-label="" style="width:32px;height:32px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:13px;font-weight:600">{{ o.name }}</span>
                   <span style="font-family:Galmuri11,monospace;font-size:10px;color:#8A9099">X {{ o.x }} · Y {{ o.y }} · {{ o.scale }} · {{ o.layer }}</span>
@@ -1083,6 +1122,14 @@
                 <span onClick="{{ o.remove }}" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#C6CBD3;flex-shrink:0" style-hover="background:#FDECEA;color:#C0392B"><iconify-icon icon="lucide:x" width="13"></iconify-icon></span>
               </div>
             </sc-for>
+            <sc-if value="{{ sceneEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;border:1px dashed #CFC7B6;border-radius:11px;padding:18px 12px;text-align:center">
+                <iconify-icon icon="lucide:grid-2x2" width="20" style="color:#CFC7B6"></iconify-icon>
+                <span style="font-size:12.5px;font-weight:700;color:#5B616C">이 장면에 오브젝트가 없습니다</span>
+                <span style="font-size:11.5px;color:#A0A6AF;line-height:1.6">도트를 찍어 오브젝트를 만들면 실행화면에 나타납니다</span>
+                <button onClick="{{ goDotTab }}" style="background:#2F6F5E;color:#FFFFFF;border:0;border-radius:9px;padding:9px 15px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#16181D">도트로 만들기</button>
+              </div>
+            </sc-if>
           </div>
         </div>
 
@@ -1240,7 +1287,7 @@
 
     <!-- 도트 오브젝트 탭 -->
     <sc-if value="{{ t_dot }}" hint-placeholder-val="{{ false }}">
-    <div style="display:grid;grid-template-columns:212px minmax(0,1fr) 316px;gap:16px;align-items:start">
+    <div class="dv-pane" style="display:grid;grid-template-columns:212px minmax(0,1fr) 316px;gap:16px;align-items:start">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:14px;display:flex;flex-direction:column;gap:14px">
         <span style="font-size:12px;font-weight:700;color:#8A9099">도구</span>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
@@ -1260,11 +1307,12 @@
         <div style="display:flex;flex-direction:column;gap:6px">
           <sc-for list="{{ shapes }}" as="sh" hint-placeholder-count="2">
             <span onClick="{{ sh.go }}" style="display:flex;align-items:center;gap:9px;border:1px solid {{ sh.bd }};background:{{ sh.bg }};border-radius:9px;padding:7px 9px;cursor:pointer" style-hover="border-color:#2F6F5E">
-              <img src="{{ sh.sprite }}" alt="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0" />
+              <span role="img" aria-label="" style="width:26px;height:26px;image-rendering:pixelated;background:#F7F5EF;border-radius:6px;flex-shrink:0;background-image:{{ sh.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1">
                 <span style="font-size:12px;font-weight:600">{{ sh.name }}</span>
                 <span style="font-family:Galmuri11,monospace;font-size:9.5px;color:#8A9099">{{ sh.frames }}프레임</span>
               </span>
+              <span onClick="{{ sh.remove }}" title="모양 삭제" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#C6CBD3;flex-shrink:0" style-hover="background:#FDECEA;color:#C0392B"><iconify-icon icon="lucide:trash-2" width="11"></iconify-icon></span>
             </span>
           </sc-for>
           <span onClick="{{ addShape }}" style="display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed #CFC7B6;border-radius:9px;padding:9px;font-size:12px;font-weight:600;color:#8A9099;cursor:pointer" style-hover="border-color:#2F6F5E;color:#2F6F5E">
@@ -1282,6 +1330,16 @@
           </span>
         </div>
         <canvas ref="{{ dotRef }}" width="512" height="512" onMouseDown="{{ dotDown }}" onMouseMove="{{ dotMove }}" onMouseUp="{{ dotUp }}" onMouseLeave="{{ dotUp }}" style="width:min(480px,100%);aspect-ratio:1;image-rendering:pixelated;border-radius:12px;border:1px solid #E3DCCC;cursor:crosshair"></canvas>
+
+        <div style="width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button onClick="{{ addShapeObject }}" style="flex:1;min-width:200px;display:flex;align-items:center;justify-content:center;gap:7px;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:11px;padding:13px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#16181D">
+            <iconify-icon icon="lucide:plus-square" width="15"></iconify-icon><span>이 모양을 오브젝트로 추가</span>
+          </button>
+          <button onClick="{{ addShapeToMap }}" style="display:flex;align-items:center;justify-content:center;gap:7px;background:#FFFFFF;color:#2F6F5E;border:1px solid #CFC7B6;border-radius:11px;padding:13px 15px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:#2F6F5E">
+            <iconify-icon icon="lucide:map-pin" width="15"></iconify-icon><span>맵에 놓기</span>
+          </button>
+        </div>
+        <span style="width:100%;font-size:11.5px;color:#A0A6AF;line-height:1.6">오브젝트로 추가하면 블록코딩 탭으로 넘어가 이 모양에 바로 코드를 붙일 수 있습니다. 프레임이 2장 이상이면 «모양 … 애니메이션 재생하기» 블록으로 움직입니다.</span>
 
         <div style="width:100%;display:flex;flex-direction:column;gap:9px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -1301,7 +1359,7 @@
           <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-bottom:6px">
             <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="4">
               <span onClick="{{ fr.go }}" style="width:62px;height:62px;flex-shrink:0;border-radius:9px;border:{{ fr.border }};background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/12px 12px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">
-                <img src="{{ fr.sprite }}" alt="" style="width:84%;height:84%;object-fit:contain;image-rendering:pixelated" />
+                <span role="img" aria-label="" style="width:84%;height:84%;image-rendering:pixelated;flex-shrink:0;background-image:{{ fr.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span style="position:absolute;bottom:2px;right:3px;font-family:Galmuri11,monospace;font-size:9px;color:#8A9099">{{ fr.n }}</span>
                 <span onClick="{{ fr.remove }}" style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:99px;background:#FFFFFF;border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center;color:#C0392B" style-hover="background:#C0392B;color:#FFFFFF"><iconify-icon icon="lucide:x" width="9"></iconify-icon></span>
               </span>
@@ -1350,17 +1408,35 @@
 
     <!-- 맵 에디터 탭 -->
     <sc-if value="{{ t_map }}" hint-placeholder-val="{{ false }}">
-    <div style="position:relative;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;background:#FFFFFF">
+    <div class="dv-pane" style="position:relative;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;background:#FFFFFF">
       <!-- 에디터 본체 -->
       <div style="position:relative;display:flex;background:#EFEADE">
         <!-- 캔버스 위 컨트롤 -->
-        <div style="position:absolute;left:78px;top:14px;right:{{ ctrlRight }};z-index:8;display:flex;align-items:flex-start;gap:10px;pointer-events:none">
+        <div style="position:absolute;left:78px;top:14px;right:{{ ctrlRight }};z-index:8;display:flex;align-items:flex-start;gap:10px;pointer-events:none;flex-wrap:wrap">
           <div style="display:flex;gap:3px;background:rgba(255,255,255,0.96);border:1px solid #E3DCCC;border-radius:11px;padding:4px;box-shadow:0 6px 18px -8px rgba(22,24,29,0.28);pointer-events:auto;flex-shrink:0">
             <sc-for list="{{ mapModes }}" as="m" hint-placeholder-count="4">
               <button onClick="{{ m.go }}" style="display:flex;align-items:center;gap:6px;border:0;border-radius:8px;padding:8px 13px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;background:{{ m.bg }};color:{{ m.fg }};white-space:nowrap;flex-shrink:0">
                 <iconify-icon icon="{{ m.ic }}" width="15"></iconify-icon><span>{{ m.t }}</span>
               </button>
             </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.96);border:1px solid #E3DCCC;border-radius:11px;padding:5px 7px;box-shadow:0 6px 18px -8px rgba(22,24,29,0.28);pointer-events:auto;flex-shrink:0;flex-wrap:nowrap;white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:#8A9099;padding:0 3px;flex-shrink:0">
+              <iconify-icon icon="lucide:layers" width="12"></iconify-icon><span>숨기기</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:5px;pointer-events:auto;flex-wrap:nowrap;flex-shrink:0">
+              <sc-if value="{{ anyHidden }}" hint-placeholder-val="{{ false }}">
+                <span onClick="{{ showAllLayers }}" style="display:flex;align-items:center;gap:5px;font-family:Galmuri11,monospace;font-size:10.5px;background:#16181D;border:1px solid #16181D;color:#FFFFFF;border-radius:7px;padding:6px 9px;cursor:pointer">
+                  <iconify-icon icon="lucide:rotate-ccw" width="11"></iconify-icon><span>모두 보이기</span>
+                </span>
+              </sc-if>
+              <sc-for list="{{ layerChips }}" as="l" hint-placeholder-count="5">
+                <span onClick="{{ l.go }}" title="{{ l.title }}" style="display:flex;align-items:center;gap:5px;font-family:Galmuri11,monospace;font-size:10.5px;background:{{ l.bg }};border:1px solid {{ l.bd }};color:{{ l.fg }};border-radius:7px;padding:6px 9px;cursor:pointer">
+                  <iconify-icon icon="{{ l.ic }}" width="11"></iconify-icon><span>{{ l.t }}</span>
+                </span>
+              </sc-for>
+            </span>
           </div>
 
           <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.9);border:1px solid #E3DCCC;border-radius:9px;padding:9px 12px;font-size:12px;color:#5B616C;min-width:0;box-shadow:0 6px 18px -10px rgba(22,24,29,0.24);pointer-events:auto">
@@ -1438,7 +1514,7 @@
             <sc-for list="{{ panelObjects }}" as="o" hint-placeholder-count="6">
               <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:11px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:10px;padding:9px 11px;cursor:pointer" style-hover="border-color:#2F6F5E">
                 <span style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:#F7F5EF;display:flex;align-items:center;justify-content:center;padding:5px">
-                  <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                  <span role="img" aria-label="{{ o.name }}" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 </span>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:12.5px;font-weight:600;color:#16181D">{{ o.name }}</span>
@@ -1470,7 +1546,7 @@
 
     <!-- 데이터베이스 탭 -->
     <sc-if value="{{ t_db }}" hint-placeholder-val="{{ false }}">
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
+    <div class="dv-pane" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:16px">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:18px;display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:center;gap:10px">
@@ -1675,7 +1751,7 @@
       <sc-for list="{{ filteredAssets }}" as="a" hint-placeholder-count="8">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;display:flex;flex-direction:column" style-hover="border-color:#E0653A;box-shadow:0 14px 32px -18px rgba(22,24,29,0.35)">
           <div style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/18px 18px;display:flex;align-items:center;justify-content:center;padding:20px;position:relative">
-            <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+            <span role="img" aria-label="{{ a.name }}" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             <span style="position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;background:rgba(22,24,29,0.82);color:#F4F1EA;border-radius:6px;padding:4px 8px">{{ a.kindName }}</span>
             <sc-if value="{{ a.animated }}" hint-placeholder-val="{{ false }}">
               <span style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:rgba(224,101,58,0.9);color:#FFF;border-radius:6px;padding:4px 8px">
@@ -1747,13 +1823,9 @@
       <sc-if value="{{ composing }}" hint-placeholder-val="{{ false }}">
         <div style="background:#FFFFFF;border:1px solid #2F6F5E;border-radius:15px;padding:18px;display:flex;flex-direction:column;gap:11px">
           <span style="font-size:14px;font-weight:700">{{ boardTitle }} 에 글쓰기</span>
+          <span style="font-size:11.5px;font-weight:700;color:#8A9099">제목</span>
           <input value="{{ postTitle }}" onChange="{{ setPostTitle }}" placeholder="제목 · 40자 이내 (필터 적용)" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14px;outline:none" />
-          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
-            <sc-for list="{{ textFx }}" as="fx" hint-placeholder-count="5">
-              <span onClick="{{ fx.go }}" title="{{ fx.hint }}" style="display:flex;align-items:center;gap:5px;border:1px solid #E3DCCC;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:{{ fx.weight }};font-style:{{ fx.style }};text-decoration:{{ fx.deco }};color:{{ fx.color }};background:{{ fx.bg }};cursor:pointer" style-hover="border-color:#2F6F5E">{{ fx.t }}</span>
-            </sc-for>
-            <span style="font-size:11px;color:#A0A6AF;margin-left:2px">글자를 선택하고 누르면 효과가 붙습니다</span>
-          </div>
+          <span style="font-size:11.5px;font-weight:700;color:#8A9099">내용</span>
           <textarea ref="{{ bodyRef }}" value="{{ postBody }}" onChange="{{ setPostBody }}" placeholder="무엇을 만들었고 어디서 막혔는지 적어 주세요" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13.5px;line-height:1.7;min-height:110px;resize:vertical;outline:none"></textarea>
           <div style="display:flex;flex-direction:column;gap:7px;background:#F7F5EF;border-radius:10px;padding:11px">
             <span style="display:flex;align-items:center;gap:8px">
@@ -1785,7 +1857,7 @@
         <div style="background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:15px;padding:34px;display:flex;flex-direction:column;align-items:center;gap:10px">
           <iconify-icon icon="lucide:message-square-plus" width="26" style="color:#CFC7B6"></iconify-icon>
           <span style="font-size:14.5px;font-weight:700;color:#3A3F49">{{ boardTitle }}에 아직 글이 없습니다</span>
-          <span style="font-size:13px;color:#8A9099;text-align:center;line-height:1.7">첫 글을 올려 보세요. 투표와 글자 효과도 넣을 수 있습니다.</span>
+          <span style="font-size:13px;color:#8A9099;text-align:center;line-height:1.7">첫 글을 올려 보세요. 투표도 함께 넣을 수 있습니다.</span>
           <button onClick="{{ openCompose }}" style="margin-top:4px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">글쓰기</button>
         </div>
       </sc-if>
@@ -1808,7 +1880,7 @@
             </span>
             <span style="font-size:16px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ p.title }}</span>
             <span style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A9099">
-              <img src="{{ p.sprite }}" alt="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated" />
+              <span role="img" aria-label="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ p.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="font-weight:600;color:#3A3F49">{{ p.author }}</span>
               <span>· {{ p.ago }}</span>
               <span onClick="{{ p.open }}" style="display:flex;align-items:center;gap:4px;color:#4A5FD1;font-weight:600;background:#EEF1FB;border-radius:7px;padding:4px 9px;cursor:pointer" style-hover="background:#4A5FD1;color:#FFFFFF"><iconify-icon icon="lucide:message-circle" width="13"></iconify-icon><span>댓글 {{ p.comments }}</span></span>
@@ -1888,7 +1960,7 @@
 
       <div style="padding:0 26px 22px;display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;margin-top:-44px">
         <span style="position:relative;flex-shrink:0">
-          <img src="{{ me.sprite }}" alt="" style="width:96px;height:96px;border-radius:22px;background:#F7F5EF;border:3px solid #FFFFFF;image-rendering:pixelated;object-fit:cover" />
+          <span role="img" aria-label="" style="width:96px;height:96px;border-radius:22px;background:#F7F5EF;border:3px solid #FFFFFF;image-rendering:pixelated;flex-shrink:0;background-image:{{ me.sprite }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
           <sc-if value="{{ me.isMine }}" hint-placeholder-val="{{ true }}">
             <label style="position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:99px;background:#16181D;color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #FFFFFF" style-hover="background:#2F6F5E">
               <iconify-icon icon="lucide:camera" width="13"></iconify-icon>
@@ -2031,7 +2103,7 @@
         <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="0">
           <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
             <span style="padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:0">
-              <img src="{{ w.sprite }}" alt="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0" />
+              <span role="img" aria-label="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                 <span style="font-size:13.5px;font-weight:600">{{ w.title }}</span>
                 <span style="font-size:11.5px;color:#8A9099">{{ w.catName }} · {{ w.ago }}</span>
@@ -2063,7 +2135,7 @@
         <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:9px" style-hover="border-color:#E0653A">
             <span style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/14px 14px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:11px">
-              <img src="{{ a.sprite }}" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <span role="img" aria-label="" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
             </span>
             <span style="font-size:12.5px;font-weight:600;line-height:1.4">{{ a.name }}</span>
             <span style="font-size:11.5px;color:#8A9099">사용 {{ a.usesK }} · ♥ {{ a.likesK }}</span>
@@ -2091,7 +2163,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <sc-for list="{{ avatarChoices }}" as="av" hint-placeholder-count="5">
               <span onClick="{{ av.go }}" style="width:52px;height:52px;border-radius:12px;border:2px solid {{ av.bd }};background:#F7F5EF;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:5px">
-                <img src="{{ av.sprite }}" alt="" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+                <span role="img" aria-label="" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ av.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               </span>
             </sc-for>
           </div>
@@ -2205,7 +2277,7 @@
     <div onClick="{{ closePv }}" style="position:fixed;inset:0;z-index:95;background:rgba(22,24,29,0.55);display:flex;align-items:center;justify-content:center;padding:32px">
       <div onClick="{{ stopIt }}" style="width:min(760px,100%);background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,0.5);display:grid;grid-template-columns:minmax(0,1fr) 280px">
         <div style="background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/22px 22px;display:flex;align-items:center;justify-content:center;padding:40px;min-height:360px">
-          <img src="{{ pv.sprite }}" alt="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated" />
+          <span role="img" aria-label="{{ pv.name }}" style="width:100%;max-width:280px;image-rendering:pixelated;flex-shrink:0;background-image:{{ pv.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
         </div>
         <div style="padding:22px;display:flex;flex-direction:column;gap:14px;border-left:1px solid #EFEADE">
           <div style="display:flex;align-items:flex-start;gap:10px">
@@ -2252,7 +2324,7 @@
       <div onClick="{{ stageClick }}" style="position:relative;width:min(94vw,calc((100vh - 170px) * 4 / 3));aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#E7EFE9;box-shadow:0 30px 70px -20px rgba(0,0,0,0.7)">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-            <img src="{{ stageBg }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />
+            <span role="img" aria-label="" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ stageBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
@@ -2260,7 +2332,7 @@
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
-              <img src="{{ pp.sprite }}" alt="" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9))" />
+              <span role="img" aria-label="" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:drop-shadow(0 0 2px rgba(74,95,209,0.9));flex-shrink:0;background-image:{{ pp.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:rgba(74,95,209,0.92);color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap">{{ pp.name }}</span>
             </span>
           </sc-for>
@@ -2273,7 +2345,7 @@
                 <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSizeBig }};line-height:1.3">{{ o.text }}</span>
               </sc-if>
               <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                <img src="{{ o.sprite }}" alt="{{ o.name }}" style="width:100%;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }}" />
+                <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               </sc-if>
             </span>
           </sc-for>
@@ -2362,18 +2434,34 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
-    <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:10px;background:#16181D;color:#F4F1EA;border-radius:12px;padding:14px 20px;box-shadow:0 18px 40px -12px rgba(0,0,0,0.5);animation:dv-toast-in 300ms cubic-bezier(0.16,1,0.3,1) forwards">
-      <iconify-icon icon="lucide:check-circle-2" width="18" style="color:#6FD3C7"></iconify-icon>
-      <span style="font-size:14px">{{ toast }}</span>
-    </div>
-  </sc-if>
+  <div style="position:fixed;right:22px;bottom:22px;z-index:120;display:flex;flex-direction:column-reverse;gap:9px;align-items:flex-end;pointer-events:none">
+    <sc-for list="{{ toasts }}" as="tt" hint-placeholder-count="1">
+      <div onClick="{{ tt.close }}" style="pointer-events:auto;display:flex;align-items:flex-start;gap:10px;max-width:340px;background:{{ tt.bg }};color:#F4F1EA;border-radius:12px;padding:13px 16px;box-shadow:0 18px 38px -14px rgba(22,24,29,0.55);cursor:pointer;animation:dv-fade-up 220ms cubic-bezier(0.16,1,0.3,1) forwards">
+        <iconify-icon icon="{{ tt.ic }}" width="17" style="color:{{ tt.fg }};flex-shrink:0;margin-top:1px"></iconify-icon>
+        <span style="font-size:13.5px;line-height:1.55">{{ tt.msg }}</span>
+      </div>
+    </sc-for>
+  </div>
 </div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
 // 시드는 도트 그림 · 게시판 목록 · 약관 같은 «앱 구성»에만 쓴다.
 // 작품 · 크리에이터 · 커뮤니티 글 · 공유 오브젝트는 DB 에서만 온다 (없으면 빈 목록).
+// 브라우저 저장 키 — 로그인한 사람마다 따로 남긴다
+// 값이 아직 없을 때 쓰는 투명한 1px 그림 (주소칸이 비어 깨지는 것을 막는다)
+const BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+let LS_UID = "guest";
+try { LS_UID = localStorage.getItem("dotverse.uid") || "guest"; } catch (e) {}
+const LS = (k) => "dotverse." + LS_UID + "." + k;
+window.DOT_LS_SET = (uid) => {
+  const next = uid || "guest";
+  if (next === LS_UID) return false;
+  LS_UID = next;
+  try { localStorage.setItem("dotverse.uid", next); } catch (e) {}
+  return true;
+};
+
 const S = () => {
   const raw = window.DOT_SEED || {};
   return Object.assign({}, raw, { worlds: [], creators: [], posts: [], assets: [] });
@@ -2510,8 +2598,8 @@ class Component extends DCLogic {
     tab: "blocks",
     worldId: (() => {
       try {
-        let v = localStorage.getItem("dotverse.worldId");
-        if (!v) { v = "w" + Math.random().toString(36).slice(2, 10); localStorage.setItem("dotverse.worldId", v); }
+        let v = localStorage.getItem(LS("worldId"));
+        if (!v) { v = "w" + Math.random().toString(36).slice(2, 10); localStorage.setItem(LS("worldId"), v); }
         return v;
       } catch (e) { return "w" + Math.random().toString(36).slice(2, 10); }
     })(),
@@ -2574,6 +2662,9 @@ class Component extends DCLogic {
     curY: 0,
     tiles: {},
     placeArt: "tree",
+    hideLayers: {},
+    toasts: [],
+    myCostume: "slime",
     favArts: [],
     imgArts: [],
     objPanelOpen: true,
@@ -2702,7 +2793,7 @@ class Component extends DCLogic {
     clearTimeout(this._mapSaveT);
     this._mapSaveT = setTimeout(() => {
       try {
-        localStorage.setItem("dotverse.map", JSON.stringify({
+        localStorage.setItem(LS("map"), JSON.stringify({
           tiles: this.state.tiles, objectsBy: this.state.objectsBy,
           mapOX: this.state.mapOX, mapOY: this.state.mapOY,
         }));
@@ -2712,7 +2803,7 @@ class Component extends DCLogic {
 
   restoreMap() {
     try {
-      const j = JSON.parse(localStorage.getItem("dotverse.map") || "{}");
+      const j = JSON.parse(localStorage.getItem(LS("map")) || "{}");
       if (j.tiles && Object.keys(j.tiles).length) {
         this._baseKey = null;
         this.setState({
@@ -2747,6 +2838,10 @@ class Component extends DCLogic {
       tiles[key] = { t: "obj", art: this.state.placeArt, c: (prev && prev.c) || null };
     }
     else if (this.state.mapMode === "effect") tiles[key] = { t: "block" };
+    else if (this.state.mapMode === "spawn") {
+      Object.keys(tiles).forEach((k) => { if (tiles[k] && tiles[k].t === "entry") delete tiles[k]; });
+      tiles[key] = { t: "entry", c: "#8FC0A2" };
+    }
     this.setState({ tiles: tiles }, () => { this.drawMap(); this.persistMap(); });
   };
 
@@ -2927,9 +3022,9 @@ class Component extends DCLogic {
       try { await window.DotDB.setVar(this.state.worldId, key, v, !!perPlayer); return true; } catch (e) {}
     }
     try {
-      const all = JSON.parse(localStorage.getItem("dotverse.vars") || "{}");
+      const all = JSON.parse(localStorage.getItem(LS("vars")) || "{}");
       all[key] = v;
-      localStorage.setItem("dotverse.vars", JSON.stringify(all));
+      localStorage.setItem(LS("vars"), JSON.stringify(all));
     } catch (e) {}
     return false;
   }
@@ -3061,7 +3156,126 @@ class Component extends DCLogic {
         self.art = arts[(i + 1) % arts.length];
         this.tick();
       },
-      artId: (label) => label,
+      artId: (label) => this.artKeyOf(label),
+      followStart: (self, name, sp) => {
+        self.followName = name;
+        self.followSpeed = Math.max(0.2, Number(sp) || 3);
+        if (this._followT) return;
+        this._followT = setInterval(() => {
+          if (!this.state.running || !this._live) return;
+          let moved = false;
+          this._live.forEach((o) => {
+            if (!o.followName) return;
+            const t = this._live.find((x) => x.name === o.followName && x !== o);
+            if (!t) return;
+            const sp2 = o.followSpeed || 3;
+            const dx = t.x - o.x, dy = t.y - o.y, L = Math.hypot(dx, dy);
+            if (L > sp2) { o.x += dx / L * sp2; o.y += dy / L * sp2; moved = true; }
+          });
+          if (moved) this.tick();
+        }, 33);
+      },
+      followStop: (self) => { self.followName = null; },
+      animPlay: (self, shapeName, ms) => this.animPlay(self, shapeName, ms),
+      animStop: (self) => this.animStop(self),
+      animFrame: (self, n) => {
+        const idx = self.animShape;
+        if (idx === undefined || idx === null) return;
+        const sh = (this.state.shapes || [])[idx];
+        if (!sh) return;
+        const f = Math.max(0, (Math.round(n) || 1) - 1) % sh.frames.length;
+        self.frame = f;
+        self.art = f === 0 ? "my" + idx : "my" + idx + "#" + f;
+        this.tick();
+      },
+      layerShow: (layer, on) => {
+        this.setState((p) => {
+          const h = Object.assign({}, p.hideLayers);
+          if (on) delete h[layer]; else h[layer] = true;
+          return { hideLayers: h };
+        }, () => { this._baseKey = null; this.drawMap(); this.tick(); });
+      },
+      setPlayer: (self) => {
+        self.player = true;
+        this._mpSelf = self;
+        this.setObjects((list) => list.map((x) => (x.id === self.id ? Object.assign({}, x, { player: true }) : x)));
+        if (!this._mpOn) this.mpStart(this.state.mpRoom || "기본방", self);
+      },
+      mpCostume: (label) => {
+        const key = this.artKeyOf(label);
+        this.setState({ myCostume: key });
+        if (this._mpSelf && this._mpSelf.synthetic) this._mpSelf.art = key;
+      },
+      objCount: () => (this._live || []).filter((o) => o.on !== false).length,
+      tileKind: (x, y) => {
+        const tx = Math.round((Number(x) + 240) / (480 / this.MW) - 0.5);
+        const ty = Math.round((180 - Number(y)) / (360 / this.MH) - 0.5);
+        const t = (this.state.tiles || {})[tx + "," + ty];
+        return t ? ({ floor: "바닥", wall: "벽", block: "경계", obj: "오브젝트", entry: "스폰" }[t.t] || t.t) : "없음";
+      },
+      spawn: () => this.spawnPoint(),
+      setSpawn: (x, y) => {
+        const tx = Math.round((Number(x) + 240) / (480 / this.MW) - 0.5);
+        const ty = Math.round((180 - Number(y)) / (360 / this.MH) - 0.5);
+        this.setState((p) => {
+          const t = Object.assign({}, p.tiles);
+          Object.keys(t).forEach((k) => { if (t[k] && t[k].t === "entry") delete t[k]; });
+          t[tx + "," + ty] = { t: "entry", c: "#8FC0A2" };
+          return { tiles: t };
+        }, () => { this._baseKey = null; this.drawMap(); this.persistMap(); });
+      },
+      prevShape: (self) => {
+        const arts = Object.keys((S().art) || {});
+        const i = arts.indexOf(self.art);
+        self.art = arts[(i - 1 + arts.length) % arts.length] || self.art;
+        this.tick();
+      },
+      stopOther: (self) => { if (this._rt) this._rt.stopObject(self.id); },
+      listSet: (n, arr) => { this._lists = this._lists || {}; this._lists[n] = arr; this.pushLists(); },
+      camMove: (x, y) => { this._cam.follow = null; this._cam.x = Number(x) || 0; this._cam.y = Number(y) || 0; this.applyCam(); },
+      toast: (m) => this.say(m),
+      flash: (col) => {
+        const c = { "흰색": "#FFFFFF", "빨강": "#C0392B", "노랑": "#F2B23E", "검정": "#16181D" }[col] || "#FFFFFF";
+        this.setState({ flash: c });
+        setTimeout(() => this.setState({ flash: null }), 160);
+      },
+      stageColor: (col) => {
+        const c = { "초록": "#E7EFE9", "하늘": "#DCE9F5", "모래": "#F2E9D5", "밤": "#20242E", "흰색": "#FFFFFF" }[col] || "#E7EFE9";
+        this.setState({ stageColor: c });
+      },
+      beep: (hz, ms) => {
+        try {
+          const A = window.AudioContext || window.webkitAudioContext;
+          if (!A) return;
+          this._ac = this._ac || new A();
+          const o = this._ac.createOscillator(), g = this._ac.createGain();
+          o.frequency.value = Math.max(30, Math.min(4000, Number(hz) || 440));
+          g.gain.value = (this._vol === undefined ? 100 : this._vol) / 100 * 0.12;
+          o.connect(g); g.connect(this._ac.destination);
+          o.start();
+          o.stop(this._ac.currentTime + Math.max(0.02, (Number(ms) || 200) / 1000));
+        } catch (e) {}
+      },
+      soundFade: (sec) => {
+        const dur = Math.max(0.1, Number(sec) || 1) * 1000;
+        const t0 = Date.now(), v0 = this._vol === undefined ? 100 : this._vol;
+        clearInterval(this._fadeT);
+        this._fadeT = setInterval(() => {
+          const p = Math.min(1, (Date.now() - t0) / dur);
+          this._vol = Math.round(v0 * (1 - p));
+          (this._audios || []).forEach((a) => { try { a.volume = this._vol / 100; } catch (e) {} });
+          if (p >= 1) { clearInterval(this._fadeT); this.stopSounds(); this._vol = v0; }
+        }, 50);
+      },
+      mpSend: (m) => {
+        this._mpMsg = String(m);
+        if (this._mpCh) { try { this._mpCh.send({ type: "broadcast", event: "msg", payload: { m: String(m) } }); } catch (e) {} }
+      },
+      mpLast: () => this._mpMsg || "",
+      mpRoom: () => this._mpRoom || "",
+      funcByName: (name) => this.funcByName(name),
+      setResult: (v) => { this._fnResult = v; },
+      result: () => (this._fnResult === undefined ? 0 : this._fnResult),
       speak: (m) => {
         this.setState({ uiText: m });
         try {
@@ -3088,7 +3302,7 @@ class Component extends DCLogic {
       chat: (m) => this.sendChat(m),
       setTile: (x, y, t) => {
         const key = Math.round(x) + "," + Math.round(y);
-        const c = { "바닥": { t: "floor", c: "#8FC0A2" }, "벽": { t: "wall" }, "경계": { t: "entry", c: "#8FC0A2" } }[t] || { t: "floor", c: "#8FC0A2" };
+        const c = { "바닥": { t: "floor", c: "#8FC0A2" }, "벽": { t: "wall" }, "경계": { t: "block" } }[t] || { t: "floor", c: "#8FC0A2" };
         this.setState((p) => ({ tiles: Object.assign({}, p.tiles, { [key]: c }) }), () => this.drawMap());
       },
       // ── 실시간 DB: game_vars / game_rows 에 실제로 읽고 쓴다
@@ -3111,7 +3325,7 @@ class Component extends DCLogic {
         if ((this.state.tables || []).some((t) => t.name === n)) return;
         let saved = false;
         if (window.DotDB && window.DotDB.isLive) {
-          try { saved = await window.DotDB.createTable(this.state.worldId, n, [], !!perPlayer); } catch (e) {}
+          try { saved = await window.DotDB.upsertTable(this.state.worldId, n, [], !!perPlayer); } catch (e) {}
         }
         this._rows = this._rows || {};
         this._rows[n] = this._rows[n] || [];
@@ -3121,20 +3335,31 @@ class Component extends DCLogic {
         this.say("블록이 «" + n + "» 테이블을 만들었습니다.");
       },
       colAdd: async (n, col, type) => {
+        const t0 = (this.state.tables || []).find((x) => x.name === n);
+        if (!t0) { this.say("«" + n + "» 테이블이 없습니다 — 테이블 만들기 블록을 먼저 실행하세요.", "warn"); return; }
+        if (t0.cols.some((x) => x.name === col)) return;
+        const cols = t0.cols.concat([{ name: col, type: type }]);
         this.setState((p) => ({
-          tables: (p.tables || []).map((t) => (t.name === n && !t.cols.some((c) => c.name === col)
-            ? Object.assign({}, t, { cols: t.cols.concat([{ name: col, type: type }]) }) : t)),
+          tables: (p.tables || []).map((t) => (t.name === n ? Object.assign({}, t, { cols: cols }) : t)),
         }));
-        if (window.DotDB && window.DotDB.isLive) {
-          const t = (this.state.tables || []).find((x) => x.name === n);
-          if (t) { try { await window.DotDB.createTable(this.state.worldId, n, t.cols.concat([{ name: col, type: type }]), t.perPlayer); } catch (e) {} }
+        await this.pushTable(n, cols, t0.perPlayer);
+        this.say("«" + n + "» 에 컬럼 «" + col + "» 을 추가했습니다.");
+      },
+      colDrop: async (n, col) => {
+        const t0 = (this.state.tables || []).find((x) => x.name === n);
+        if (!t0) return;
+        const cols = t0.cols.filter((x) => x.name !== col);
+        this.setState((p) => ({
+          tables: (p.tables || []).map((t) => (t.name === n ? Object.assign({}, t, { cols: cols }) : t)),
+        }));
+        await this.pushTable(n, cols, t0.perPlayer);
+      },
+      tableDrop: async (n) => {
+        this.setState((p) => ({ tables: (p.tables || []).filter((t) => t.name !== n) }));
+        if (window.DotDB && window.DotDB.isLive && window.DotDB.dropTable) {
+          try { await window.DotDB.dropTable(this.state.worldId, n); } catch (e) {}
         }
       },
-      colDrop: (n, col) => this.setState((p) => ({
-        tables: (p.tables || []).map((t) => (t.name === n
-          ? Object.assign({}, t, { cols: t.cols.filter((c) => c.name !== col) }) : t)),
-      })),
-      tableDrop: (n) => this.setState((p) => ({ tables: (p.tables || []).filter((t) => t.name !== n) })),
       rtGet: async (key) => await this.dbRead(key),
       rtSet: async (key, v) => await this.dbWrite(key, v, false),
     });
@@ -3199,6 +3424,7 @@ class Component extends DCLogic {
     this._cam = { x: 0, y: 0, z: 1, sx: 0, sy: 0, follow: null };
     this._penSegs = [];
     this.penRedraw();
+    this.stopAnims();
     this.setState({ running: false, camT: "none", uiText: "", asking: false });
   };
 
@@ -3291,7 +3517,9 @@ class Component extends DCLogic {
       };
     }
     // 슬롯: 값 블록이 끼워져 있으면 그 블록을, 없으면 입력칸을
-    const cur = block ? block.inputs[p.k] : (p.def === undefined ? null : { lit: p.def });
+    let cur = block ? block.inputs[p.k] : (p.def === undefined ? null : { lit: p.def });
+    // 예전에 글자칸으로 저장된 값(문자·숫자)도 그대로 보이게 감싼다
+    if (cur !== null && cur !== undefined && typeof cur !== "object") cur = { lit: cur };
     if (cur && cur.id) {
       const id = window.DotBlocks.DEFS[cur.def];
       return {
@@ -3324,7 +3552,12 @@ class Component extends DCLogic {
     if (o[0] === "__OBJ__") return this.curObjects().map((x) => x.name);
     if (o[0] === "__SCENE__") return (this.state.scenes || []).map((x) => x.name);
     if (o[0] === "__SIG__") return (this.state.sigsDef || []);
-    if (o[0] === "__ART__") return Object.keys((S().art) || {});
+    if (o[0] === "__ART__") {
+      return (this.state.shapes || []).map((sh) => sh.name)
+        .concat((this.state.imgArts || []).map((a) => a.name))
+        .concat(Object.keys((S().art) || {}));
+    }
+    if (o[0] === "__SHAPE__") return (this.state.shapes || []).map((sh) => sh.name);
     if (o[0] === "__SOUND__") return this.BUILTIN_SOUNDS.concat((this.state.soundsDef || []).map((x) => x.name));
     return o;
   }
@@ -3384,7 +3617,7 @@ class Component extends DCLogic {
         radius: d.shape === "hat" ? "14px 14px 8px 8px" : (d.shape === "c" || d.shape === "c2" ? "9px 9px 0 0" : "8px"),
         pad: "0 12px", cursor: "grab",
         shadow: drag ? "0 14px 26px -8px rgba(22,24,29,0.5)" : "0 2px 0 rgba(22,24,29,0.22)",
-        z: drag ? 50 : 2,
+        z: drag ? 50 : (String(st.openSel || "").indexOf(b.id + ":") === 0 ? 900 : 2),
         parts: (d.parts || []).map((p) => this.partChip(p, d, b)),
         grab: (e) => this.grabExisting(e, b.id),
       };
@@ -3397,6 +3630,21 @@ class Component extends DCLogic {
   // 내 오브젝트 위치·모양·말풍선을 계속 보내고, 남들의 것을 화면에 그린다.
   mpStart = async (room, self) => {
     this._mpRoom = String(room || "1번방");
+    const marked = (this.curObjects() || []).find((o) => o.player);
+    if (marked && this._live) {
+      const lv = this._live.find((x) => x.id === marked.id);
+      if (lv) self = lv;
+    } else if (!self || !self.player) {
+      // 만든 사람이 플레이어를 지정하지 않았으면 코스튬 아바타로 참여한다
+      const sp = this.spawnPoint();
+      this._syn = this._syn || {
+        id: "me", synthetic: true, name: "나",
+        art: this.state.myCostume || "slime", x: sp.x, y: sp.y, scale: 1, on: true,
+      };
+      self = this._syn;
+      if (this._live && this._live.indexOf(self) < 0) this._live.push(self);
+      this.tick();
+    }
     this._mpSelf = self;
     this._peers = this._peers || {};
     this._mpId = this._mpId || "u" + Math.random().toString(36).slice(2, 8);
@@ -3660,6 +3908,120 @@ class Component extends DCLogic {
     this.setState({ chatDraft: "" });
   };
 
+  // 블록에서 고른 이름을 실제 모양 키로 바꾼다
+  artKeyOf(label) {
+    if (!label) return null;
+    const shapes = this.state.shapes || [];
+    const i = shapes.findIndex((sh) => sh.name === label);
+    if (i >= 0) return "my" + i;
+    const im = (this.state.imgArts || []).find((a) => a.name === label || a.art === label);
+    if (im) return im.art;
+    return label;
+  }
+
+  // 이름이 같은 «함수 정의» 모자 블록의 몸통을 찾는다 (장면 전체에서)
+  funcByName(name) {
+    const want = String(name || "");
+    const all = Object.assign({}, this.state.wsBy || {}, this._model || {});
+    const keys = Object.keys(all);
+    for (let i = 0; i < keys.length; i++) {
+      const stacks = all[keys[i]] || [];
+      for (let j = 0; j < stacks.length; j++) {
+        const root = stacks[j] && stacks[j].root;
+        if (root && root.def === "fn_def" && String(root.inputs.name || "") === want) return root.next;
+      }
+    }
+    return null;
+  }
+
+  // 도트 모양 프레임을 순서대로 돌린다
+  animPlay(self, shapeName, ms) {
+    const shapes = this.state.shapes || [];
+    let idx = shapes.findIndex((sh) => sh.name === shapeName);
+    if (idx < 0) idx = shapes.findIndex((sh, i) => "my" + i === self.art || "my" + i === String(self.art).split("#")[0]);
+    if (idx < 0) { this.say("재생할 도트 모양이 없습니다 — 도트 오브젝트 탭에서 프레임을 만들어 주세요."); return; }
+    const sh = shapes[idx];
+    self.animShape = idx;
+    self.frame = 0;
+    self.art = "my" + idx;
+    this.animStop(self);
+    this._anims = this._anims || {};
+    const n = Math.max(1, (sh.frames || []).length);
+    this._anims[self.id] = setInterval(() => {
+      self.frame = ((self.frame || 0) + 1) % n;
+      self.art = self.frame === 0 ? "my" + idx : "my" + idx + "#" + self.frame;
+      this.tick();
+    }, Math.max(40, Number(ms) || 120));
+    this.tick();
+  }
+
+  animStop(self) {
+    this._anims = this._anims || {};
+    if (this._anims[self.id]) { clearInterval(this._anims[self.id]); delete this._anims[self.id]; }
+  }
+
+  stopAnims() {
+    Object.keys(this._anims || {}).forEach((k) => clearInterval(this._anims[k]));
+    this._anims = {};
+    clearInterval(this._followT); this._followT = null;
+  }
+
+  // 팔로우를 실제로 반영하고, 서버가 거부하면 화면도 되돌린다
+  async doFollow(handle, on) {
+    this.setState((p) => ({ follows: Object.assign({}, p.follows, { [handle]: on }) }));
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      this.say("서버 연결이 없어 이 브라우저에만 기억합니다.", "warn");
+      return;
+    }
+    let ok = false;
+    try { ok = await window.DotDB.follow(handle, on); } catch (e) { ok = false; }
+    if (!ok) {
+      this.setState((p) => ({ follows: Object.assign({}, p.follows, { [handle]: !on }) }));
+      this.say("팔로우하지 못했습니다 — 로그인 후 다시 시도하세요.", "warn");
+      return;
+    }
+    const fl = await window.DotDB.myFollows();
+    if (fl) {
+      const f = {};
+      fl.forEach((x) => { if (x.profiles && x.profiles.handle) f[x.profiles.handle] = true; });
+      this.setState({ follows: f });
+    }
+    this.say(on ? "@" + handle + " 님을 팔로우했습니다." : "@" + handle + " 님 팔로우를 취소했습니다.");
+    this.loadNotifs();
+  }
+
+  // 알림만 따로 다시 읽는다 (새 알림은 오른쪽 아래에 띄운다)
+  async loadNotifs(quiet) {
+    if (!(window.DotDB && window.DotDB.isLive)) return;
+    let nt = null;
+    try { nt = await window.DotDB.notifications(); } catch (e) { return; }
+    if (!nt) return;
+    const list = nt.map((n) => ({
+      key: String(n.id),
+      ic: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
+      color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E", follow: "#D97706", report: "#C0392B" }[n.kind] || "#2F6F5E",
+      t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
+    }));
+    const seen = this._notifSeen;
+    if (!quiet && seen) {
+      list.filter((n) => !n.read && seen.indexOf(n.key) < 0).slice(0, 3).forEach((n) => this.say(n.t, "notif"));
+    }
+    this._notifSeen = list.map((n) => n.key);
+    this.setState({ liveNotifs: list });
+  }
+
+  // 테이블 정의를 서버에 저장한다 (컬럼 지정이 DB 탭에도 남게)
+  async pushTable(name, cols, perPlayer) {
+    if (!(window.DotDB && window.DotDB.isLive && window.DotDB.upsertTable)) return false;
+    let ok = false;
+    try { ok = await window.DotDB.upsertTable(this.state.worldId, name, cols, !!perPlayer); } catch (e) { ok = false; }
+    this.setState((p) => ({
+      tables: (p.tables || []).map((t) => (t.name === name ? Object.assign({}, t, { saved: ok }) : t)),
+    }));
+    if (!ok) this.say("«" + name + "» 을 서버에 저장하지 못했습니다.", "warn");
+    return ok;
+  }
+
   peerList() {
     const p = this._peers || {};
     return Object.keys(p).map((k) => p[k]);
@@ -3676,7 +4038,18 @@ class Component extends DCLogic {
       const name = f.name.replace(/\.[^.]+$/, "").slice(0, 18);
       this.setState((p) => ({
         soundsDef: p.soundsDef.filter((s) => s.name !== name).concat([{ name: name, url: r.result }]),
-      }), () => this.say("«" + name + "» 소리를 올렸습니다. 소리 블록에서 고를 수 있습니다."));
+      }), async () => {
+        this.say("«" + name + "» 소리를 올렸습니다. 소리 블록에서 고를 수 있습니다.");
+        if (window.DotDB && window.DotDB.isLive && window.DotDB.uploadMedia) {
+          try {
+            const up = await window.DotDB.uploadMedia(this.state.worldId, "sound/" + name, r.result);
+            if (up) {
+              this.setState((p) => ({ soundsDef: p.soundsDef.map((sd) => (sd.name === name ? { name: name, url: up } : sd)) }));
+              this.say("소리를 서버에 저장했습니다.");
+            } else this.say("소리를 서버에 올리지 못했습니다 — 이 브라우저에만 남습니다.", "warn");
+          } catch (e) {}
+        }
+      });
     };
     r.readAsDataURL(f);
     e.target.value = "";
@@ -3855,7 +4228,7 @@ class Component extends DCLogic {
 
   persistCommunity = () => {
     try {
-      localStorage.setItem("dotverse.community", JSON.stringify({
+      localStorage.setItem(LS("community"), JSON.stringify({
         myPosts: this.state.myPosts, threads: this.state.threads,
         postVotes: this.state.postVotes, pollVotes: this.state.pollVotes,
       }));
@@ -3864,7 +4237,7 @@ class Component extends DCLogic {
 
   restoreCommunity() {
     try {
-      const j = JSON.parse(localStorage.getItem("dotverse.community") || "{}");
+      const j = JSON.parse(localStorage.getItem(LS("community")) || "{}");
       if (j.myPosts || j.threads) {
         this.setState({ myPosts: j.myPosts || [], threads: j.threads || {}, postVotes: j.postVotes || {}, pollVotes: j.pollVotes || {} });
       }
@@ -3889,6 +4262,18 @@ class Component extends DCLogic {
     if (e.shiftKey) this._ws.scrollLeft += e.deltaY;
     else { this._ws.scrollTop += e.deltaY; this._ws.scrollLeft += e.deltaX; }
   };
+
+  // 스폰 칸의 무대 좌표 (없으면 가운데)
+  spawnPoint() {
+    const tiles = this.state.tiles || {};
+    const k = Object.keys(tiles).find((key) => tiles[key] && tiles[key].t === "entry");
+    if (!k) return { x: 0, y: 0 };
+    const p = k.split(",");
+    return {
+      x: (Number(p[0]) + 0.5) * (480 / this.MW) - 240,
+      y: 180 - (Number(p[1]) + 0.5) * (360 / this.MH),
+    };
+  }
 
   // 벽 · 경계 타일은 지나갈 수 없다
   blocked(x, y) {
@@ -4055,6 +4440,10 @@ class Component extends DCLogic {
           x: Math.round(o.x), y: Math.round(o.y),
           s: Math.round((o.scale || 1) * 100),
           on: o.on === false ? 0 : 1,
+          kind: o.kind || null, text: o.text === undefined ? null : o.text,
+          color: o.color || null, fontSize: o.fontSize || null,
+          rot: Math.round(o.rot || 0), player: o.player ? 1 : 0,
+          animShape: o.animShape === undefined ? null : o.animShape,
         }));
         return acc;
       }, {}),
@@ -4067,9 +4456,11 @@ class Component extends DCLogic {
       arts: await this.uploadMedia(this.state.imgArts || [], "art"),
       sounds: await this.uploadMedia(this.state.soundsDef || [], "sound"),
       shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
+      favs: this.state.favArts || [],
+      hideLayers: this.state.hideLayers || {},
     };
     if (!window.DotDB || !window.DotDB.isLive) {
-      try { localStorage.setItem("dotverse.studio", JSON.stringify(payload)); } catch (e) {}
+      try { localStorage.setItem(LS("studio"), JSON.stringify(payload)); } catch (e) {}
       this.setState({ saved: "로컬" });
       this.say("환경 변수가 없어 이 브라우저에 저장했습니다.");
       return;
@@ -4077,9 +4468,14 @@ class Component extends DCLogic {
     this.setState({ saving: true });
     const r = await window.DotDB.saveStudio(this.state.worldId, payload);
     this.setState({ saving: false, saved: r.ok ? "v" + r.version : null });
-    this.say(r.ok
-      ? "Supabase 에 v" + r.version + " 으로 저장했습니다."
-      : "저장하지 못했습니다 — " + (r.reason === "env" ? "환경 변수를 확인하세요" : r.reason));
+    const quiet = this._quietSave;
+    this._quietSave = false;
+    if (!r.ok || !quiet) {
+      this.say(r.ok
+        ? "Supabase 에 v" + r.version + " 으로 저장했습니다."
+        : "저장하지 못했습니다 — " + (r.reason === "env" ? "환경 변수를 확인하세요" : r.reason),
+        r.ok ? "ok" : "warn");
+    }
   };
 
   // 사진·소리를 Storage 에 올려 링크만 저장한다 (테이블 용량을 쓰지 않음)
@@ -4119,16 +4515,17 @@ class Component extends DCLogic {
     return out;
   }
 
-  loadStudio = async () => {
+  loadStudio = async (quiet) => {
     let payload = null;
+    this._quietLoad = !!quiet;
     if (window.DotDB && window.DotDB.isLive) {
       const row = await window.DotDB.loadStudio(this.state.worldId);
       if (row) payload = Object.assign({}, row.scene, { wsBy: row.blocks });
     }
     if (!payload) {
-      try { payload = JSON.parse(localStorage.getItem("dotverse.studio") || "null"); } catch (e) {}
+      try { payload = JSON.parse(localStorage.getItem(LS("studio")) || "null"); } catch (e) {}
     }
-    if (!payload || !payload.scenes) { this.say("불러올 저장본이 없습니다."); return; }
+    if (!payload || !payload.scenes) { if (!this._quietLoad) this.say("불러올 저장본이 없습니다."); return; }
     // 블록은 전용 테이블에서 먼저 읽는다 (없으면 저장본 안의 것을 쓴다)
     if (window.DotDB && window.DotDB.isLive) {
       try {
@@ -4145,6 +4542,13 @@ class Component extends DCLogic {
         x: o.x || 0, y: o.y || 0,
         scale: o.scale !== undefined ? o.scale : (o.s || 100) / 100,
         on: o.on === 0 ? false : true,
+        kind: o.kind || undefined,
+        text: o.text === null ? undefined : o.text,
+        color: o.color || undefined,
+        fontSize: o.fontSize || undefined,
+        rot: o.rot || 0,
+        player: !!o.player,
+        animShape: o.animShape === null ? undefined : o.animShape,
       }));
     });
     const first = (objectsBy[payload.scenes[0].id] || [])[0];
@@ -4161,17 +4565,19 @@ class Component extends DCLogic {
       objId: first ? first.id : null,
       imgArts: arts,
       soundsDef: sounds.map((sd) => ({ name: sd.name, url: sd.url })),
-      sprites: Object.assign({}, this.state.sprites, spriteAdd),
     };
-    if (payload.shapes) next.shapes = payload.shapes;
+    if (payload.shapes) { next.shapes = payload.shapes; this._myKey = null; }
     if (payload.vars) next.varsDef = payload.vars.map((v) => ({ name: v[0], value: v[1], visible: !!v[2] }));
     if (payload.lists) next.listsDef = payload.lists.map((l) => ({ name: l[0], items: l[1] || [] }));
     if (payload.funcs) next.funcsDef = payload.funcs;
     if (payload.sigs) next.sigsDef = payload.sigs;
+    if (payload.favs) next.favArts = payload.favs;
+    if (payload.hideLayers) next.hideLayers = payload.hideLayers;
     const tiles = typeof payload.tiles === "string" ? this.unpackTiles(payload.tiles) : payload.tiles;
     if (tiles) { next.tiles = tiles; this._baseKey = null; }
     // 사진 오브젝트를 맵 캔버스에도 쓸 수 있게 준비한다
     this._spriteCanvas = this._spriteCanvas || {};
+    setTimeout(() => { this._myKey = null; this.syncMyArts(); }, 0);
     arts.forEach((a) => {
       const im = new Image();
       im.crossOrigin = "anonymous";
@@ -4184,7 +4590,9 @@ class Component extends DCLogic {
       };
       im.src = a.url;
     });
-    this.setState(next, () => this.drawMap());
+    this.setState((p) => Object.assign({}, next, {
+      sprites: Object.assign({}, p.sprites, spriteAdd),
+    }), () => { this._myKey = null; this.syncMyArts(); this.drawMap(); });
     this.say("저장본을 불러왔습니다 — 블록 · 맵 · 오브젝트 · 사진 · 소리까지 그대로입니다.");
   };
 
@@ -4282,13 +4690,16 @@ class Component extends DCLogic {
   // 타일 한 장을 어떤 캔버스에든 그린다 (보이는 캔버스 / 실행화면 미리보기 공용)
   paintTilesInto(g, u, W, H, tiles, ox, oy, editing) {
     const OX = ox || 0, OY = oy || 0;
+    const HL = this.state.hideLayers || {};
+    const LMAP = { floor: "바닥", wall: "벽", block: "경계", obj: "오브젝트", entry: "스폰" };
+    const shown = (t) => !HL[LMAP[t] || t];
     const T0 = tiles;
     tiles = {};
     Object.keys(T0).forEach((k) => {
       const p = k.split(",");
       tiles[(Number(p[0]) - OX) + "," + (Number(p[1]) - OY)] = T0[k];
     });
-    if (this._bg) {
+    if (this._bg && !HL["배경"]) {
       g.clearRect(0, 0, W, H);
       g.drawImage(this._bg, 0, 0, W, H);
       g.fillStyle = "rgba(244,241,234,0.08)";
@@ -4302,6 +4713,7 @@ class Component extends DCLogic {
     Object.keys(tiles).forEach((k) => {
       const [x, y] = k.split(",").map(Number);
       const c = tiles[k];
+      if (!shown(c.t)) return;
       if (c.t === "floor") { g.fillStyle = c.c; g.fillRect(x * u, y * u, u, u); }
       else if ((c.t === "obj" || c.t === "entry") && c.c) { g.fillStyle = c.c; g.fillRect(x * u, y * u, u, u); }
       else if (c.t === "wall") {
@@ -4315,7 +4727,7 @@ class Component extends DCLogic {
       const c = tiles[x + "," + y];
       return !!c && c.t === "block";
     };
-    const bounds = editing ? Object.keys(tiles).filter((k) => tiles[k].t === "block") : [];
+    const bounds = (editing && shown("block")) ? Object.keys(tiles).filter((k) => tiles[k].t === "block") : [];
     if (bounds.length) {
       g.fillStyle = "rgba(244,241,234,0.78)";
       bounds.forEach((k) => {
@@ -4344,18 +4756,25 @@ class Component extends DCLogic {
     Object.keys(tiles).forEach((k) => {
       const [x, y] = k.split(",").map(Number);
       const c = tiles[k];
+      if (!shown(c.t)) return;
       if (c.t === "obj") {
         const spc = (this._spriteCanvas || {})[c.art];
         if (spc) g.drawImage(spc, x * u - u * 0.25, y * u - u * 0.7, u * 1.5, u * 1.5);
       } else if (c.t === "entry") {
-        const cx = x * u + u / 2, cy = y * u + u / 2, rr = u * 0.34;
-        g.fillStyle = "#6FD3C7";
-        g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.fill();
-        g.strokeStyle = "#16181D"; g.lineWidth = 2; g.stroke();
-        g.fillStyle = "#16181D";
-        g.font = "700 " + Math.round(u * 0.32) + "px monospace";
-        g.textAlign = "center"; g.textBaseline = "middle";
-        g.fillText("입장", cx, cy);
+        // 스폰 지점 — 바닥 표식 + 그 위에 뜬 도트 핀 (16칸 격자에 맞춰 각지게)
+        const p = u / 16;
+        const cx0 = x * u, top = y * u;
+        const px = (a, b, w, h, col) => { g.fillStyle = col; g.fillRect(Math.round(x * u + a * p), Math.round(top + b * p), Math.ceil(w * p), Math.ceil(h * p)); };
+        // 바닥 표식: 각진 마름모 고리
+        px(4, 12, 8, 1, "#16181D"); px(2, 13, 12, 1, "#16181D");
+        px(5, 13, 6, 1, "#6FD3C7"); px(3, 14, 10, 1, "#16181D");
+        px(4, 14, 8, 1, "#4FB8AC"); px(5, 15, 6, 1, "#16181D");
+        // 뜬 핀: 몸통 + 안쪽 점 + 아래 꼬리
+        px(5, 1, 6, 1, "#16181D"); px(4, 2, 8, 5, "#16181D");
+        px(5, 2, 6, 4, "#6FD3C7"); px(5, 2, 6, 1, "#A8ECE4");
+        px(7, 3, 2, 2, "#16181D");
+        px(5, 7, 6, 1, "#16181D"); px(6, 8, 4, 1, "#16181D");
+        px(7, 9, 2, 1, "#16181D"); px(7, 10, 2, 1, "#16181D");
       }
     });
   }
@@ -4596,14 +5015,20 @@ class Component extends DCLogic {
     if (!w) this.say("팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.");
   };
 
-  componentDidMount() {
+  // 도트 모양 · 기본 블록 · 기본 맵을 만든다 (seed.js 가 준비된 뒤에 부른다)
+  initSeed() {
+    if (this._seeded) return;
     const s = SEED();
+    // 색 팔레트(P)까지 와야 도트를 그릴 수 있다 — 없으면 다시 기다린다
+    if (!s || !s.art || !s.P || !Object.keys(s.P).length || !window.DotBlocks) return;
+    this._seeded = true;
     const sprites = {};
-    this._spriteCanvas = {};
-    Object.keys(s.art || {}).forEach((k) => {
-      const c = this.makeSpriteCanvas(s.art[k], 8);
-      this._spriteCanvas[k] = c;
-      sprites[k] = c.toDataURL();
+    this._spriteCanvas = this._spriteCanvas || {};
+    Object.keys(s.art).forEach((k) => {
+      const url = this.artToSVG(s.art[k], s.P);
+      if (!url) return;
+      sprites[k] = url;
+      this._spriteCanvas[k] = this.makeSpriteCanvas(s.art[k], 8);
     });
     const toGrid = (k) => (s.art[k] || []).map((row) => row.split("").map((ch) => s.P[ch] || null));
     const grid = toGrid("chest");
@@ -4613,8 +5038,28 @@ class Component extends DCLogic {
       { name: "코인 회전", frames: [toGrid("coin"), toGrid("lamp"), toGrid("coin")] },
     ];
     this._model = this.seedBlocks();
-    this.setState({ sprites, grid, shapes: shapes, script: (s.script || []).slice(), tiles: this.seedMap(), wsBy: this._model },
-      () => { this.drawGridFrom(this._grid); this.drawMap(); });
+    this._myKey = null;
+    this.setState((p) => ({
+      sprites: Object.assign({}, sprites, p.sprites),
+      grid: grid,
+      shapes: (p.shapes && p.shapes.length) ? p.shapes : shapes,
+      script: (s.script || []).slice(),
+      tiles: (p.tiles && Object.keys(p.tiles).length) ? p.tiles : this.seedMap(),
+      wsBy: this._model,
+    }), () => { this.syncMyArts(); this.drawGridFrom(this._grid); this.drawMap(); });
+  }
+
+  componentDidMount() {
+    const s = SEED();
+    // seed.js · blocks-engine.js 가 늦게 붙어도 준비되면 바로 초기화한다
+    this.initSeed();
+    if (!this._seeded) {
+      let tries = 0;
+      this._seedT = setInterval(() => {
+        this.initSeed();
+        if (this._seeded || ++tries > 200) { clearInterval(this._seedT); this._seedT = null; }
+      }, 60);
+    }
     // 랜딩 화면에서만 단어를 굴린다 — 다른 화면에서는 전체 리렌더가 일어나지 않게
     this._t = setInterval(() => {
       if (this.state.route !== "landing" || document.hidden) return;
@@ -4627,7 +5072,7 @@ class Component extends DCLogic {
     this.restoreMap();
     this.restoreArts();
     try {
-      const f = JSON.parse(localStorage.getItem("dotverse.favs") || "[]");
+      const f = JSON.parse(localStorage.getItem(LS("favs")) || "[]");
       if (f.length) this.setState({ favArts: f });
     } catch (e) {}
 
@@ -4649,6 +5094,23 @@ class Component extends DCLogic {
     window.addEventListener("mousedown", this._onMouse);
     window.addEventListener("mouseup", this._onMouse);
 
+    // 알림은 주기적으로 다시 읽고, 새 것이 오면 오른쪽 아래에 띄운다
+    this._nt = setInterval(() => {
+      if (!document.hidden) this.loadNotifs();
+    }, 20000);
+    setTimeout(() => this.loadNotifs(true), 1500);
+    this._auto = setInterval(() => {
+      if (document.hidden || this.state.running || this.state.saving) return;
+      if (!this.state.signedIn || !(window.DotDB && window.DotDB.isLive)) return;
+      this._quietSave = true;
+      this.saveStudio();
+    }, 30000);
+    setTimeout(() => {
+      if (window.DotDB && window.DotDB.isLive && window.DotDB.notifChannel) {
+        try { this._notifCh = window.DotDB.notifChannel(() => this.loadNotifs()); } catch (e) {}
+      }
+    }, 2000);
+
     // «새 톭에서 허러이» — #play 로 열리면 바로 큰 화면 실행
     if ((location.hash || "") === "#play") {
       setTimeout(() => this.setState({ route: "play", bigPlay: true }, () => this.runAll()), 400);
@@ -4656,7 +5118,8 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
-    clearInterval(this._t); clearInterval(this._anim);
+    clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
+    this.stopAnims();
     clearTimeout(this._toast); clearTimeout(this._menuT);
     if (this._onMouse) {
       window.removeEventListener("mousemove", this._onMouse);
@@ -4664,6 +5127,30 @@ class Component extends DCLogic {
       window.removeEventListener("mouseup", this._onMouse);
     }
     this.stopAll();
+  }
+
+  // 사람이 바뀌면 그 사람의 저장본만 다시 읽는다
+  reloadUserData() {
+    this._swapUser = false;
+    try {
+      const w = localStorage.getItem(LS("worldId"));
+      if (w) this.setState({ worldId: w });
+    } catch (e) {}
+    this.setState({
+      imgArts: [], favArts: [], myPosts: [], threads: {},
+      postVotes: {}, pollVotes: {},
+    }, () => {
+      this.restoreArts();
+      this.restoreMap();
+      this.restoreCommunity();
+      try {
+        const f = JSON.parse(localStorage.getItem(LS("favs")) || "[]");
+        this.setState({ favArts: f });
+      } catch (e) {}
+      this._baseKey = null;
+      this.drawMap();
+      this.loadStudio(true);
+    });
   }
 
   // 데이터베이스에서 실제 데이터를 읽어와 화면 데이터를 대체한다
@@ -4697,7 +5184,7 @@ class Component extends DCLogic {
           catName: x.category || "실험실",
           likes: x.like_count || 0, dislikes: x.dislike_count || 0,
           comments: x.comment_count || 0, plays: x.play_count || 0,
-          online: 0, ago: "방금", tags: [], art: "portal",
+          online: 0, ago: this.agoText(x.published_at || x.created_at), tags: [], art: x.art || "portal",
         }));
       }
       if (a) {
@@ -4739,11 +5226,16 @@ class Component extends DCLogic {
       }));
       if (cnt) next.liveCounts = cnt;
       next.liveNotifs = (nt || []).map((n) => ({
-        ic: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box" }[n.kind] || "lucide:bell",
-        color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E" }[n.kind] || "#2F6F5E",
+        key: String(n.id),
+        ic: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
+        color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E", follow: "#D97706", report: "#C0392B" }[n.kind] || "#2F6F5E",
         t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
       }));
+      this._notifSeen = next.liveNotifs.map((n) => n.key);
       next.signedIn = !!mp;
+      if (window.DOT_LS_SET && window.DOT_LS_SET(mp ? mp.id : "guest")) {
+        this._swapUser = true;
+      }
       if (mp) {
         const ms = await window.DotDB.creatorStats([mp.id]);
         next.liveMe = {
@@ -4776,7 +5268,11 @@ class Component extends DCLogic {
         status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
         color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
       }));
-      this.setState(next, () => { this.loadPosts(); this.loadMyWorlds(); });
+      this.setState(next, () => {
+        this.loadPosts();
+        this.loadMyWorlds();
+        if (this._swapUser) this.reloadUserData();
+      });
     } catch (e) { /* 연결이 안 되면 예시 데이터로 둘러본다 */ }
   }
 
@@ -4853,6 +5349,147 @@ class Component extends DCLogic {
         })),
       }),
     }));
+  }
+
+  // 모양 파일을 못 찾았을 때 쓰는 표시 (안 보이는 대신 자리를 알려 준다)
+  // 기본 도트 모양이 비어 있으면(불러오기·복원 뒤) 다시 만든다
+  ensureSeedSprites() {
+    const sp = this.state.sprites || {};
+    if (sp.slime) return;
+    const seed = SEED();
+    if (!seed || !seed.art) return;
+    const add = {};
+    this._spriteCanvas = this._spriteCanvas || {};
+    if (!seed.P || !Object.keys(seed.P).length) return;
+    Object.keys(seed.art).forEach((k) => {
+      const url = this.artToSVG(seed.art[k], seed.P);
+      if (!url) return;
+      add[k] = url;
+      this._spriteCanvas[k] = this._spriteCanvas[k] || this.makeSpriteCanvas(seed.art[k], 8);
+    });
+    if (Object.keys(add).length) {
+      setTimeout(() => this.setState((p) => ({ sprites: Object.assign({}, add, p.sprites) })), 0);
+    }
+  }
+
+  // 모양 한 장을 어떻게든 찾아온다. 못 찾으면 «?» 표시를 준다.
+  spriteOf(key) {
+    if (!key) return this.missingSprite();
+    const sp = this.state.sprites || {};
+    if (sp[key]) return sp[key];
+    // 내가 찍은 도트 모양 (my0, my0#1 …)
+    const m = String(key).match(/^my(\d+)(?:#(\d+))?$/);
+    if (m) {
+      const sh = (this.state.shapes || [])[Number(m[1])];
+      const grid = sh && (sh.frames || [])[Number(m[2] || 0)];
+      const url = grid ? this.dotsToSVG(grid) : "";
+      if (url) { this.cacheSprite(key, url); return url; }
+    }
+    // 기본 도트
+    const seed = SEED();
+    if (seed && seed.art && seed.art[key] && seed.P && Object.keys(seed.P).length) {
+      const url = this.artToSVG(seed.art[key], seed.P);
+      if (url) { this.cacheSprite(key, url); return url; }
+    }
+    if (!this._warned) this._warned = {};
+    if (!this._warned[key]) { this._warned[key] = 1; console.warn("[dotverse] 모양을 찾지 못했습니다:", key); }
+    return this.missingSprite();
+  }
+
+  // 어떤 그림 주소든 blob: 주소로 바꾼다 (스타일 문자열에서 잘리지 않게)
+  blobURL(u) {
+    if (!u || typeof u !== "string") return "";
+    if (u.indexOf("blob:") === 0 || u.indexOf("http") === 0) return u;
+    this._blobs = this._blobs || {};
+    if (this._blobs[u]) return this._blobs[u];
+    if (u.indexOf("data:") !== 0) return u;
+    try {
+      const head = u.slice(5, u.indexOf(","));
+      const body = u.slice(u.indexOf(",") + 1);
+      const type = head.split(";")[0] || "application/octet-stream";
+      let blob;
+      if (head.indexOf("base64") >= 0) {
+        const bin = atob(body);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        blob = new Blob([arr], { type: type });
+      } else {
+        blob = new Blob([decodeURIComponent(body)], { type: type });
+      }
+      const out = URL.createObjectURL(blob);
+      this._blobs[u] = out;
+      return out;
+    } catch (e) { return u; }
+  }
+
+  cacheSprite(key, url) {
+    this._late = this._late || {};
+    if (this._late[key]) return;
+    this._late[key] = 1;
+    setTimeout(() => this.setState((p) => ({ sprites: Object.assign({}, p.sprites, { [key]: url }) })), 0);
+  }
+
+  missingSprite() {
+    if (this._missing) return this._missing;
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 64;
+    const g = c.getContext("2d");
+    g.fillStyle = "rgba(224,101,58,0.14)";
+    g.fillRect(0, 0, 64, 64);
+    g.strokeStyle = "#E0653A";
+    g.lineWidth = 4;
+    g.setLineDash([7, 6]);
+    g.strokeRect(3, 3, 58, 58);
+    g.setLineDash([]);
+    g.fillStyle = "#E0653A";
+    g.font = "700 30px monospace";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("?", 32, 34);
+    try { this._missing = c.toDataURL(); } catch (e) { this._missing = null; }
+    if (!this._missing || this._missing.length < 40) {
+      this._missing = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">' +
+        '<rect x="3" y="3" width="58" height="58" rx="6" fill="rgba(224,101,58,0.14)" stroke="#E0653A" stroke-width="4" stroke-dasharray="7 6"/>' +
+        '<text x="32" y="42" font-size="28" font-family="monospace" font-weight="700" fill="#E0653A" text-anchor="middle">?</text></svg>');
+    }
+    return this._missing;
+  }
+
+  // 캔버스에 실제로 찍힌 점이 있는지 본다 (팔레트가 없을 때 만들어진 빈 그림 걸러내기)
+  // 도트 격자를 SVG 그림 주소로 만든다 (캔버스를 쓰지 않는다)
+  dotsToSVG(cells, w, h) {
+    let r = "";
+    let any = false;
+    for (let y = 0; y < cells.length; y++) {
+      const row = cells[y] || [];
+      for (let x = 0; x < row.length; x++) {
+        const c = row[x];
+        if (!c) continue;
+        any = true;
+        r += '<rect x="' + x + '" y="' + y + '" width="1.02" height="1.02" fill="' + c + '"/>';
+      }
+    }
+    if (!any) return "";
+    const W = w || (cells[0] ? cells[0].length : 16), H = h || cells.length || 16;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" shape-rendering="crispEdges">' + r + "</svg>");
+  }
+
+  // 시드의 문자 그림("....##..") 을 색 격자로 바꾼다
+  artCells(rows, P) {
+    return (rows || []).map((row) => String(row).split("").map((ch) => (P || {})[ch] || null));
+  }
+
+  artToSVG(rows, P) {
+    return this.dotsToSVG(this.artCells(rows, P));
+  }
+
+  hasPixels(c) {
+    try {
+      const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+      for (let i = 3; i < d.length; i += 4) if (d[i] > 8) return true;
+      return false;
+    } catch (e) { return true; }
   }
 
   makeSpriteCanvas(rows, scale) {
@@ -5012,9 +5649,10 @@ class Component extends DCLogic {
     this._myKey = shapes;
     const add = {};
     this._spriteCanvas = this._spriteCanvas || {};
-    shapes.forEach((sh, i) => {
-      const grid = (sh.frames || [])[0];
-      if (!grid) return;
+    const paint = (grid, key) => {
+      const url = this.dotsToSVG(grid);
+      if (url) add[key] = url;
+      // 맵 캔버스에 그릴 때 쓰는 사본 (그리기는 되지만 읽기는 안 하는 브라우저 대비)
       const c = document.createElement("canvas");
       c.width = 64; c.height = 64;
       const g = c.getContext("2d");
@@ -5024,9 +5662,13 @@ class Component extends DCLogic {
         if (!col) return;
         g.fillStyle = col; g.fillRect(Math.floor(x * u), Math.floor(y * u), Math.ceil(u), Math.ceil(u));
       }));
-      const key = "my" + i;
       this._spriteCanvas[key] = c;
-      try { add[key] = c.toDataURL(); } catch (e) {}
+    };
+    shapes.forEach((sh, i) => {
+      (sh.frames || []).forEach((grid, f) => {
+        if (!grid) return;
+        paint(grid, f === 0 ? "my" + i : "my" + i + "#" + f);
+      });
     });
     if (Object.keys(add).length) {
       setTimeout(() => this.setState((p) => ({ sprites: Object.assign({}, p.sprites, add) })), 0);
@@ -5037,6 +5679,12 @@ class Component extends DCLogic {
   uploadArt = (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
+    // 캔버스 읽기가 막힌 브라우저 대비 — 원본 파일도 함께 읽어 둔다
+    try {
+      const fr = new FileReader();
+      fr.onload = () => { this._lastFileData = fr.result; };
+      fr.readAsDataURL(f);
+    } catch (err) {}
     const url = URL.createObjectURL(f);
     const img = new Image();
     img.onload = () => {
@@ -5049,7 +5697,9 @@ class Component extends DCLogic {
       g.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, N, N);
       URL.revokeObjectURL(url);
       let data = "";
-      try { data = c.toDataURL("image/png"); } catch (err) { return; }
+      try { data = c.toDataURL("image/png"); } catch (err) { data = ""; }
+      if (!data || data.length < 40) data = this._lastFileData || "";
+      if (!data) { this.say("이 브라우저에서는 사진을 변환할 수 없습니다.", "warn"); return; }
       const name = f.name.replace(/\.[^.]+$/, "").slice(0, 14);
       const key = "img" + Date.now().toString(36);
       this._spriteCanvas = this._spriteCanvas || {};
@@ -5060,20 +5710,61 @@ class Component extends DCLogic {
         placeArt: key, mapMode: "object", objTab: 1,
       }), () => {
         this.persistArts();
-        this.say("«" + name + "» 오브젝트를 만들었습니다. 맵을 클릭해 놓으세요.");
+        this.say("«" + name + "» 오브젝트를 만들었습니다.");
+        this.addObjectToScene(key, name);
+        this.saveArtToServer(key, name, data);
       });
     };
     img.src = url;
     e.target.value = "";
   };
 
+  // 이미지·도트 오브젝트를 서버(Storage + assets)에 올린다
+  async saveArtToServer(key, name, dataUrl) {
+    if (!(window.DotDB && window.DotDB.isLive)) return;
+    try {
+      let url = dataUrl;
+      if (window.DotDB.uploadMedia) {
+        const up = await window.DotDB.uploadMedia(this.state.worldId, "art/" + key, dataUrl);
+        if (up) url = up;
+      }
+      const r = await window.DotDB.saveAsset({
+        name: name, kind: "object", width: 32, height: 32,
+        frames: [], imageUrl: url, license: "cc_by", tags: [], isPublic: false,
+      });
+      if (r) { this.say("«" + name + "» 을 서버에 저장했습니다."); this.loadLive(); }
+      else this.say("서버에 저장하지 못했습니다 — 로그인 상태를 확인하세요.", "warn");
+    } catch (e) { this.say("서버에 저장하지 못했습니다.", "warn"); }
+  }
+
+  // 현재 장면에 오브젝트 한 개를 놓는다 (도트·사진 공용)
+  addObjectToScene(artKey, name, extra) {
+    // 모양이 아직 등록되지 않았으면 지금 등록한다
+    const id = "o" + Date.now().toString(36);
+    this._myKey = null;
+    this.syncMyArts();
+    const canv = (this._spriteCanvas || {})[artKey];
+    if (canv && !(this.state.sprites || {})[artKey]) {
+      try {
+        const url = canv.toDataURL();
+        this.setState((p) => ({ sprites: Object.assign({}, p.sprites, { [artKey]: url }) }));
+      } catch (e) {}
+    }
+    this.setObjects((list) => list.concat([Object.assign({
+      id: id, name: name || "오브젝트", art: artKey,
+      x: 0, y: 0, scale: 1, rot: 0, on: true,
+    }, extra || {})]));
+    this.setState({ objId: id, tab: "blocks" });
+    return id;
+  }
+
   persistArts = () => {
-    try { localStorage.setItem("dotverse.arts", JSON.stringify(this.state.imgArts || [])); } catch (e) {}
+    try { localStorage.setItem(LS("arts"), JSON.stringify(this.state.imgArts || [])); } catch (e) {}
   };
 
   restoreArts() {
     try {
-      const list = JSON.parse(localStorage.getItem("dotverse.arts") || "[]");
+      const list = JSON.parse(localStorage.getItem(LS("arts")) || "[]");
       if (!list.length) return;
       const add = {};
       this._spriteCanvas = this._spriteCanvas || {};
@@ -5096,19 +5787,13 @@ class Component extends DCLogic {
     this.setState((p) => ({
       favArts: p.favArts.indexOf(art) >= 0 ? p.favArts.filter((x) => x !== art) : p.favArts.concat([art]),
     }), () => {
-      try { localStorage.setItem("dotverse.favs", JSON.stringify(this.state.favArts)); } catch (e) {}
+      try { localStorage.setItem(LS("favs"), JSON.stringify(this.state.favArts)); } catch (e) {}
     });
   };
 
   // 프레임 격자를 작은 미리보기 이미지로
   gridToURL(grid) {
-    const c = document.createElement("canvas");
-    c.width = 64; c.height = 64;
-    const g = c.getContext("2d");
-    (grid || []).forEach((row, y) => row.forEach((col, x) => {
-      if (col) { g.fillStyle = col; g.fillRect(x * 4, y * 4, 4, 4); }
-    }));
-    return c.toDataURL();
+    return this.dotsToSVG(grid || []) || this.missingSprite();
   }
 
   loadFrame(shapeIdx, frameIdx) {
@@ -5137,18 +5822,27 @@ class Component extends DCLogic {
     window.scrollTo(0, 0);
   };
 
-  say = (msg) => {
-    clearTimeout(this._toast);
-    this.setState({ toast: msg });
-    this._toast = setTimeout(() => this.setState({ toast: null }), 2600);
+  say = (msg, kind) => {
+    if (!msg) return;
+    const id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    this.setState((p) => ({ toasts: (p.toasts || []).concat([{ id: id, msg: String(msg), kind: kind || "ok" }]).slice(-5) }));
+    setTimeout(() => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) })), 3400);
   };
+
+  dropToast = (id) => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) }));
 
   renderVals() {
     this.syncFuncs();
+    this.syncMyArts();
+    this.ensureSeedSprites();
     const s = S();
     const sp = this.state.sprites;
     const st = this.state;
-    const spr = (k) => sp[k] || "";
+    const cssUrl = (u) => {
+      const b = this.blobURL(u);
+      return b ? 'url("' + b.replace(/"/g, "%22") + '")' : "none";
+    };
+    const spr = (k) => cssUrl(this.spriteOf(k));
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
 
@@ -5308,6 +6002,7 @@ class Component extends DCLogic {
       })),
       noNotifs: st.dbLoaded && !(st.liveNotifs || []).length,
       meSprite: spr("slime"),
+      spritesReady: Object.keys(st.sprites || {}).length > 0,
       q: st.q,
       setQ: (e) => this.setState({ q: e.target.value }),
       onSearchKey: (e) => { if (e.key === "Enter") this.go("search")(); },
@@ -5320,7 +6015,7 @@ class Component extends DCLogic {
         const kindName = { object: "오브젝트", character: "캐릭터", animation: "애니메이션",
           tile: "타일", effect: "이펙트", background: "배경" }[a.kind] || "오브젝트";
         return {
-          name: a.name, handle: a.handle, sprite: a.sprite, tags: a.tags || [],
+          name: a.name, handle: a.handle, sprite: a.sprite || "none", tags: a.tags || [],
           rows: [
             { k: "종류", v: kindName },
             { k: "크기", v: a.size },
@@ -5541,8 +6236,7 @@ class Component extends DCLogic {
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
             if (st.liveMe && st.liveMe.handle === w.handle) return this.say("내 작품입니다.");
-            this.setState((p) => ({ follows: Object.assign({}, p.follows, { [w.handle]: !fOn }) }));
-            if (window.DotDB && window.DotDB.isLive) window.DotDB.follow(w.handle, !fOn);
+            this.doFollow(w.handle, !fOn);
           },
           followBg: fOn ? "#2F6F5E" : "#16181D",
           followText: fOn ? "팔로잉" : "팔로우",
@@ -5690,7 +6384,10 @@ class Component extends DCLogic {
       trashBg: st.trashHot ? "#FDECEA" : "rgba(255,255,255,0.86)",
       trashFg: st.trashHot ? "#C0392B" : "#A8AEB8",
       trashLabel: st.trashHot ? "놓으면 삭제" : "휴지통",
-      stageBg: st.stageBg || "",
+      stageBg: cssUrl(st.stageBg),
+      stageColor: st.stageColor || "#E7EFE9",
+      flashOn: !!st.flash,
+      flashColor: st.flash || "transparent",
       hasStageBg: !!st.stageBg,
       noStageBg: !st.stageBg,
       goMapTab: () => this.setState({ tab: "map" }),
@@ -5706,7 +6403,7 @@ class Component extends DCLogic {
       saveStudio: this.saveStudio,
       loadStudio: this.loadStudio,
       saveLabel: st.saving ? "저장 중…" : "저장",
-      savedTag: st.saved ? "저장됨 " + st.saved : (st.live ? (st.liveWorlds ? "DB 연결됨 · 실데이터" : "DB 연결됨") : "환경 변수 없음 · 로컬 저장"),
+      savedTag: (st.saved ? "저장됨 " + st.saved : (st.live ? (st.liveWorlds ? "DB 연결됨 · 실데이터" : "DB 연결됨") : "환경 변수 없음 · 로컬 저장")) + " · 빌드 svg-2 · 모양 " + Object.keys(st.sprites || {}).length + "장",
       wsRows: this.buildRows(),
       wsCount: this.countBlocks(),
       wsEmpty: this.countBlocks() === 0,
@@ -5818,6 +6515,108 @@ class Component extends DCLogic {
       }))),
       uploadSound: this.uploadSound,
       uploadArt: this.uploadArt,
+      sceneEmpty: this.curObjects().length === 0,
+      buildTag: "빌드 svg-3 · 모양 " + Object.keys(st.sprites || {}).length + "장",
+      goDotTab: () => this.setState({ route: "studio", tab: "dot" }, () => this.say("도트를 찍고 «이 모양을 오브젝트로 추가» 를 누르세요.")),
+      addShapeObject: () => {
+        const i = st.shapeIdx || 0;
+        const sh = (st.shapes || [])[i];
+        if (!sh) return this.say("먼저 모양을 만들어 주세요.", "warn");
+        const filled = (sh.frames[0] || []).some((row) => row.some((c) => !!c));
+        if (!filled) return this.say("빈 모양입니다 — 도트를 찍은 뒤 추가하세요.", "warn");
+        this._myKey = null;
+        this.syncMyArts();
+        const extra = (sh.frames || []).length > 1 ? { animShape: i } : {};
+        this.addObjectToScene("my" + i, sh.name || "도트 오브젝트", extra);
+        this.say("«" + (sh.name || "도트 오브젝트") + "» 을 오브젝트로 추가했습니다.");
+        const url = this.gridToURL(sh.frames[0]);
+        this.saveArtToServer("my" + i, sh.name || "도트 오브젝트", url);
+      },
+      addShapeToMap: () => {
+        const i = st.shapeIdx || 0;
+        const sh = (st.shapes || [])[i];
+        if (!sh) return this.say("먼저 모양을 만들어 주세요.", "warn");
+        this._myKey = null;
+        this.syncMyArts();
+        this.setState({ placeArt: "my" + i, mapMode: "object", tab: "map" },
+          () => this.say("맵을 클릭해 «" + (sh.name || "모양") + "» 을 놓으세요."));
+      },
+      toasts: (st.toasts || []).map((t) => ({
+        msg: t.msg,
+        bg: t.kind === "warn" ? "#8A3324" : (t.kind === "notif" ? "#2A2F3A" : "#16181D"),
+        fg: t.kind === "warn" ? "#FFC9B4" : (t.kind === "notif" ? "#F2B23E" : "#6FD3C7"),
+        ic: t.kind === "warn" ? "lucide:alert-triangle" : (t.kind === "notif" ? "lucide:bell" : "lucide:check-circle-2"),
+        close: () => this.dropToast(t.id),
+      })),
+      anyHidden: Object.keys(st.hideLayers || {}).length > 0,
+      showAllLayers: () => this.setState({ hideLayers: {} }, () => { this._baseKey = null; this.drawMap(); this.tick(); }),
+      layerChips: ["바닥", "벽", "경계", "오브젝트", "스폰", "배경"].map((L) => {
+        const off = !!(st.hideLayers || {})[L];
+        return {
+          t: L, title: off ? L + " 숨김 — 눌러서 보이기" : L + " 보임 — 눌러서 숨기기",
+          ic: off ? "lucide:eye-off" : "lucide:eye",
+          bg: off ? "#FDECEA" : "#FFFFFF",
+          bd: off ? "#F0C4BC" : "#E3DCCC",
+          fg: off ? "#C0392B" : "#5B616C",
+          go: () => this.setState((p) => {
+            const h = Object.assign({}, p.hideLayers);
+            if (off) delete h[L]; else h[L] = true;
+            return { hideLayers: h };
+          }, () => { this._baseKey = null; this.drawMap(); }),
+        };
+      }),
+      selText: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return !!(o && o.kind === "text");
+      })(),
+      textVal: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return o ? String(o.text === undefined ? "" : o.text) : "";
+      })(),
+      setTextVal: (e) => {
+        const v = e.target.value;
+        this.setObjects((list) => list.map((x) => (x.id === st.objId ? Object.assign({}, x, { text: v }) : x)));
+      },
+      textSize: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return String((o && o.fontSize) || 22);
+      })(),
+      setTextSize: (e) => {
+        const v = Math.max(8, parseFloat(e.target.value) || 22);
+        this.setObjects((list) => list.map((x) => (x.id === st.objId ? Object.assign({}, x, { fontSize: v }) : x)));
+      },
+      textColors: [
+        { name: "검정", c: "#16181D" }, { name: "빨강", c: "#C0392B" }, { name: "초록", c: "#2F6F5E" },
+        { name: "파랑", c: "#4A5FD1" }, { name: "노랑", c: "#F2B23E" }, { name: "흰색", c: "#FFFFFF" },
+      ].map((tc) => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        const on = !!(o && (o.color || "#16181D") === tc.c);
+        return Object.assign({}, tc, {
+          bd: on ? "#16181D" : "#E3DCCC",
+          go: () => this.setObjects((list) => list.map((x) => (x.id === st.objId ? Object.assign({}, x, { color: tc.c }) : x))),
+        });
+      }),
+      playerLabel: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return o && o.player ? "플레이어로 지정됨" : "플레이어로 지정하기";
+      })(),
+      playerIcon: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return o && o.player ? "lucide:user-check" : "lucide:user-plus";
+      })(),
+      playerFg: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        return o && o.player ? "#2F6F5E" : "#8A9099";
+      })(),
+      togglePlayerObj: () => {
+        const o = this.curObjects().find((x) => x.id === st.objId);
+        if (!o) return;
+        const on = !o.player;
+        this.setObjects((list) => list.map((x) => (
+          x.id === o.id ? Object.assign({}, x, { player: on }) : Object.assign({}, x, { player: false })
+        )));
+        this.say(on ? "«" + o.name + "» 을 플레이어로 지정했습니다." : "플레이어 지정을 해제했습니다.");
+      },
       palAttr: st.palMode === "attr",
       palBlocks: st.palMode !== "attr",
       attrGroups: [
@@ -5940,10 +6739,18 @@ class Component extends DCLogic {
       },
       shapes: (st.shapes || []).map((sh, i) => ({
         name: sh.name, frames: sh.frames.length,
-        sprite: this.gridToURL(sh.frames[0]),
+        sprite: cssUrl(this.gridToURL(sh.frames[0])),
         bd: st.shapeIdx === i ? "#2F6F5E" : "#EFEADE",
         bg: st.shapeIdx === i ? "#F1F7F4" : "#FFFFFF",
         go: () => this.loadFrame(i, 0),
+        remove: (e) => {
+          e.stopPropagation();
+          if ((st.shapes || []).length < 2) return this.say("모양이 하나뿐입니다 — 새 모양을 먼저 만들어 주세요.", "warn");
+          this.setState((p) => ({
+            shapes: p.shapes.filter((_, j) => j !== i),
+            shapeIdx: 0, frameIdx: 0,
+          }), () => { this._myKey = null; this.syncMyArts(); this.loadFrame(0, 0); this.say("모양을 삭제했습니다."); });
+        },
       })),
       addShape: () => {
         this.setState((p) => ({
@@ -5956,7 +6763,7 @@ class Component extends DCLogic {
         this.setState((p) => ({ shapes: p.shapes.map((s, i) => (i === p.shapeIdx ? Object.assign({}, s, { name: v }) : s)) }));
       },
       frames: ((st.shapes[st.shapeIdx] || {}).frames || []).map((fr, i) => ({
-        sprite: this.gridToURL(fr), n: i + 1,
+        sprite: cssUrl(this.gridToURL(fr)), n: i + 1,
         border: st.frameIdx === i ? "2px solid #16181D" : "1px solid #E3DCCC",
         go: () => this.loadFrame(st.shapeIdx, i),
         remove: (e) => {
@@ -6023,6 +6830,7 @@ class Component extends DCLogic {
         { t: "벽", ic: "lucide:brick-wall", k: "wall" },
         { t: "오브젝트", ic: "lucide:box", k: "object" },
         { t: "경계", ic: "lucide:scan", k: "effect" },
+        { t: "스폰", ic: "lucide:flag-triangle-right", k: "spawn" },
       ].map((m) => ({
         t: m.t, ic: m.ic,
         bg: st.mapMode === m.k ? "#FFFFFF" : "transparent",
@@ -6030,12 +6838,13 @@ class Component extends DCLogic {
         shadow: st.mapMode === m.k ? "0 1px 4px rgba(22,24,29,0.12)" : "none",
         go: () => { if (m.k === "code") this.setState({ tab: "blocks" }); else this.setState({ mapMode: m.k }, () => this.drawMap()); },
       })),
-      modeIcon: { floor: "lucide:grid-3x3", wall: "lucide:brick-wall", object: "lucide:box", effect: "lucide:scan" }[st.mapMode] || "lucide:grid-3x3",
+      modeIcon: { floor: "lucide:grid-3x3", wall: "lucide:brick-wall", object: "lucide:box", effect: "lucide:scan", spawn: "lucide:flag-triangle-right" }[st.mapMode] || "lucide:grid-3x3",
       modeHint: {
         floor: "클릭·드래그로 바닥 타일을 칠합니다",
         wall: "클릭·드래그로 벽을 세웁니다 (통과 불가)",
         object: "클릭하면 선택한 오브젝트를 놓습니다",
         effect: "클릭·드래그로 갈 수 없는 곳을 칠합니다",
+        spawn: "클릭한 칸이 플레이어가 처음 나타나는 자리가 됩니다 (한 곳)",
       }[st.mapMode] || "",
       railTools: [
         { name: "선택", ic: "lucide:mouse-pointer-2", k: "select" },
@@ -6292,11 +7101,23 @@ class Component extends DCLogic {
           category: st.worldCat || "adventure",
           tags: st.tagsDef || [],
           license: ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
+          art: (() => {
+            const o = (this.curObjects() || [])[0];
+            return (o && o.art) || "portal";
+          })(),
         });
-        this.say(r && r.ok
-          ? "게시했습니다. 둘러보기 목록에 올라갑니다."
-          : "게시하지 못했습니다: " + ((r && r.reason) || "알 수 없는 오류"));
-        if (r && r.ok) this.loadLive();
+        if (!r || !r.ok) {
+          return this.say("게시하지 못했습니다: " + ((r && r.reason) || "알 수 없는 오류"), "warn");
+        }
+        await this.loadLive();
+        await this.loadMyWorlds();
+        const up = (this.state.liveWorlds || []).some((w) => w.id === st.worldId);
+        if (up) {
+          this.setState({ route: "home" }, () => window.scrollTo(0, 0));
+          this.say("«" + title + "» 을 게시했습니다. 둘러보기 목록에 올라갔습니다.");
+        } else {
+          this.say("게시는 됐지만 목록을 다시 읽지 못했습니다 — 새로고침하면 보입니다.", "warn");
+        }
       },
 
       // ───────── 공유 오브젝트 라이브러리
@@ -6443,9 +7264,11 @@ class Component extends DCLogic {
           name: c ? c.name : (st.dbLoaded ? "손님" : "밤샘개발자"),
           handle: c ? c.handle : (st.dbLoaded ? "guest" : "nightowl"),
           memo: c ? (c.memo || "소개를 적어보세요.") : (st.dbLoaded ? "소개를 적어보세요." : "새벽 3시에 만든 건 다 방탈출이 된다."),
-          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl)) || spr((c && c.art) || st.avatarArt || "slime") || spr("slime"),
+          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl))
+            ? cssUrl(mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : c.avatarUrl)
+            : spr((c && c.art) || st.avatarArt || "slime"),
           bannerBg: (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : (c && c.bannerUrl))
-            ? "url(" + (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : c.bannerUrl) + ")"
+            ? cssUrl(mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : c.bannerUrl)
             : "linear-gradient(120deg,#2F6F5E 0%,#6FD3C7 100%)",
           followersK: kfmt(c ? (c.followers || 0) : (st.dbLoaded ? 0 : 24100)),
           worlds: c ? (c.worlds || 0) : (st.dbLoaded ? 0 : 38),
@@ -6455,9 +7278,7 @@ class Component extends DCLogic {
           followLabel: mine ? "프로필 편집" : (st.follows[h] ? "팔로잉" : "팔로우"),
           follow: () => {
             if (mine) { this.say("프로필 편집은 설정에서 할 수 있습니다."); return; }
-            const on = !st.follows[h];
-            this.setState((p) => ({ follows: Object.assign({}, p.follows, { [h]: on }) }));
-            if (window.DotDB && window.DotDB.isLive) window.DotDB.follow(h, on);
+            this.doFollow(h, !st.follows[h]);
           },
         };
       })(),
