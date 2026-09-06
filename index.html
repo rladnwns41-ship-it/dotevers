@@ -38,6 +38,8 @@
   @keyframes dv-toast-in { from { opacity: 0; transform: translate(-50%, 24px) scale(0.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
   @keyframes dv-slide-right { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes dv-grow-up { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes dv-report-backdrop { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dv-report-pop { from { opacity: 0; transform: scale(0.88) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   /* 인터랙션 전환: 클릭 가능한 모든 요소에 공통 적용 */
   [style*="cursor: pointer"], [style*="cursor:pointer"], button, input, textarea, a {
     transition: background-color 180ms cubic-bezier(0.16,1,0.3,1),
@@ -228,10 +230,16 @@
         <div style="position:relative;background:#20232B;border:1px solid #2E3341;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px">
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
             <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
-              <div style="aspect-ratio:1;background:#EFEADE;border:1px solid #CFC7B6;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:9px">
-                <img src="{{ a.sprite }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:contain;image-rendering:pixelated" />
+              <div style="aspect-ratio:1;background:#EFEADE;border:1px solid #CFC7B6;border-radius:11px;display:flex;align-items:center;justify-content:center;padding:9px;overflow:hidden">
+                <canvas data-sprite-anim="{{ a.artKey }}" style="width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges"></canvas>
               </div>
             </sc-for>
+          </div>
+          <!-- 슬라이딩 픽셀 캐릭터: coin / torch / slime 순환 애니메이션 -->
+          <div style="display:flex;align-items:center;justify-content:center;gap:24px;padding:6px 0">
+            <canvas data-sprite-anim="coin"  style="width:48px;height:48px;image-rendering:pixelated;animation:dv-float 2.0s ease-in-out infinite"></canvas>
+            <canvas data-sprite-anim="torch" style="width:48px;height:48px;image-rendering:pixelated;animation:dv-float 2.4s ease-in-out infinite;animation-delay:0.3s"></canvas>
+            <canvas data-sprite-anim="slime" style="width:48px;height:48px;image-rendering:pixelated;animation:dv-float 1.8s ease-in-out infinite;animation-delay:0.6s"></canvas>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;background:#171A21;border-radius:13px;padding:14px">
             <sc-for list="{{ heroBlocks }}" as="b" hint-placeholder-count="3">
@@ -727,7 +735,7 @@
 
       <div style="position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#DFE9E4,#EFEADE);border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center">
         <div style="position:absolute;inset:0;opacity:0.5;background-image:linear-gradient(#CFC7B6 1px,transparent 1px),linear-gradient(90deg,#CFC7B6 1px,transparent 1px);background-size:32px 32px"></div>
-        <img src="{{ world.sprite }}" alt="" style="position:relative;width:26%;height:26%;object-fit:contain;image-rendering:pixelated" />
+        <canvas data-sprite-anim="{{ world.artKey }}" style="position:relative;width:26%;height:26%;image-rendering:pixelated;image-rendering:crisp-edges"></canvas>
         <button onClick="{{ playWorld }}" style="position:absolute;bottom:20px;left:20px;display:flex;align-items:center;gap:9px;background:#16181D;color:#FFFFFF;border:0;border-radius:12px;padding:15px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
           <iconify-icon icon="lucide:play" width="17"></iconify-icon><span>새 탭에서 플레이</span>
         </button>
@@ -2322,46 +2330,6 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ reportOn }}" hint-placeholder-val="{{ false }}">
-    <div style="position:fixed;inset:0;z-index:98;background:rgba(16,18,22,0.55);display:flex;align-items:center;justify-content:center;padding:24px">
-      <div style="width:100%;max-width:420px;background:#FFFFFF;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;align-items:center;gap:9px">
-          <iconify-icon icon="lucide:flag" width="17" style="color:#C0392B"></iconify-icon>
-          <span style="font-size:16px;font-weight:700;color:#16181D">신고하기</span>
-          <span onClick="{{ closeReport }}" style="margin-left:auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;color:#A0A6AF" style-hover="background:#F4F1EA;color:#16181D"><iconify-icon icon="lucide:x" width="14"></iconify-icon></span>
-        </div>
-        <span style="font-size:13px;color:#5B616C;line-height:1.7">{{ reportLabel }} 을 신고합니다. 접수 내용은 검토팀에만 보입니다.</span>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <span style="font-size:12.5px;font-weight:700;color:#16181D">사유</span>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            <sc-for list="{{ reportReasons }}" as="r" hint-placeholder-count="6">
-              <span onClick="{{ r.go }}" style="border:1px solid {{ r.bd }};background:{{ r.bg }};color:{{ r.fg }};border-radius:99px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer">{{ r.t }}</span>
-            </sc-for>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <span style="font-size:12.5px;font-weight:700;color:#16181D">자세한 내용</span>
-          <textarea value="{{ reportDetail }}" onChange="{{ setReportDetail }}" placeholder="언제, 어디서, 무엇이 문제였는지 적어 주세요. 원본 링크가 있으면 함께 넣어 주세요." style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;line-height:1.7;min-height:96px;resize:vertical;outline:none"></textarea>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <span style="font-size:12.5px;font-weight:700;color:#16181D">회신받을 이메일</span>
-          <input type="email" value="{{ reportEmail }}" onChange="{{ setReportEmail }}" placeholder="you@example.com" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;outline:none" />
-          <span style="font-size:11.5px;color:#8A9099;line-height:1.6">처리 결과를 이 주소로 알려드립니다. 급한 사안은 <b style="color:#2F6F5E">rladnwns54@gmail.com</b> 으로 직접 보내주세요.</span>
-        </div>
-        <sc-if value="{{ reportTicket }}" hint-placeholder-val="{{ false }}">
-          <span style="display:flex;align-items:center;gap:8px;background:#F1F7F4;border:1px solid #CFE3DA;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#2F6F5E">
-            <iconify-icon icon="lucide:check-circle-2" width="15"></iconify-icon>
-            <span>접수번호 <b style="font-family:Galmuri11,monospace">{{ reportTicket }}</b> · 프로필 &gt; 신고 내역에서 상태를 볼 수 있습니다.</span>
-          </span>
-        </sc-if>
-        <div style="display:flex;gap:8px">
-          <button onClick="{{ sendReport }}" style="flex:1;background:#C0392B;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">신고 접수</button>
-          <button onClick="{{ closeReport }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:12px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>
-        </div>
-      </div>
-    </div>
-  </sc-if>
-
   <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:10px;background:#16181D;color:#F4F1EA;border-radius:12px;padding:14px 20px;box-shadow:0 18px 40px -12px rgba(0,0,0,0.5);animation:dv-toast-in 300ms cubic-bezier(0.16,1,0.3,1) forwards">
       <iconify-icon icon="lucide:check-circle-2" width="18" style="color:#6FD3C7"></iconify-icon>
@@ -2371,6 +2339,148 @@
 </div>
 
 </x-dc>
+
+<!-- ══════════ 신고 모달 (네이티브 DOM — 렌더링 엔진 scope 외부) ══════════ -->
+<div id="dv-report-overlay" style="display:none;position:fixed;inset:0;z-index:98;background:rgba(16,18,22,0.55);align-items:center;justify-content:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',system-ui,sans-serif">
+  <div id="dv-report-box" style="width:100%;max-width:420px;background:#FFFFFF;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 28px 60px -16px rgba(16,18,22,0.45)">
+    <div style="display:flex;align-items:center;gap:9px">
+      <iconify-icon icon="lucide:flag" width="17" style="color:#C0392B"></iconify-icon>
+      <span style="font-size:16px;font-weight:700;color:#16181D">신고하기</span>
+      <span id="dv-report-close-x" style="margin-left:auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;color:#A0A6AF">
+        <iconify-icon icon="lucide:x" width="14"></iconify-icon>
+      </span>
+    </div>
+    <span id="dv-report-label-text" style="font-size:13px;color:#5B616C;line-height:1.7"></span>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-size:12.5px;font-weight:700;color:#16181D">사유</span>
+      <div id="dv-report-reasons" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-size:12.5px;font-weight:700;color:#16181D">자세한 내용</span>
+      <textarea id="dv-report-detail" placeholder="언제, 어디서, 무엇이 문제였는지 적어 주세요. 원본 링크가 있으면 함께 넣어 주세요." style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;line-height:1.7;min-height:96px;resize:vertical;outline:none;width:100%;box-sizing:border-box"></textarea>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-size:12.5px;font-weight:700;color:#16181D">회신받을 이메일</span>
+      <input id="dv-report-email" type="email" placeholder="you@example.com" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13px;outline:none;width:100%;box-sizing:border-box" />
+      <span style="font-size:11.5px;color:#8A9099;line-height:1.6">처리 결과를 이 주소로 알려드립니다. 급한 사안은 <b style="color:#2F6F5E">rladnwns54@gmail.com</b> 으로 직접 보내주세요.</span>
+    </div>
+    <div id="dv-report-ticket-row" style="display:none;align-items:center;gap:8px;background:#F1F7F4;border:1px solid #CFE3DA;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#2F6F5E">
+      <iconify-icon icon="lucide:check-circle-2" width="15"></iconify-icon>
+      <span>접수번호 <b id="dv-report-ticket-num" style="font-family:Galmuri11,monospace"></b> · 프로필 &gt; 신고 내역에서 상태를 볼 수 있습니다.</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="dv-report-submit" style="flex:1;background:#C0392B;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">신고 접수</button>
+      <button id="dv-report-close-btn" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:12px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var REASONS = ["욕설·비하 표현", "다른 사람의 작품 무단 사용", "개인정보 유포", "성인물·폭력 묘사", "광고·도박 유도", "기타"];
+  var _current = null;   // { type, id, label }
+  var _reason  = REASONS[0];
+
+  var overlay   = document.getElementById("dv-report-overlay");
+  var box       = document.getElementById("dv-report-box");
+  var labelEl   = document.getElementById("dv-report-label-text");
+  var reasonsEl = document.getElementById("dv-report-reasons");
+  var detailEl  = document.getElementById("dv-report-detail");
+  var emailEl   = document.getElementById("dv-report-email");
+  var ticketRow = document.getElementById("dv-report-ticket-row");
+  var ticketNum = document.getElementById("dv-report-ticket-num");
+
+  function renderReasons() {
+    reasonsEl.innerHTML = "";
+    REASONS.forEach(function (t) {
+      var chip = document.createElement("span");
+      chip.textContent = t;
+      var sel = t === _reason;
+      chip.style.cssText = "border:1px solid " + (sel ? "#16181D" : "#E3DCCC") + ";background:" + (sel ? "#16181D" : "#FFFFFF") + ";color:" + (sel ? "#FFFFFF" : "#3A3F49") + ";border-radius:99px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all 160ms";
+      chip.addEventListener("click", function () { _reason = t; renderReasons(); });
+      reasonsEl.appendChild(chip);
+    });
+  }
+
+  function showModal(type, id, label) {
+    _current = { type: type, id: id, label: label };
+    _reason  = REASONS[0];
+    detailEl.value  = "";
+    emailEl.value   = window.__dotApp ? (window.__dotApp.state.reportEmail || "") : "";
+    ticketRow.style.display = "none";
+    labelEl.textContent = (label || "이 항목") + " 을 신고합니다. 접수 내용은 검토팀에만 보입니다.";
+    renderReasons();
+    overlay.style.display = "flex";
+    // 진입 애니메이션
+    box.style.animation = "none";
+    box.offsetHeight;   // reflow
+    box.style.animation = "dv-report-pop 280ms cubic-bezier(0.16,1,0.3,1) forwards";
+    overlay.style.animation = "none";
+    overlay.offsetHeight;
+    overlay.style.animation = "dv-report-backdrop 220ms cubic-bezier(0.16,1,0.3,1) forwards";
+  }
+
+  function hideModal() {
+    overlay.style.display = "none";
+    _current = null;
+    if (window.__dotApp) window.__dotApp.setState({ reportOn: null, reportTicket: null });
+  }
+
+  async function submitReport() {
+    if (!_current) return;
+    var detail = (detailEl.value || "").trim();
+    var email  = (emailEl.value  || "").trim();
+    var app    = window.__dotApp;
+    if (!detail) { if (app) app.say("자세한 내용을 적어주세요."); else alert("자세한 내용을 적어주세요."); return; }
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      if (app) app.say("회신받을 이메일을 정확히 적어주세요."); else alert("회신받을 이메일을 정확히 적어주세요."); return;
+    }
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      if (app) app.say("서버 연결이 없어 접수할 수 없습니다. rladnwns54@gmail.com 으로 보내주세요.");
+      else alert("서버 연결이 없습니다.");
+      return;
+    }
+    if (app) app.setState({ reportEmail: email });
+    var res = await window.DotDB.report({
+      subjectType: _current.type, subjectId: _current.id, subjectLabel: _current.label,
+      reason: _reason, detail: detail, email: email,
+      url: (typeof location !== "undefined" ? location.href : ""),
+    });
+    if (res && res.ok) {
+      var ticket = res.ticket || "접수 완료";
+      ticketNum.textContent = ticket;
+      ticketRow.style.display = "flex";
+      detailEl.value = "";
+      if (app) { app.say("신고를 접수했습니다. 접수번호 " + ticket + " · 24시간 내 검토합니다."); app.loadLive(); }
+    } else {
+      var reason = (res && res.reason) || "알 수 없는 오류";
+      if (app) app.say("접수하지 못했습니다: " + reason + " · rladnwns54@gmail.com 으로 보내주세요.");
+    }
+  }
+
+  // 전역 브릿지
+  window.closeReport = hideModal;
+  window.openReport  = showModal;
+
+  // 이벤트
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) hideModal(); });
+  document.getElementById("dv-report-close-x").addEventListener("click", hideModal);
+  document.getElementById("dv-report-close-btn").addEventListener("click", hideModal);
+  document.getElementById("dv-report-submit").addEventListener("click", submitReport);
+
+  // hover 효과
+  var hoverEls = [
+    { el: document.getElementById("dv-report-close-x"),   on: "background:#F4F1EA;color:#16181D", off: "color:#A0A6AF" },
+    { el: document.getElementById("dv-report-submit"),     on: "background:#96251B", off: "background:#C0392B" },
+    { el: document.getElementById("dv-report-close-btn"),  on: "background:#F4F1EA", off: "background:#FFFFFF" },
+  ];
+  hoverEls.forEach(function (h) {
+    h.el.addEventListener("mouseenter", function () { h.on.split(";").forEach(function (s) { var p = s.split(":"); if (p[0]) h.el.style[p[0].trim().replace(/-([a-z])/g, function (m, c) { return c.toUpperCase(); })] = p[1].trim(); }); });
+    h.el.addEventListener("mouseleave", function () { h.off.split(";").forEach(function (s) { var p = s.split(":"); if (p[0]) h.el.style[p[0].trim().replace(/-([a-z])/g, function (m, c) { return c.toUpperCase(); })] = p[1].trim(); }); });
+  });
+})();
+</script>
+
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
 // 시드는 도트 그림 · 게시판 목록 · 약관 같은 «앱 구성»에만 쓴다.
 // 작품 · 크리에이터 · 커뮤니티 글 · 공유 오브젝트는 DB 에서만 온다 (없으면 빈 목록).
@@ -2509,9 +2619,10 @@ class Component extends DCLogic {
     reacts: {},
     tab: "blocks",
     worldId: (() => {
+      // 로그인 전에는 임시 ID를 쓰고, 로그인 후 setUserWorldId()로 교체합니다
       try {
-        let v = localStorage.getItem("dotverse.worldId");
-        if (!v) { v = "w" + Math.random().toString(36).slice(2, 10); localStorage.setItem("dotverse.worldId", v); }
+        let v = localStorage.getItem("dotverse.worldId.guest");
+        if (!v) { v = "w" + Math.random().toString(36).slice(2, 10); localStorage.setItem("dotverse.worldId.guest", v); }
         return v;
       } catch (e) { return "w" + Math.random().toString(36).slice(2, 10); }
     })(),
@@ -3509,12 +3620,10 @@ class Component extends DCLogic {
   REPORT_REASONS = ["욕설·비하 표현", "다른 사람의 작품 무단 사용", "개인정보 유포", "성인물·폭력 묘사", "광고·도박 유도", "기타"];
 
   openReport = (type, id, label) => {
-    this.setState({
-      reportOn: { type: type, id: id, label: label },
-      reportReason: this.REPORT_REASONS[0],
-      reportDetail: "", reportTicket: null,
-      reportEmail: this.state.reportEmail || "",
-    });
+    // 네이티브 신고 모달(x-dc scope 밖)에 위임한다
+    if (typeof window.openReport === "function") {
+      window.openReport(type, id, label);
+    }
   };
 
   sendReport = async () => {
@@ -4119,6 +4228,42 @@ class Component extends DCLogic {
     return out;
   }
 
+  // worldId 변경 시 자동으로 해당 유저의 스튜디오 데이터를 읽어옵니다
+  loadStudioData = async (worldId) => {
+    if (!window.DotDB || !window.DotDB.isLive || !worldId) return;
+    try {
+      const row = await window.DotDB.loadStudio(worldId);
+      if (!row) return;
+      const payload = Object.assign({}, row.scene, { wsBy: row.blocks });
+      try {
+        const b = await window.DotDB.loadBlocks(worldId);
+        if (b && Object.keys(b).length) payload.wsBy = b;
+      } catch (e) {}
+      this._model = JSON.parse(JSON.stringify(payload.wsBy || {}));
+      const objectsBy = {};
+      Object.keys(payload.objectsBy || {}).forEach((sid) => {
+        objectsBy[sid] = (payload.objectsBy[sid] || []).map((o) => ({
+          id: o.id, name: o.name, art: o.art,
+          x: o.x || 0, y: o.y || 0,
+          scale: o.scale !== undefined ? o.scale : (o.s || 100) / 100,
+          on: o.on === 0 ? false : true,
+        }));
+      });
+      const spriteAdd = {};
+      (payload.arts || []).forEach((a) => { spriteAdd[a.art] = a.url; });
+      const next = {
+        scenes: payload.scenes || this.state.scenes,
+        objectsBy: objectsBy,
+        wsBy: payload.wsBy || {},
+        wsRev: (this.state.wsRev || 0) + 1,
+        sprites: Object.assign({}, this.state.sprites, spriteAdd),
+      };
+      if (payload.shapes) next.shapes = payload.shapes;
+      if (payload.vars) next.varsDef = payload.vars.map((v) => ({ name: v[0], value: v[1], visible: !!v[2] }));
+      this.setState(next, () => this.drawMap());
+    } catch (e) {}
+  };
+
   loadStudio = async () => {
     let payload = null;
     if (window.DotDB && window.DotDB.isLive) {
@@ -4653,11 +4798,82 @@ class Component extends DCLogic {
     if ((location.hash || "") === "#play") {
       setTimeout(() => this.setState({ route: "play", bigPlay: true }, () => this.runAll()), 400);
     }
+
+    // ── 전역 브릿지: 네이티브 신고 모달이 앱 인스턴스를 참조할 수 있도록 ──
+    window.__dotApp = this;
+
+    // ── 도트 스프라이트 애니메이션 재생기 ──
+    this._startSpriteAnimations();
+  }
+
+  // 페이지 내 모든 <canvas data-sprite-anim> 요소에 픽셀 애니메이션을 건다
+  _startSpriteAnimations() {
+    const s = SEED();
+    if (!s || !s.art || !s.P) return;
+    const FPS = 6;
+    const SCALE = 8;
+    const spriteKeys = Object.keys(s.art);
+    // 다중-프레임으로 쓸 스프라이트 쌍: [key, [frame0, frame1, ...]]
+    const animMap = {
+      coin:   ["coin",   "lamp"],
+      torch:  ["torch",  "portal"],
+      slime:  ["slime",  "key"],
+    };
+
+    const toGrid = (k) => (s.art[k] || []).map((row) =>
+      row.split("").map((ch) => s.P[ch] || null)
+    );
+
+    const drawGrid = (ctx, grid, scale) => {
+      const h = grid.length, w = grid[0] ? grid[0].length : 0;
+      ctx.clearRect(0, 0, w * scale, h * scale);
+      for (let r = 0; r < h; r++) {
+        for (let c = 0; c < w; c++) {
+          const col = grid[r][c];
+          if (col) {
+            ctx.fillStyle = col;
+            ctx.fillRect(c * scale, r * scale, scale, scale);
+          }
+        }
+      }
+    };
+
+    // 기존 캔버스 엘리먼트에 애니메이션 붙이기
+    const attach = () => {
+      document.querySelectorAll("canvas[data-sprite-anim]").forEach((cv) => {
+        if (cv.__animAttached) return;
+        cv.__animAttached = true;
+        const key = cv.dataset.spriteAnim;
+        const frames = animMap[key]
+          ? animMap[key].map(toGrid)
+          : [toGrid(key)];
+        if (!frames[0] || !frames[0].length) return;
+        const rows = frames[0].length;
+        const cols = frames[0][0] ? frames[0][0].length : 0;
+        cv.width  = cols * SCALE;
+        cv.height = rows * SCALE;
+        const ctx = cv.getContext("2d");
+        let fi = 0;
+        cv.__spriteTimer = setInterval(() => {
+          drawGrid(ctx, frames[fi % frames.length], SCALE);
+          fi++;
+        }, 1000 / FPS);
+        drawGrid(ctx, frames[0], SCALE);
+      });
+    };
+
+    attach();
+    // 새 라우트가 렌더되면 다시 스캔
+    this._spriteAttachInterval = setInterval(attach, 800);
   }
 
   componentWillUnmount() {
     clearInterval(this._t); clearInterval(this._anim);
     clearTimeout(this._toast); clearTimeout(this._menuT);
+    clearInterval(this._spriteAttachInterval);
+    document.querySelectorAll("canvas[data-sprite-anim]").forEach((cv) => {
+      if (cv.__spriteTimer) clearInterval(cv.__spriteTimer);
+    });
     if (this._onMouse) {
       window.removeEventListener("mousemove", this._onMouse);
       window.removeEventListener("mousedown", this._onMouse);
@@ -4697,7 +4913,10 @@ class Component extends DCLogic {
           catName: x.category || "실험실",
           likes: x.like_count || 0, dislikes: x.dislike_count || 0,
           comments: x.comment_count || 0, plays: x.play_count || 0,
-          online: 0, ago: "방금", tags: [], art: "portal",
+          online: 0, ago: this.agoText(x.published_at), tags: x.tags || [],
+          // thumb_url 이 있으면 썸네일, 없으면 기본 아트
+          thumbUrl: x.thumb_url || null,
+          art: x.thumb_url ? "__thumb__" : "portal",
         }));
       }
       if (a) {
@@ -4753,6 +4972,13 @@ class Component extends DCLogic {
           followers: ((ms || {})[mp.id] || {}).followers || 0,
           worlds: ((ms || {})[mp.id] || {}).worlds || 0,
         };
+        // 로그인 유저는 사용자별 고유 worldId를 씁니다
+        const userWorldKey = "dotverse.worldId." + mp.id;
+        try {
+          let uv = localStorage.getItem(userWorldKey);
+          if (!uv) { uv = "w" + mp.id.replace(/-/g, "").slice(0, 10); localStorage.setItem(userWorldKey, uv); }
+          if (uv !== this.state.worldId) next.worldId = uv;
+        } catch (e) {}
       }
       if (db) {
         next.liveKpis = [
@@ -4776,7 +5002,14 @@ class Component extends DCLogic {
         status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
         color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
       }));
-      this.setState(next, () => { this.loadPosts(); this.loadMyWorlds(); });
+      this.setState(next, () => {
+        this.loadPosts();
+        this.loadMyWorlds();
+        // worldId가 변경된 경우 스튜디오 데이터를 새 ID로 다시 로드합니다
+        if (next.worldId && next.worldId !== this.state.worldId) {
+          this.loadStudioData(next.worldId);
+        }
+      });
     } catch (e) { /* 연결이 안 되면 예시 데이터로 둘러본다 */ }
   }
 
@@ -5144,9 +5377,10 @@ class Component extends DCLogic {
   };
 
   renderVals() {
+    try {
     this.syncFuncs();
     const s = S();
-    const sp = this.state.sprites;
+    const sp = this.state.sprites || {};
     const st = this.state;
     const spr = (k) => sp[k] || "";
     const authorArt = {};
@@ -5196,7 +5430,8 @@ class Component extends DCLogic {
       catName: w.catName, online: w.online, ago: w.ago,
       likes: kfmt(w.likes + (st.reacts["w:" + w.id] === "like" ? 1 : 0)),
       dislikes: kfmt(w.dislikes), comments: kfmt(w.comments), playsK: kfmt(w.plays),
-      sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || w.art),
+      sprite: w.thumbUrl || spr(w.art) || spr("portal"),
+      authorSprite: spr(authorArt[w.author] || w.art) || spr("slime"),
       go: () => {
         this.go("world", { worldId: w.id })();
         this.loadWorldThread(w.id);
@@ -5221,7 +5456,17 @@ class Component extends DCLogic {
         btnFg: on ? "#FFFFFF" : "#2A2D36",
         follow: (e) => {
           e.stopPropagation();
-          this.setState((p) => ({ follows: Object.assign({}, p.follows, { [c.handle]: !on }) }));
+          if (!st.signedIn) { this.say("팔로우하려면 로그인이 필요합니다."); return; }
+          const nextOn = !on;
+          this.setState((p) => ({ follows: Object.assign({}, p.follows, { [c.handle]: nextOn }) }));
+          if (window.DotDB && window.DotDB.isLive) {
+            window.DotDB.follow(c.handle, nextOn).then((ok) => {
+              if (!ok) {
+                this.setState((p) => ({ follows: Object.assign({}, p.follows, { [c.handle]: on }) }));
+                this.say("팔로우에 실패했습니다.");
+              }
+            });
+          }
         },
       };
     }));
@@ -5239,7 +5484,7 @@ class Component extends DCLogic {
       id: a.id, name: a.name, handle: a.handle, author: a.author, size: a.size,
       frames: a.frames, license: a.license, kind: a.kind, tags: a.tags,
       usesK: kfmt(a.uses), likesK: kfmt(a.likes), dislikes: a.dislikes,
-      sprite: spr(a.art),
+      sprite: spr(a.art), artKey: a.art || "chest",
       preview: (e) => {
         if (e) e.stopPropagation();
         this.setState({ pvId: a.id });
@@ -5254,6 +5499,13 @@ class Component extends DCLogic {
     })));
 
     return {
+      // ── 항상 먼저 정의: 어떤 라우트에서도 쓰이는 이벤트 핸들러
+      // 아래 속성들이 return 블록 중간에서 예외가 발생해도 누락되지 않도록
+      // 객체 리터럴의 맨 앞에 선언합니다.
+      chatSend: () => this.sendChat(),
+      stopIt: (e) => { if (e && typeof e.stopPropagation === "function") e.stopPropagation(); },
+      stageClick: () => this.fireMouse(),
+
       // 라우팅
       r_landing: st.route === "landing",
       r_auth: st.route === "auth",
@@ -5307,7 +5559,13 @@ class Component extends DCLogic {
         },
       })),
       noNotifs: st.dbLoaded && !(st.liveNotifs || []).length,
-      meSprite: spr("slime"),
+      meSprite: (st.liveMe && st.liveMe.avatarUrl) || spr((st.liveMe && st.liveMe.art) || "slime") || spr("slime"),
+      // ───────── 채팅 (항상 정의 — world 라우트 외에서도 참조됨)
+      chatLines: (st.chatLog || []).slice(-8),
+      chatEmpty: !(st.chatLog || []).length,
+      chatDraft: st.chatDraft || "",
+      setChat: (e) => this.setState({ chatDraft: e.target.value }),
+      chatKey: (e) => { if (e.key === "Enter") this.sendChat(); e.stopPropagation(); },
       q: st.q,
       setQ: (e) => this.setState({ q: e.target.value }),
       onSearchKey: (e) => { if (e.key === "Enter") this.go("search")(); },
@@ -5536,7 +5794,7 @@ class Component extends DCLogic {
           likes: kfmt((w.likes || 0) + (r === "like" ? 1 : 0)),
           dislikes: kfmt((w.dislikes || 0) + (r === "dislike" ? 1 : 0)),
           comments: kfmt(w.comments || 0),
-          sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || w.art),
+          sprite: spr(w.art), artKey: w.art || "portal", authorSprite: spr(authorArt[w.author] || w.art),
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
@@ -5599,30 +5857,14 @@ class Component extends DCLogic {
           report: () => this.openReport("comment", c.id || ("local:" + i), c.author + " 님의 댓글"),
         };
       }),
-      reportOn: !!st.reportOn,
-      reportLabel: st.reportOn ? st.reportOn.label : "",
-      reportReasons: this.REPORT_REASONS.map((t) => ({
-        t: t,
-        bg: st.reportReason === t ? "#16181D" : "#FFFFFF",
-        fg: st.reportReason === t ? "#FFFFFF" : "#3A3F49",
-        bd: st.reportReason === t ? "#16181D" : "#E3DCCC",
-        go: () => this.setState({ reportReason: t }),
-      })),
-      reportDetail: st.reportDetail || "",
-      setReportDetail: (e) => this.setState({ reportDetail: e.target.value }),
-      reportEmail: st.reportEmail || "",
-      setReportEmail: (e) => this.setState({ reportEmail: e.target.value }),
-      reportTicket: st.reportTicket || "",
-      sendReport: this.sendReport,
-      closeReport: () => this.setState({ reportOn: null, reportTicket: null }),
       replyDraft: st.replyDraft || "",
       setReplyDraft: (e) => this.setState({ replyDraft: e.target.value }),
-      draft: st.draft,
-      draftLen: st.draft.length,
+      draft: st.draft || "",
+      draftLen: (st.draft || "").length,
       lastFiltered: st.lastFiltered,
       setDraft: (e) => this.setState({ draft: e.target.value }),
       postComment: () => {
-        const t = st.draft.trim();
+        const t = (st.draft || "").trim();
         if (!t) return;
         const f = filterText(t);
         this.setState({
@@ -5654,7 +5896,7 @@ class Component extends DCLogic {
       t_blocks: st.tab === "blocks", t_dot: st.tab === "dot", t_map: st.tab === "map",
       t_db: st.tab === "db", t_publish: st.tab === "publish",
       goPublish: () => this.setState({ tab: "publish" }),
-      studioTitle: st.worldTitle || (st.scenes[0] && st.scenes[0].name) || "이름 없는 월드",
+      studioTitle: st.worldTitle || ((st.scenes || [])[0] && (st.scenes || [])[0].name) || "이름 없는 월드",
       pubTitle: st.worldTitle || "",
       pubSummary: st.worldSummary || "",
       setPubTitle: (e) => this.setState({ worldTitle: e.target.value }),
@@ -5702,7 +5944,6 @@ class Component extends DCLogic {
       dragStage: this.dragPane("paneStage", 240, 520),
       dragPal: this.dragPane("panePal", 150, 420),
       dragObj: this.dragPane("paneObj", 240, 520, -1),
-      stopIt: (e) => e.stopPropagation(),
       saveStudio: this.saveStudio,
       loadStudio: this.loadStudio,
       saveLabel: st.saving ? "저장 중…" : "저장",
@@ -5735,7 +5976,7 @@ class Component extends DCLogic {
       })),
       sceneHint: st.running ? "실행 중 — 정지를 누르면 처음 상태로 돌아갑니다" : "장면마다 오브젝트와 블록이 따로 저장됩니다",
       addScene: () => {
-        const id = "s" + (st.scenes.length + 1);
+        const id = "s" + ((st.scenes || []).length + 1);
         this.setState((p) => ({
           scenes: p.scenes.concat([{ id: id, name: "장면 " + (p.scenes.length + 1) }]),
           objectsBy: Object.assign({}, p.objectsBy, { [id]: [] }),
@@ -5773,12 +6014,6 @@ class Component extends DCLogic {
         say: p.say || "", hasSay: !!p.say,
         z: 40 + i,
       })),
-      chatLines: (st.chatLog || []).slice(-8),
-      chatEmpty: !(st.chatLog || []).length,
-      chatDraft: st.chatDraft || "",
-      setChat: (e) => this.setState({ chatDraft: e.target.value }),
-      chatKey: (e) => { if (e.key === "Enter") this.sendChat(); e.stopPropagation(); },
-      chatSend: () => this.sendChat(),
       camT: st.camT || "none",
       penRefA: this.penRefA,
       penRefB: this.penRefB,
@@ -5792,13 +6027,12 @@ class Component extends DCLogic {
       setAsk: (e) => this.setState({ askInput: e.target.value }),
       askKey: (e) => { if (e.key === "Enter") this.sendAnswer(); },
       sendAnswer: this.sendAnswer,
-      stageClick: () => this.fireMouse(),
       addTextObject: this.addTextObject,
       openBig: this.openBig,
       closeBig: this.closeBig,
       closeBigLabel: st.route === "play" ? "닫기" : "작업화면으로",
       bigPlay: !!st.bigPlay,
-      playTitle: "심야 도서관 방탈출 · " + (st.scenes.find((x) => x.id === st.sceneId) || {}).name,
+      playTitle: "심야 도서관 방탈출 · " + ((st.scenes || []).find((x) => x.id === st.sceneId) || {}).name,
       playIcon: st.running ? "lucide:rotate-ccw" : "lucide:play",
       playLabel: st.running ? "다시 시작" : "시작",
       palTabs: [{ k: "blocks", t: "블록" }, { k: "attr", t: "속성" }].map((t) => ({
@@ -6088,7 +6322,7 @@ class Component extends DCLogic {
         fg: st.objCat === c ? "#FFFFFF" : "#5B616C",
         go: () => this.setState({ objCat: c }),
       })),
-      panelObjects: (() => {
+      panelObjects: (() => { try {
         this.syncMyArts();
         const baseSrc = st.dbLoaded ? (st.liveAssets || []) : (s.assets || []);
         const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art || "chest", tags: a.tags || [] }));
@@ -6116,7 +6350,7 @@ class Component extends DCLogic {
           bd: st.placeArt === a.art ? "#6FD3C7" : "rgba(244,241,234,0.1)",
           pick: () => this.setState({ placeArt: a.art, mapMode: "object" }, () => this.say("«" + a.name + "» 을 골랐습니다. 맵을 클릭해 놓으세요.")),
         }));
-      })(),
+      } catch(e) { console.warn("[dotverse] panelObjects threw:", e); return []; } })(),
       panelEmpty: false,
       emptyDb: st.dbLoaded && !(st.liveWorlds || []).length,
       emptyAssets: st.dbLoaded && !(st.liveAssets || []).length,
@@ -6455,9 +6689,19 @@ class Component extends DCLogic {
           followLabel: mine ? "프로필 편집" : (st.follows[h] ? "팔로잉" : "팔로우"),
           follow: () => {
             if (mine) { this.say("프로필 편집은 설정에서 할 수 있습니다."); return; }
+            // 팔로우는 정식 로그인 계정만 가능합니다
+            if (!st.signedIn) { this.say("팔로우하려면 로그인이 필요합니다."); this.go("profile")(); return; }
             const on = !st.follows[h];
             this.setState((p) => ({ follows: Object.assign({}, p.follows, { [h]: on }) }));
-            if (window.DotDB && window.DotDB.isLive) window.DotDB.follow(h, on);
+            if (window.DotDB && window.DotDB.isLive) {
+              window.DotDB.follow(h, on).then((ok) => {
+                if (!ok) {
+                  // 실패 시 낙관적 업데이트 되돌리기
+                  this.setState((p) => ({ follows: Object.assign({}, p.follows, { [h]: !on }) }));
+                  this.say("팔로우에 실패했습니다. 로그인 상태를 확인해 주세요.");
+                }
+              });
+            }
           },
         };
       })(),
@@ -6570,6 +6814,30 @@ class Component extends DCLogic {
         { k: "REPORT", v: "rladnwns54@gmail.com", d: "권리침해·신고 접수. 24시간 내 1차 검토하고 결과를 알림과 이메일로 보냅니다." },
       ],
     };
+
+    // ── 안전 래퍼: 템플릿 엔진이 현재 라우트에 없는 {{ 바인딩 }}을 참조하면
+    //    ReferenceError 대신 undefined(값) 또는 noop(함수 자리)를 반환합니다.
+    return new Proxy(props, {
+      get(target, key) {
+        if (key in target) return target[key];
+        // 함수 자리인지 알 수 없으므로 양쪽 다 쓸 수 있는 noop 반환
+        const noop = () => {};
+        return noop;
+      },
+      has() { return true; },
+    });
+    } catch(e) {
+      console.error("[dotverse] renderVals threw:", e);
+      // 빈 객체 대신 Proxy를 반환해 템플릿이 undefined 바인딩에 접근해도
+      // ReferenceError 없이 noop(함수) 또는 undefined(값)를 받을 수 있게 합니다.
+      return new Proxy({}, {
+        get(_, key) {
+          if (key === Symbol.toPrimitive || key === "then") return undefined;
+          return () => {};
+        },
+        has() { return true; },
+      });
+    }
   }
 }
 
