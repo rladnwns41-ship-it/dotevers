@@ -13,6 +13,9 @@
   // shape: hat(모자) / stack(쌓기) / c(감싸기) / bool(판단) / num(계산)
   // parts: lbl(글자) / num,txt(직접 입력) / slot(블록 끼우기) / sel(고르기)
   const D = {};
+  const KEYS = ["위쪽", "아래쪽", "왼쪽", "오른쪽", "스페이스", "엔터", "시프트", "탭", "백스페이스",
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
   const def = (o) => { D[o.id] = o; return o; };
 
   const C = {
@@ -25,7 +28,7 @@
   def({ id: "when_start", cat: "이벤트", shape: "hat", c: C.event,
     parts: [{ t: "lbl", v: "시작 버튼을 눌렀을 때" }] });
   def({ id: "when_key", cat: "이벤트", shape: "hat", c: C.event,
-    parts: [{ t: "lbl", v: "" }, { t: "sel", k: "key", opts: ["위쪽", "아래쪽", "왼쪽", "오른쪽", "스페이스"], def: "오른쪽" }, { t: "lbl", v: "키를 눌렀을 때" }] });
+    parts: [{ t: "lbl", v: "" }, { t: "sel", k: "key", opts: KEYS, def: "오른쪽" }, { t: "lbl", v: "키를 눌렀을 때" }] });
   def({ id: "when_click", cat: "이벤트", shape: "hat", c: C.event,
     parts: [{ t: "lbl", v: "오브젝트를 클릭했을 때" }] });
   def({ id: "broadcast", cat: "이벤트", shape: "stack", c: C.event,
@@ -47,9 +50,9 @@
 
   // 생김새
   def({ id: "say", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "txt", k: "msg", def: "안녕!" }, { t: "lbl", v: "라고 말하기" }] });
+    parts: [{ t: "slot", k: "msg", accept: "num", def: "안녕!" }, { t: "lbl", v: "라고 말하기" }] });
   def({ id: "say_wait", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "txt", k: "msg", def: "안녕!" }, { t: "lbl", v: "을" }, { t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안 말하기" }] });
+    parts: [{ t: "slot", k: "msg", accept: "num", def: "안녕!" }, { t: "lbl", v: "을" }, { t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안 말하기" }] });
   def({ id: "set_size", cat: "생김새", shape: "stack", c: C.look,
     parts: [{ t: "lbl", v: "크기를" }, { t: "slot", k: "n", accept: "num", def: 120 }, { t: "lbl", v: "% 로 정하기" }] });
   def({ id: "hide", cat: "생김새", shape: "stack", c: C.look, parts: [{ t: "lbl", v: "모양 숨기기" }] });
@@ -87,7 +90,7 @@
   def({ id: "not", cat: "판단·논리", shape: "bool", c: C.logic,
     parts: [{ t: "slot", k: "a", accept: "bool" }, { t: "lbl", v: "이 아니다" }] });
   def({ id: "key_down", cat: "판단·논리", shape: "bool", c: C.logic,
-    parts: [{ t: "sel", k: "key", opts: ["위쪽", "아래쪽", "왼쪽", "오른쪽", "스페이스"], def: "오른쪽" }, { t: "lbl", v: "키가 눌렸는가?" }] });
+    parts: [{ t: "sel", k: "key", opts: KEYS, def: "오른쪽" }, { t: "lbl", v: "키가 눌렸는가?" }] });
   def({ id: "touching", cat: "판단·논리", shape: "bool", c: C.logic,
     parts: [{ t: "lbl", v: "" }, { t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "에 닿았는가?" }] });
 
@@ -160,7 +163,7 @@
 
   // 글상자 (생김새)
   def({ id: "text_set", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "글상자 내용을" }, { t: "txt", k: "msg", def: "안녕!" }, { t: "lbl", v: "로 정하기" }] });
+    parts: [{ t: "lbl", v: "글상자 내용을" }, { t: "slot", k: "msg", accept: "num", def: "안녕!" }, { t: "lbl", v: "로 정하기" }] });
   def({ id: "text_add", cat: "생김새", shape: "stack", c: C.look,
     parts: [{ t: "lbl", v: "글상자 뒤에" }, { t: "slot", k: "v", accept: "num", def: 1 }, { t: "lbl", v: "붙이기" }] });
   def({ id: "text_size", cat: "생김새", shape: "stack", c: C.look,
@@ -188,7 +191,7 @@
 
   // 글상자·UI
   def({ id: "ui_text", cat: "카메라·UI", shape: "stack", c: C.obj,
-    parts: [{ t: "lbl", v: "화면에" }, { t: "txt", k: "msg", def: "점수" }, { t: "lbl", v: "글자 보이기" }] });
+    parts: [{ t: "lbl", v: "화면에" }, { t: "slot", k: "msg", accept: "num", def: "점수" }, { t: "lbl", v: "글자 보이기" }] });
   def({ id: "cam_follow", cat: "카메라·UI", shape: "stack", c: C.obj,
     parts: [{ t: "lbl", v: "카메라를" }, { t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "따라가게 하기" }] });
   def({ id: "cam_zoom", cat: "카메라·UI", shape: "stack", c: C.obj,
@@ -249,7 +252,7 @@
   def({ id: "move_to_zone", cat: "멀티플레이", shape: "stack", c: C.multi,
     parts: [{ t: "lbl", v: "플레이어를" }, { t: "txt", k: "zone", def: "대기실" }, { t: "lbl", v: "구역으로 옮기기" }] });
   def({ id: "chat_send", cat: "멀티플레이", shape: "stack", c: C.multi,
-    parts: [{ t: "lbl", v: "채팅으로" }, { t: "txt", k: "msg", def: "시작합니다" }, { t: "lbl", v: "보내기 (필터 적용)" }] });
+    parts: [{ t: "lbl", v: "채팅으로" }, { t: "slot", k: "msg", accept: "num", def: "시작합니다" }, { t: "lbl", v: "보내기 (필터 적용)" }] });
   def({ id: "my_name", cat: "멀티플레이", shape: "num", c: C.multi, parts: [{ t: "lbl", v: "내 이름" }] });
 
   // 멀티플레이 — 이 블록 하나면 같은 방의 사람들이 서로 보이고 움직임이 오간다
@@ -277,7 +280,7 @@
   def({ id: "translate", cat: "확장", shape: "num", c: C2.ext,
     parts: [{ t: "txt", k: "msg", def: "안녕" }, { t: "lbl", v: "을" }, { t: "sel", k: "to", opts: ["영어", "일본어", "중국어"], def: "영어" }, { t: "lbl", v: "로 번역하기" }] });
   def({ id: "speak", cat: "확장", shape: "stack", c: C2.ext,
-    parts: [{ t: "txt", k: "msg", def: "안녕하세요" }, { t: "lbl", v: "읽어주기" }] });
+    parts: [{ t: "slot", k: "msg", accept: "num", def: "안녕하세요" }, { t: "lbl", v: "읽어주기" }] });
 
 
   // 데이터베이스 정의 블록 — 코드가 아니라 블록으로 테이블·컬럼을 만든다
@@ -352,7 +355,7 @@
   def({ id: "mouse_x", cat: "계산", shape: "num", c: C.calc, parts: [{ t: "lbl", v: "마우스 x 좌표" }] });
   def({ id: "mouse_y", cat: "계산", shape: "num", c: C.calc, parts: [{ t: "lbl", v: "마우스 y 좌표" }] });
   def({ id: "join", cat: "계산", shape: "num", c: C3.str,
-    parts: [{ t: "txt", k: "a", def: "점수:" }, { t: "lbl", v: "와" }, { t: "slot", k: "b", accept: "num", def: 0 }, { t: "lbl", v: "를 합치기" }] });
+    parts: [{ t: "slot", k: "a", accept: "num", def: "점수:" }, { t: "lbl", v: "와" }, { t: "slot", k: "b", accept: "num", def: 0 }, { t: "lbl", v: "를 합치기" }] });
   def({ id: "str_len", cat: "계산", shape: "num", c: C3.str,
     parts: [{ t: "txt", k: "s", def: "안녕" }, { t: "lbl", v: "의 글자 수" }] });
   def({ id: "char_at", cat: "계산", shape: "num", c: C3.str,
@@ -360,7 +363,7 @@
 
   // 변수·리스트
   def({ id: "ask", cat: "변수·리스트", shape: "stack", c: C.data,
-    parts: [{ t: "txt", k: "msg", def: "이름이 뭐야?" }, { t: "lbl", v: "라고 묻고 대답 기다리기" }] });
+    parts: [{ t: "slot", k: "msg", accept: "num", def: "이름이 뭐야?" }, { t: "lbl", v: "라고 묻고 대답 기다리기" }] });
   def({ id: "answer", cat: "변수·리스트", shape: "num", c: C.data, parts: [{ t: "lbl", v: "대답" }] });
   def({ id: "show_var", cat: "변수·리스트", shape: "stack", c: C.data,
     parts: [{ t: "lbl", v: "변수" }, { t: "sel", k: "name", opts: ["__VAR__"], def: "점수" }, { t: "lbl", v: "보이기" }] });
@@ -378,6 +381,156 @@
   // 카메라·UI
   def({ id: "ui_clear", cat: "카메라·UI", shape: "stack", c: C.obj, parts: [{ t: "lbl", v: "화면 글자 지우기" }] });
   def({ id: "cam_reset", cat: "카메라·UI", shape: "stack", c: C.obj, parts: [{ t: "lbl", v: "카메라 원래대로" }] });
+
+  // ── 따라가기 · 애니메이션 · 레이어 · 플레이어 ──────────────
+  def({ id: "follow_obj", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "를" }, { t: "slot", k: "n", accept: "num", def: 4 }, { t: "lbl", v: "만큼 따라가기" }] });
+  def({ id: "follow_start", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "계속 따라가기 · 속도" }, { t: "slot", k: "n", accept: "num", def: 3 }] });
+  def({ id: "follow_stop", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "lbl", v: "따라가기 멈추기" }] });
+  def({ id: "anim_play", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "모양" }, { t: "sel", k: "shape", opts: ["__SHAPE__"], def: "" }, { t: "lbl", v: "애니메이션을" }, { t: "slot", k: "ms", accept: "num", def: 120 }, { t: "lbl", v: "ms 로 재생하기" }] });
+  def({ id: "anim_stop", cat: "생김새", shape: "stack", c: C.look, parts: [{ t: "lbl", v: "애니메이션 멈추기" }] });
+  def({ id: "anim_frame", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "애니메이션" }, { t: "slot", k: "n", accept: "num", def: 1 }, { t: "lbl", v: "번째 프레임 보이기" }] });
+  def({ id: "layer_show", cat: "오브젝트·맵", shape: "stack", c: C.obj,
+    parts: [{ t: "sel", k: "layer", opts: ["벽", "바닥", "경계", "배경", "오브젝트"], def: "벽" }, { t: "lbl", v: "을" }, { t: "sel", k: "on", opts: ["숨기기", "보이기"], def: "숨기기" }] });
+  def({ id: "set_player", cat: "멀티플레이", shape: "stack", c: C.multi,
+    parts: [{ t: "lbl", v: "나를 플레이어로 정하기 (위치 공유)" }] });
+  def({ id: "mp_costume", cat: "멀티플레이", shape: "stack", c: C.multi,
+    parts: [{ t: "lbl", v: "내 코스튬을" }, { t: "sel", k: "art", opts: ["__ART__"], def: "" }, { t: "lbl", v: "으로 정하기" }] });
+
+  // ── 4차 확장 ──────────────────────────────────────────────
+  const DIRS = ["위쪽", "아래쪽", "왼쪽", "오른쪽"];
+
+  // 움직임
+  def({ id: "move_dir", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "sel", k: "d", opts: DIRS, def: "오른쪽" }, { t: "lbl", v: "으로" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "만큼 움직이기" }] });
+  def({ id: "bounce_edge", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "lbl", v: "벽에 닿으면 튕기기" }] });
+  def({ id: "glide_xy", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안 x" }, { t: "slot", k: "x", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "y", accept: "num", def: 0 }, { t: "lbl", v: "로 이동하기" }] });
+  def({ id: "glide_obj", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안" }, { t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "위치로 이동하기" }] });
+  def({ id: "point_obj", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "쪽 보기" }] });
+  def({ id: "point_mouse", cat: "움직임", shape: "stack", c: C.move,
+    parts: [{ t: "lbl", v: "마우스 쪽 보기" }] });
+
+  // 생김새
+  def({ id: "prev_shape", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "이전 모양으로 바꾸기" }] });
+  def({ id: "change_size", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "크기를" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "만큼 바꾸기" }] });
+  def({ id: "set_alpha", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "투명도를" }, { t: "slot", k: "n", accept: "num", def: 50 }, { t: "lbl", v: "% 로 정하기" }] });
+  def({ id: "change_alpha", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "투명도를" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "% 만큼 바꾸기" }] });
+  def({ id: "clear_fx", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "모든 효과 지우기" }] });
+  def({ id: "say_clear", cat: "생김새", shape: "stack", c: C.look,
+    parts: [{ t: "lbl", v: "말풍선 지우기" }] });
+
+  // 흐름
+  def({ id: "loop_index", cat: "흐름", shape: "num", c: C.flow,
+    parts: [{ t: "lbl", v: "반복 순번" }] });
+  def({ id: "stop_other", cat: "흐름", shape: "stack", c: C.flow,
+    parts: [{ t: "lbl", v: "나의 다른 코드 멈추기" }] });
+  def({ id: "wait_ms", cat: "흐름", shape: "stack", c: C.flow,
+    parts: [{ t: "slot", k: "ms", accept: "num", def: 200 }, { t: "lbl", v: "ms 기다리기" }] });
+
+  // 판단·논리
+  def({ id: "between", cat: "판단·논리", shape: "bool", c: C.logic,
+    parts: [{ t: "slot", k: "a", accept: "num", def: 5 }, { t: "lbl", v: "이" }, { t: "slot", k: "b", accept: "num", def: 1 }, { t: "lbl", v: "과" }, { t: "slot", k: "c", accept: "num", def: 10 }, { t: "lbl", v: "사이인가?" }] });
+  def({ id: "obj_visible", cat: "판단·논리", shape: "bool", c: C.logic,
+    parts: [{ t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "가 보이는가?" }] });
+  def({ id: "is_clone", cat: "판단·논리", shape: "bool", c: C.logic,
+    parts: [{ t: "lbl", v: "내가 복제본인가?" }] });
+  def({ id: "key_any", cat: "판단·논리", shape: "bool", c: C.logic,
+    parts: [{ t: "lbl", v: "아무 키나 눌렸는가?" }] });
+  def({ id: "str_has", cat: "판단·논리", shape: "bool", c: C3.str,
+    parts: [{ t: "slot", k: "a", accept: "num", def: "안녕하세요" }, { t: "lbl", v: "에" }, { t: "slot", k: "b", accept: "num", def: "안녕" }, { t: "lbl", v: "가 있는가?" }] });
+  def({ id: "str_same", cat: "판단·논리", shape: "bool", c: C3.str,
+    parts: [{ t: "slot", k: "a", accept: "num", def: "가" }, { t: "lbl", v: "와" }, { t: "slot", k: "b", accept: "num", def: "가" }, { t: "lbl", v: "가 같은가?" }] });
+
+  // 계산
+  def({ id: "ceil", cat: "계산", shape: "num", c: C.calc,
+    parts: [{ t: "slot", k: "a", accept: "num", def: 3.2 }, { t: "lbl", v: "의 소수점 올리기" }] });
+  def({ id: "clamp", cat: "계산", shape: "num", c: C.calc,
+    parts: [{ t: "slot", k: "a", accept: "num", def: 15 }, { t: "lbl", v: "을" }, { t: "slot", k: "b", accept: "num", def: 0 }, { t: "lbl", v: "~" }, { t: "slot", k: "c", accept: "num", def: 10 }, { t: "lbl", v: "로 제한" }] });
+  def({ id: "sign", cat: "계산", shape: "num", c: C.calc,
+    parts: [{ t: "slot", k: "a", accept: "num", def: -3 }, { t: "lbl", v: "의 부호" }] });
+  def({ id: "dist_xy", cat: "계산", shape: "num", c: C.calc,
+    parts: [{ t: "lbl", v: "x" }, { t: "slot", k: "a", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "b", accept: "num", def: 0 }, { t: "lbl", v: "까지 거리" }] });
+  def({ id: "to_num", cat: "계산", shape: "num", c: C3.str,
+    parts: [{ t: "slot", k: "a", accept: "num", def: "10" }, { t: "lbl", v: "을 숫자로" }] });
+  def({ id: "substr", cat: "계산", shape: "num", c: C3.str,
+    parts: [{ t: "slot", k: "s", accept: "num", def: "안녕하세요" }, { t: "lbl", v: "의" }, { t: "slot", k: "a", accept: "num", def: 1 }, { t: "lbl", v: "~" }, { t: "slot", k: "b", accept: "num", def: 2 }, { t: "lbl", v: "번째 글자" }] });
+  def({ id: "str_replace", cat: "계산", shape: "num", c: C3.str,
+    parts: [{ t: "slot", k: "s", accept: "num", def: "가나다" }, { t: "lbl", v: "에서" }, { t: "slot", k: "a", accept: "num", def: "나" }, { t: "lbl", v: "를" }, { t: "slot", k: "b", accept: "num", def: "라" }, { t: "lbl", v: "로 바꾸기" }] });
+  def({ id: "str_find", cat: "계산", shape: "num", c: C3.str,
+    parts: [{ t: "slot", k: "s", accept: "num", def: "가나다" }, { t: "lbl", v: "에서" }, { t: "slot", k: "a", accept: "num", def: "나" }, { t: "lbl", v: "의 위치" }] });
+
+  // 변수·리스트
+  def({ id: "list_sum", cat: "변수·리스트", shape: "num", c: C2.list,
+    parts: [{ t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "의 합" }] });
+  def({ id: "list_min", cat: "변수·리스트", shape: "num", c: C2.list,
+    parts: [{ t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "의 최저값" }] });
+  def({ id: "list_pick", cat: "변수·리스트", shape: "num", c: C2.list,
+    parts: [{ t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "에서 무작위 값" }] });
+  def({ id: "list_join", cat: "변수·리스트", shape: "num", c: C2.list,
+    parts: [{ t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "을" }, { t: "txt", k: "sep", def: "," }, { t: "lbl", v: "로 합치기" }] });
+  def({ id: "list_sort", cat: "변수·리스트", shape: "stack", c: C2.list,
+    parts: [{ t: "lbl", v: "리스트" }, { t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "을" }, { t: "sel", k: "dir", opts: ["오름차순", "내림차순"], def: "오름차순" }, { t: "lbl", v: "정렬하기" }] });
+  def({ id: "list_shuffle", cat: "변수·리스트", shape: "stack", c: C2.list,
+    parts: [{ t: "lbl", v: "리스트" }, { t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "섞기" }] });
+
+  // 카메라·UI
+  def({ id: "cam_move", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "카메라를 x" }, { t: "slot", k: "x", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "y", accept: "num", def: 0 }, { t: "lbl", v: "로 옮기기" }] });
+  def({ id: "ui_toast", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "알림으로" }, { t: "slot", k: "msg", accept: "num", def: "성공!" }, { t: "lbl", v: "띄우기" }] });
+  def({ id: "screen_flash", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "화면을" }, { t: "sel", k: "col", opts: ["흰색", "빨강", "노랑", "검정"], def: "흰색" }, { t: "lbl", v: "으로 번쩍이기" }] });
+  def({ id: "set_stage_color", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "배경색을" }, { t: "sel", k: "col", opts: ["초록", "하늘", "모래", "밤", "흰색"], def: "초록" }, { t: "lbl", v: "으로 정하기" }] });
+
+  // 오브젝트·맵
+  def({ id: "obj_count", cat: "오브젝트·맵", shape: "num", c: C.obj,
+    parts: [{ t: "lbl", v: "화면의 오브젝트 수" }] });
+  def({ id: "tile_kind", cat: "오브젝트·맵", shape: "num", c: C.obj,
+    parts: [{ t: "lbl", v: "x" }, { t: "slot", k: "x", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "y", accept: "num", def: 0 }, { t: "lbl", v: "칸의 종류" }] });
+  def({ id: "goto_spawn", cat: "오브젝트·맵", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "스폰 위치로 이동하기" }] });
+  def({ id: "set_spawn_here", cat: "오브젝트·맵", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "스폰을 내 위치로 정하기" }] });
+
+  // 소리
+  def({ id: "beep", cat: "소리", shape: "stack", c: C.sound,
+    parts: [{ t: "slot", k: "hz", accept: "num", def: 440 }, { t: "lbl", v: "Hz 소리를" }, { t: "slot", k: "ms", accept: "num", def: 200 }, { t: "lbl", v: "ms 내기" }] });
+  def({ id: "sound_fade", cat: "소리", shape: "stack", c: C.sound,
+    parts: [{ t: "lbl", v: "소리를" }, { t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안 줄이기" }] });
+
+  // 멀티플레이
+  def({ id: "mp_send", cat: "멀티플레이", shape: "stack", c: C.multi,
+    parts: [{ t: "lbl", v: "모두에게" }, { t: "slot", k: "msg", accept: "num", def: "안녕" }, { t: "lbl", v: "보내기" }] });
+  def({ id: "mp_last", cat: "멀티플레이", shape: "num", c: C.multi,
+    parts: [{ t: "lbl", v: "마지막으로 받은 메시지" }] });
+  def({ id: "mp_room_name", cat: "멀티플레이", shape: "num", c: C.multi,
+    parts: [{ t: "lbl", v: "지금 방 이름" }] });
+
+  // ── 함수: 이름으로 정의하고 부른다 (미리 만든 함수가 없어도 쓸 수 있다) ──
+  def({ id: "fn_def", cat: "함수", shape: "hat", c: C3.func,
+    parts: [{ t: "lbl", v: "함수 정의" }, { t: "txt", k: "name", def: "내함수" }, { t: "lbl", v: "· 매개변수" }, { t: "txt", k: "p", def: "값" }] });
+  def({ id: "fn_run", cat: "함수", shape: "stack", c: C3.func,
+    parts: [{ t: "lbl", v: "함수" }, { t: "txt", k: "name", def: "내함수" }, { t: "lbl", v: "실행하기 (" }, { t: "slot", k: "arg", accept: "num", def: 0 }, { t: "lbl", v: ")" }] });
+  def({ id: "fn_arg", cat: "함수", shape: "num", c: C3.func,
+    parts: [{ t: "lbl", v: "매개변수 값" }] });
+  def({ id: "fn_ret", cat: "함수", shape: "stack", c: C3.func,
+    parts: [{ t: "lbl", v: "함수 결과를" }, { t: "slot", k: "v", accept: "num", def: 0 }, { t: "lbl", v: "로 정하기" }] });
+  def({ id: "fn_result", cat: "함수", shape: "num", c: C3.func,
+    parts: [{ t: "lbl", v: "함수 결과" }] });
 
   // ── 함수: 사용자가 만든 함수를 블록 정의로 등록한다 ───────
   // f = { id, name, params:[이름…] }
@@ -678,10 +831,44 @@
         }
         case "mouse_x": return ctx.mouse().x;
         case "mouse_y": return ctx.mouse().y;
-        case "join": return String(I.a) + String(await val(I.b, self));
+        case "join": return String(await val(I.a, self)) + String(await val(I.b, self));
         case "str_len": return String(I.s).length;
         case "char_at": { const i = Number(await val(I.i, self)) || 1; return String(I.s).charAt(i - 1); }
         case "answer": return ctx.answer();
+        case "loop_index": return loops.length ? loops[loops.length - 1] : 0;
+        case "ceil": return Math.ceil(await A());
+        case "clamp": { const a = await A(), b = await B(), c2 = Number(await val(I.c, self)) || 0;
+          return Math.max(Math.min(b, c2), Math.min(Math.max(b, c2), a)); }
+        case "sign": { const a = await A(); return a > 0 ? 1 : (a < 0 ? -1 : 0); }
+        case "dist_xy": return Math.round(Math.hypot((await A()) - self.x, (await B()) - self.y));
+        case "to_num": return Number(await val(I.a, self)) || 0;
+        case "substr": { const t = String(await val(I.s, self));
+          const a = Math.max(1, Number(await A()) || 1), b = Number(await B()) || a;
+          return t.slice(a - 1, b); }
+        case "str_replace": { const t = String(await val(I.s, self));
+          return t.split(String(await A())).join(String(await B())); }
+        case "str_find": { const t = String(await val(I.s, self));
+          return t.indexOf(String(await A())) + 1; }
+        case "between": { const a = await A(), b = await B(), c2 = Number(await val(I.c, self)) || 0;
+          return a >= Math.min(b, c2) && a <= Math.max(b, c2); }
+        case "obj_visible": { const o = ctx.objByName(I.name); return !!(o && o.on !== false); }
+        case "is_clone": return /_c/.test(String(self.id));
+        case "key_any": return keys.size > 0;
+        case "str_has": return String(await A()).indexOf(String(await B())) >= 0;
+        case "str_same": return String(await A()) === String(await B());
+        case "list_sum": { const L = ctx.list(I.name).map(Number).filter((x) => !isNaN(x));
+          return L.reduce((a, b) => a + b, 0); }
+        case "list_min": { const L = ctx.list(I.name).map(Number).filter((x) => !isNaN(x));
+          return L.length ? Math.min.apply(null, L) : 0; }
+        case "list_pick": { const L = ctx.list(I.name);
+          return L.length ? L[Math.floor(Math.random() * L.length)] : 0; }
+        case "list_join": return ctx.list(I.name).join(I.sep === undefined ? "," : I.sep);
+        case "obj_count": return ctx.objCount();
+        case "tile_kind": return ctx.tileKind(await A(), await B());
+        case "mp_last": return ctx.mpLast();
+        case "mp_room_name": return ctx.mpRoom();
+        case "fn_arg": { const fr = frames[frames.length - 1]; return fr ? fr.args[0] : 0; }
+        case "fn_result": return ctx.result();
         case "list_has": { const v2 = await val(I.v, self); return ctx.list(I.name).some((x) => String(x) === String(v2)); }
         case "list_index": { const v2 = await val(I.v, self); return ctx.list(I.name).findIndex((x) => String(x) === String(v2)) + 1; }
         default: return 0;
@@ -689,10 +876,27 @@
     };
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const loops = [];
+    const skipObj = {};
+
+    // 목표 지점까지 초 단위로 부드럽게 옮긴다
+    async function glide(self, tx, ty, sec) {
+      const sx = self.x, sy = self.y, g0 = Date.now(), dur = sec * 1000;
+      for (;;) {
+        if (stop) return;
+        const p = Math.min(1, (Date.now() - g0) / dur);
+        self.x = sx + (tx - sx) * p;
+        self.y = sy + (ty - sy) * p;
+        ctx.onFrame();
+        if (p >= 1) return;
+        await sleep(16);
+      }
+    }
 
     async function runChain(b, self) {
       let guard = 0;
       while (b && !stop) {
+        if (skipObj[self.id]) { delete skipObj[self.id]; return; }
         if (++guard > 8000) break;
         const d = D[b.def], I = b.inputs;
         const num = async (k) => Number(await val(I[k], self)) || 0;
@@ -702,8 +906,8 @@
           case "change_x": self.x += await num("n"); ctx.onFrame(); break;
           case "change_y": self.y += await num("n"); ctx.onFrame(); break;
           case "turn": self.rot = (self.rot || 0) + await num("n"); ctx.onFrame(); break;
-          case "say": self.say = I.msg; ctx.onFrame(); break;
-          case "say_wait": self.say = I.msg; ctx.onFrame(); await sleep(await num("sec") * 1000); self.say = null; ctx.onFrame(); break;
+          case "say": self.say = await val(I.msg, self); ctx.onFrame(); break;
+          case "say_wait": self.say = await val(I.msg, self); ctx.onFrame(); await sleep(await num("sec") * 1000); self.say = null; ctx.onFrame(); break;
           case "set_size": self.scale = (await num("n")) / 100; ctx.onFrame(); break;
           case "hide": self.on = false; ctx.onFrame(); break;
           case "show": self.on = true; ctx.onFrame(); break;
@@ -744,7 +948,7 @@
           case "set_alpha": self.alpha = 1 - (await num("n")) / 100; ctx.onFrame(); break;
           case "to_back": ctx.toBack(self); break;
           case "clear_say": self.say = null; ctx.onFrame(); break;
-          case "text_set": self.text = String(I.msg); ctx.onFrame(); break;
+          case "text_set": self.text = String(await val(I.msg, self)); ctx.onFrame(); break;
           case "text_add": self.text = String(self.text === undefined ? "" : self.text) + String(await val(I.v, self)); ctx.onFrame(); break;
           case "text_size": self.fontSize = Math.max(8, await num("n")); ctx.onFrame(); break;
           case "text_color": self.color = { "검정": "#16181D", "빨강": "#C0392B", "초록": "#2F6F5E", "파랑": "#4A5FD1", "노랑": "#F2B23E", "흰색": "#FFFFFF" }[I.c] || "#16181D"; ctx.onFrame(); break;
@@ -757,7 +961,7 @@
           case "pen_color": self.penColor = I.c; break;
           case "pen_size": self.penSize = await num("n"); break;
           case "pen_clear": ctx.penClear(); break;
-          case "ui_text": ctx.uiText(I.msg); break;
+          case "ui_text": ctx.uiText(await val(I.msg, self)); break;
           case "cam_follow": ctx.camFollow(I.name); break;
           case "cam_zoom": ctx.camZoom(await num("n")); break;
           case "shake": await ctx.shake(await num("sec")); break;
@@ -772,13 +976,13 @@
           case "db_drop": ctx.tableDrop(I.tbl); break;
           case "rt_change": await ctx.rtSet(I.key, (Number(await ctx.rtGet(I.key)) || 0) + await num("v")); break;
           case "move_to_zone": ctx.moveZone(self, I.zone); break;
-          case "chat_send": ctx.chat(I.msg); break;
+          case "chat_send": ctx.chat(await val(I.msg, self)); break;
           case "mp_join": await ctx.mpStart(I.room, self); break;
           case "mp_leave": ctx.mpStop(); break;
           case "mp_nick": ctx.mpNick(I.name); break;
           case "del_clone": ctx.delClone(self); return;
           case "set_tile": ctx.setTile(await num("x"), await num("y"), I.t); break;
-          case "speak": ctx.speak(I.msg); break;
+          case "speak": ctx.speak(await val(I.msg, self)); break;
           case "set_rot": self.rot = await num("n"); ctx.onFrame(); break;
           case "move_random": self.x = Math.round(Math.random() * 420 - 210); self.y = Math.round(Math.random() * 300 - 150); ctx.onFrame(); break;
           case "move_to_obj": { const o = ctx.objByName(I.name); if (o) { self.x = o.x; self.y = o.y; } ctx.onFrame(); break; }
@@ -795,12 +999,108 @@
             break;
           }
           case "stop_all": ctx.stopAll(); return;
-          case "ask": self.say = null; await ctx.ask(I.msg); break;
+          case "ask": self.say = null; await ctx.ask(await val(I.msg, self)); break;
           case "show_var": ctx.showVar(I.name, true); break;
           case "hide_var": ctx.showVar(I.name, false); break;
           case "list_insert": ctx.listInsert(I.name, await num("i"), await val(I.v, self)); break;
           case "list_replace": ctx.listReplace(I.name, await num("i"), await val(I.v, self)); break;
           case "ui_clear": ctx.uiText(""); break;
+          case "move_dir": {
+            const n = await num("n");
+            if (I.d === "위쪽") self.y += n;
+            else if (I.d === "아래쪽") self.y -= n;
+            else if (I.d === "왼쪽") self.x -= n;
+            else self.x += n;
+            ctx.onFrame();
+            break;
+          }
+          case "bounce_edge": {
+            if (Math.abs(self.x) > 230) { self.x = (self.x > 0 ? 1 : -1) * 230; self.rot = 180 - (self.rot || 0); }
+            if (Math.abs(self.y) > 170) { self.y = (self.y > 0 ? 1 : -1) * 170; self.rot = -(self.rot || 0); }
+            ctx.onFrame();
+            break;
+          }
+          case "glide_xy": await glide(self, await num("x"), await num("y"), Math.max(0.05, await num("sec"))); break;
+          case "glide_obj": {
+            const o = ctx.objByName(I.name);
+            if (o) await glide(self, o.x, o.y, Math.max(0.05, await num("sec")));
+            break;
+          }
+          case "point_obj": {
+            const o = ctx.objByName(I.name);
+            if (o) { self.rot = Math.round(Math.atan2(o.y - self.y, o.x - self.x) * 180 / Math.PI); ctx.onFrame(); }
+            break;
+          }
+          case "point_mouse": {
+            const m = ctx.mouse();
+            self.rot = Math.round(Math.atan2(m.y - self.y, m.x - self.x) * 180 / Math.PI);
+            ctx.onFrame();
+            break;
+          }
+          case "prev_shape": ctx.prevShape(self); break;
+          case "change_size": self.scale = Math.max(0.1, (self.scale || 1) + (await num("n")) / 100); ctx.onFrame(); break;
+          case "set_alpha": self.alpha = Math.max(0, Math.min(1, 1 - (await num("n")) / 100)); ctx.onFrame(); break;
+          case "change_alpha": self.alpha = Math.max(0, Math.min(1, (self.alpha === undefined ? 1 : self.alpha) - (await num("n")) / 100)); ctx.onFrame(); break;
+          case "clear_fx": self.alpha = 1; self.hue = 0; self.flipH = false; self.flipV = false; ctx.onFrame(); break;
+          case "say_clear": self.say = null; ctx.onFrame(); break;
+          case "wait_ms": await sleep(Math.max(0, await num("ms"))); break;
+          case "stop_other": ctx.stopOther(self); break;
+          case "list_sort": {
+            const L = ctx.list(I.name).slice();
+            const allNum = L.every((x) => !isNaN(Number(x)));
+            L.sort(allNum ? (a, b) => Number(a) - Number(b) : (a, b) => String(a).localeCompare(String(b)));
+            if (I.dir === "내림차순") L.reverse();
+            ctx.listSet(I.name, L);
+            break;
+          }
+          case "list_shuffle": {
+            const L = ctx.list(I.name).slice();
+            for (let i = L.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              const t = L[i]; L[i] = L[j]; L[j] = t;
+            }
+            ctx.listSet(I.name, L);
+            break;
+          }
+          case "cam_move": ctx.camMove(await num("x"), await num("y")); break;
+          case "ui_toast": ctx.toast(await val(I.msg, self)); break;
+          case "screen_flash": ctx.flash(I.col); break;
+          case "set_stage_color": ctx.stageColor(I.col); break;
+          case "goto_spawn": { const p = ctx.spawn(); self.x = p.x; self.y = p.y; ctx.onFrame(); break; }
+          case "set_spawn_here": ctx.setSpawn(self.x, self.y); break;
+          case "beep": ctx.beep(await num("hz"), await num("ms")); break;
+          case "sound_fade": ctx.soundFade(await num("sec")); break;
+          case "mp_send": ctx.mpSend(await val(I.msg, self)); break;
+          case "follow_obj": {
+            const o = ctx.objByName(I.name);
+            if (o) {
+              const sp = Math.max(0.1, await num("n"));
+              const dx = o.x - self.x, dy = o.y - self.y, L = Math.hypot(dx, dy);
+              if (L > sp) { self.x += dx / L * sp; self.y += dy / L * sp; }
+              else { self.x = o.x; self.y = o.y; }
+              ctx.onFrame();
+            }
+            break;
+          }
+          case "follow_start": ctx.followStart(self, I.name, await num("n")); break;
+          case "follow_stop": ctx.followStop(self); break;
+          case "anim_play": ctx.animPlay(self, I.shape, await num("ms")); break;
+          case "anim_stop": ctx.animStop(self); break;
+          case "anim_frame": ctx.animFrame(self, await num("n")); break;
+          case "layer_show": ctx.layerShow(I.layer, I.on === "보이기"); break;
+          case "set_player": ctx.setPlayer(self); break;
+          case "mp_costume": ctx.mpCostume(I.art); break;
+          case "fn_def": break;
+          case "fn_ret": ctx.setResult(await num("v")); break;
+          case "fn_run": {
+            const body = ctx.funcByName(I.name);
+            if (body && frames.length < 24) {
+              frames.push({ id: "@" + I.name, args: [await val(I.arg, self)] });
+              await runChain(body, self);
+              frames.pop();
+            }
+            break;
+          }
           case "cam_reset": ctx.camReset(); break;
           case "repeat_while": {
             for (let i = 0; i < 3000 && !stop; i++) {
@@ -811,7 +1111,12 @@
           }
           case "repeat": {
             const n = await num("n");
-            for (let i = 0; i < n && !stop; i++) { await runChain(b.body && b.body[0], self); await sleep(16); }
+            for (let i = 0; i < n && !stop; i++) {
+              loops.push(i + 1);
+              await runChain(b.body && b.body[0], self);
+              loops.pop();
+              await sleep(16);
+            }
             break;
           }
           case "forever": {
@@ -852,6 +1157,8 @@
       vars: vars,
       resetTimer: () => { t0 = Date.now(); },
       stop: () => { stop = true; },
+      // 한 오브젝트의 스크립트만 멈춘다 (나의 다른 코드 멈추기)
+      stopObject: (id) => { skipObj[id] = Date.now(); },
       // 모자 블록에서 시작하는 스크립트를 모두 실행
       start: (stacksByObj, kind, extra) => {
         const jobs = [];
@@ -861,6 +1168,7 @@
           (stacksByObj[objId] || []).forEach((st) => {
             const root = st.root, d = D[root.def];
             if (d.shape !== "hat") return;
+            if (root.def === "fn_def") return;
             if (kind === "start" && root.def !== "when_start") return;
             if (kind === "key" && !(root.def === "when_key" && root.inputs.key === extra)) return;
             if (kind === "click" && !(root.def === "when_click" && objId === extra)) return;
