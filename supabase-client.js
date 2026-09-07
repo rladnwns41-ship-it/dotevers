@@ -3,15 +3,53 @@
 (function () {
   const env = window.__ENV || {};
   let client = null;
+  let cachedUser = null;      // 지금 로그인한 사람 (세션에서 읽어 둔다)
+  let userPromise = null;     // 동시에 여러 곳에서 불러도 한 번만 처리한다
+  let anonBlocked = false;    // 익명 로그인이 꺼져 있는 프로젝트
 
   function init() {
     if (client) return client;
     if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return null;
     if (!window.supabase || !window.supabase.createClient) return null;
     client = window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+        storageKey: "dotverse.auth",
+        storage: window.localStorage,
+      },
       realtime: { params: { eventsPerSecond: 20 } },
+      global: { headers: { "x-client-info": "dotverse/1" } },
     });
+
+    // 세션을 손에 들고 있는다 — 매번 서버에 묻지 않는다 (느려지고, 실패하면 로그아웃처럼 보인다)
+    client.auth.onAuthStateChange((evt, session) => {
+      cachedUser = (session && session.user) || null;
+      if (evt === "SIGNED_OUT") cachedUser = null;
+      try { window.dispatchEvent(new CustomEvent("dv-auth", { detail: { evt: evt, user: cachedUser } })); } catch (e) {}
+    });
+
+    // 탭으로 돌아오거나 다시 온라인이 되면 세션을 되살린다.
+    // 작업 중에는 끊기지 않아야 하므로, 만료가 가까우면 미리 갱신한다.
+    const revive = async () => {
+      if (!client) return;
+      try {
+        const { data } = await client.auth.getSession();
+        const s = data && data.session;
+        if (!s) { cachedUser = null; return; }
+        cachedUser = s.user || null;
+        const left = (s.expires_at || 0) * 1000 - Date.now();
+        if (left < 10 * 60 * 1000) await client.auth.refreshSession();
+      } catch (e) {}
+    };
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) revive(); });
+    window.addEventListener("online", revive);
+    window.addEventListener("focus", revive);
+    setInterval(revive, 5 * 60 * 1000);
+    revive();
+
     return client;
   }
 
@@ -252,30 +290,49 @@
       return error ? null : data;
     },
     // ── 로그인 (익명 포함) ────────────────────────────────────
+    // 로컬 세션에서 읽는다 — 네트워크 왕복이 없어 빠르고, 잠깐 끊겨도 로그아웃되지 않는다
     async me() {
       const c = init();
       if (!c) return null;
-      const { data } = await c.auth.getUser();
-      return (data && data.user) || null;
+      if (cachedUser) return cachedUser;
+      const { data } = await c.auth.getSession();
+      cachedUser = (data && data.session && data.session.user) || null;
+      return cachedUser;
     },
+    get anonBlocked() { return anonBlocked; },
     // 글·댓글·신고는 로그인이 필요하다. 없으면 익명 세션을 만든다.
     async ensureUser() {
       const c = init();
       if (!c) return null;
-      let u = await this.me();
-      if (u) return u;
-      try {
-        const { data } = await c.auth.signInAnonymously();
-        u = (data && data.user) || null;
-      } catch (e) { u = null; }
-      if (u) {
-        await c.from("profiles").upsert({
-          id: u.id,
-          handle: "u" + u.id.replace(/-/g, "").slice(0, 10),
-          display_name: "손님",
-        }, { onConflict: "id" });
-      }
-      return u;
+      const u0 = await this.me();
+      if (u0) return u0;
+      if (anonBlocked) return null;
+      // 여러 곳에서 동시에 불러도 익명 계정을 한 번만 만든다 (계정이 우수수 생기던 원인)
+      if (userPromise) return await userPromise;
+      userPromise = (async () => {
+        let u = null;
+        try {
+          const { data, error } = await c.auth.signInAnonymously();
+          if (error) {
+            anonBlocked = true;
+            console.warn("[dotverse] 익명 로그인이 꺼져 있습니다 — 로그인해야 저장·채팅·댓글이 됩니다.");
+            return null;
+          }
+          u = (data && data.user) || null;
+        } catch (e) { anonBlocked = true; return null; }
+        if (u) {
+          cachedUser = u;
+          await c.from("profiles").upsert({
+            id: u.id,
+            handle: "u" + u.id.replace(/-/g, "").slice(0, 10),
+            display_name: "손님",
+          }, { onConflict: "id" });
+        }
+        return u;
+      })();
+      const out = await userPromise;
+      userPromise = null;
+      return out;
     },
     async signUp(email, password, name) {
       const c = init();
@@ -287,6 +344,8 @@
       if (error) return { ok: false, reason: error.message };
       const u = data && data.user;
       if (u) {
+        cachedUser = u;
+        anonBlocked = false;
         await c.from("profiles").upsert({
           id: u.id, handle: "u" + u.id.replace(/-/g, "").slice(0, 10),
           display_name: name || "플레이어",
@@ -298,10 +357,14 @@
       const c = init();
       if (!c) return { ok: false, reason: "env" };
       const { data, error } = await c.auth.signInWithPassword({ email: email, password: password });
-      return error ? { ok: false, reason: error.message } : { ok: true, user: data.user };
+      if (error) return { ok: false, reason: error.message };
+      cachedUser = data.user;
+      anonBlocked = false;
+      return { ok: true, user: data.user };
     },
     async signOut() {
       const c = init();
+      cachedUser = null;
       if (c) await c.auth.signOut();
     },
 
@@ -352,7 +415,12 @@
         })
         .select("id")
         .single();
-      return error ? null : data;
+      if (error) {
+        console.warn("[dotverse] 댓글 저장 실패:", error.message);
+        this.lastError = error;
+        return null;
+      }
+      return data;
     },
     // 추천 · 비추천 · 투표를 한 표로 기록한다 (같은 값을 다시 보내면 취소)
     async vote(subjectType, subjectId, value) {
@@ -446,11 +514,16 @@
       const u = await this.ensureUser();
       if (!u) return { ok: false, reason: "auth" };
       const { data } = await c.from("worlds").select("id,owner_id").eq("id", worldId).maybeSingle();
-      if (data) return { ok: data.owner_id === u.id, reason: data.owner_id === u.id ? null : "not_owner" };
+      if (data) return { ok: data.owner_id === u.id, reason: data.owner_id === u.id ? null : "taken" };
       const { error } = await c.from("worlds").insert({
         id: worldId, owner_id: u.id, title: title || "이름 없는 월드", status: "draft",
       });
-      return error ? { ok: false, reason: error.message } : { ok: true };
+      if (!error) return { ok: true };
+      // 23505 = 이미 있는 id. RLS 로 안 보였을 뿐 남의 작품이다 — 새 id 로 시작해야 한다.
+      if (error.code === "23505" || /duplicate|conflict/i.test(error.message || "")) {
+        return { ok: false, reason: "taken" };
+      }
+      return { ok: false, reason: error.message };
     },
     async publishWorld(worldId, fields) {
       const c = init();
@@ -594,25 +667,36 @@
       return { worlds, assets, users, posts };
     },
     // ── 월드 안 채팅 (DB 저장 + 실시간) ─────────────────────
+    // 보내지 못하면 이유를 돌려준다 (조용히 사라지지 않게)
     async sendChat(worldId, room, body) {
       const c = init();
       if (!c) return null;
       const u = await this.ensureUser();
+      if (!u) return false;   // 로그인 없이는 남길 수 없다 (정책상 author_id 가 있어야 한다)
       const { data, error } = await c.from("chats")
-        .insert({ world_id: worldId, room: room || "1번방", author_id: u ? u.id : null, body: body })
+        .insert({ world_id: worldId, room: room || "1번방", author_id: u.id, body: body })
         .select("id")
         .single();
-      return error ? null : data;
+      if (error) { console.warn("[dotverse] 채팅 저장 실패:", error.message); return false; }
+      return data;
     },
     async listChats(worldId, room, limit = 40) {
       const c = init();
       if (!c) return null;
-      const { data, error } = await c.from("chats")
-        .select("id,body,created_at,profiles(display_name)")
+      let { data, error } = await c.from("chats")
+        .select("id,body,created_at,author_id,profiles(display_name)")
         .eq("world_id", worldId).eq("room", room || "1번방")
         .order("created_at", { ascending: false })
         .limit(limit);
-      return error ? null : (data || []).reverse();
+      if (error) {
+        // 연결(embed)이 안 되면 이름 없이라도 대화를 보여 준다
+        const r = await c.from("chats").select("id,body,created_at,author_id")
+          .eq("world_id", worldId).eq("room", room || "1번방")
+          .order("created_at", { ascending: false }).limit(limit);
+        if (r.error) return null;
+        data = r.data;
+      }
+      return (data || []).reverse();
     },
     // 새 채팅이 들어오면 알려준다
     chatChannel(worldId, room, onRow) {
@@ -621,7 +705,18 @@
       const ch = c.channel("chat:" + worldId + ":" + room);
       ch.on("postgres_changes",
         { event: "INSERT", schema: "public", table: "chats", filter: "world_id=eq." + worldId },
-        (m) => { if (!m.new || m.new.room === room) onRow(m.new); })
+        async (m) => {
+          const row = m.new;
+          if (!row || (row.room && row.room !== room)) return;
+          // 보낸 사람 이름을 붙여 준다 (실시간 알림에는 연결 정보가 오지 않는다)
+          if (row.author_id) {
+            try {
+              const { data } = await c.from("profiles").select("display_name").eq("id", row.author_id).maybeSingle();
+              row.author_name = (data && data.display_name) || "손님";
+            } catch (e) { row.author_name = "손님"; }
+          }
+          onRow(row);
+        })
         .subscribe();
       return ch;
     },
@@ -829,13 +924,27 @@
       if (!c) return null;
       const u = await this.me();
       if (!u) return null;
-      const { data, error } = await c
+      // 연결(embed)이 안 되는 프로젝트에서도 알림이 보이게 두 단계로 읽는다
+      let data = null;
+      const r1 = await c
         .from("notifications")
         .select("*, actor:actor_id(display_name,handle)")
         .eq("user_id", u.id)
         .order("created_at", { ascending: false })
-        .limit(30);
-      return error ? null : data;
+        .limit(40);
+      if (r1.error) {
+        const r2 = await c.from("notifications").select("*")
+          .eq("user_id", u.id).order("created_at", { ascending: false }).limit(40);
+        if (r2.error) return null;
+        data = r2.data;
+      } else data = r1.data;
+      return (data || []).map((n) => Object.assign({}, n, {
+        body: n.body || {
+          comment: "새 댓글이 달렸습니다.", like: "누군가 좋아합니다.",
+          follow: "새 팔로워가 생겼습니다.", remake: "누군가 리메이크했습니다.",
+          use: "누군가 오브젝트를 가져다 썼습니다.", report: "신고 처리 소식이 있습니다.",
+        }[n.kind] || "새 소식이 있습니다.",
+      }));
     },
     // 새 알림을 실시간으로 받는다
     notifChannel(onRow) {
