@@ -10,9 +10,7 @@
 <helmet>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DOTVERSE — 사람만이 만들 수 있는 것</title>
-<link href="https://cdn.jsdelivr.net/gh/quiple/galmuri/dist/galmuri.css" rel="stylesheet" />
-<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- 바깥(CDN) 자원은 문서 로드를 붙잡지 않도록 화면이 뜬 뒤에 직접 붙인다 (아래 loadVendors) -->
 <script src="./env.js"></script>
 <script src="./seed.js"></script>
 <script src="./supabase-client.js"></script>
@@ -29,6 +27,13 @@
   * ::-webkit-scrollbar-track { background: transparent; border-top: 10px solid transparent; border-bottom: 10px solid transparent; background-clip: padding-box; }
   * ::-webkit-scrollbar-thumb { background: #CFC7B6; border: 3px solid transparent; border-radius: 99px; background-clip: padding-box; }
   * ::-webkit-scrollbar-thumb:hover { background: #2F6F5E; border: 3px solid transparent; background-clip: padding-box; }
+  /* 아이콘 CDN 이 막혔을 때: 빈 사각형이 아니라 작은 점으로 자리만 지킨다 */
+  iconify-icon { display: inline-block; min-width: 1em; min-height: 1em; }
+  iconify-icon:not(:defined) {
+    background: currentColor; opacity: 0.4; border-radius: 99px;
+    width: 0.42em; height: 0.42em; min-width: 0.42em; min-height: 0.42em;
+    align-self: center;
+  }
   @keyframes dv-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
   @keyframes dv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @keyframes dv-sheen { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
@@ -204,8 +209,8 @@
           </div>
           <h1 style="margin:0;font-size:60px;line-height:1.16;font-weight:700;letter-spacing:-0.02em;text-wrap:pretty">
             <span style="display:inline-flex;align-items:baseline;gap:2px">
-              <span style="display:inline-block;height:72px;width:{{ rollW }};overflow:hidden;vertical-align:bottom;transition:width 620ms cubic-bezier(0.16,1,0.3,1)">
-                <span class="dv-reel" style="display:flex;flex-direction:column;align-items:flex-start;transform:translateY({{ rollY }})">
+              <span ref="{{ rollBoxRef }}" style="display:inline-block;height:72px;width:{{ rollW }};overflow:hidden;vertical-align:bottom;transition:width 620ms cubic-bezier(0.16,1,0.3,1)">
+                <span ref="{{ rollRef }}" class="dv-reel" style="display:flex;flex-direction:column;align-items:flex-start;transform:translateY({{ rollY }})">
                   <sc-for list="{{ rollWords }}" as="w" hint-placeholder-count="9">
                     <span style="height:72px;line-height:72px;font-family:Galmuri11,monospace;font-size:52px;color:#F2B23E;white-space:nowrap">{{ w }}</span>
                   </sc-for>
@@ -510,6 +515,19 @@
         </div>
       </sc-if>
       <button onClick="{{ doAuth }}" style="background:#2F6F5E;color:#FFFFFF;border:0;border-radius:12px;padding:15px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#16181D">{{ authCta }}</button>
+      <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #EFEADE;padding-top:16px">
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:{{ connColor }}">
+          <span style="width:8px;height:8px;border-radius:99px;background:{{ connColor }}"></span><span>{{ connLabel }}</span>
+        </span>
+        <sc-if value="{{ connOff }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:9px;background:#FFF7E6;border:1px solid #F3E2BE;border-radius:12px;padding:14px">
+            <span style="font-size:12.5px;line-height:1.6;color:#3A3F49">로그인·회원가입·저장·실시간 기능은 모두 Supabase 를 씁니다. 접속 정보가 없으면 아무것도 저장되지 않습니다. Project URL 과 publishable(anon) 키를 넣으면 이 브라우저에 기억해 둡니다.</span>
+            <input value="{{ envUrl }}" onChange="{{ setEnvUrl }}" placeholder="https://xxxx.supabase.co" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13px;outline:none" />
+            <input value="{{ envKey }}" onChange="{{ setEnvKey }}" placeholder="publishable / anon key" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13px;outline:none" />
+            <button onClick="{{ saveEnv }}" style="align-self:flex-start;background:#16181D;color:#FFFFFF;border:0;border-radius:9px;padding:10px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">연결하고 새로 고치기</button>
+          </div>
+        </sc-if>
+      </div>
     </div>
   </section>
   </sc-if>
@@ -1028,6 +1046,50 @@
               <sc-if value="{{ hasUiText }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(22,24,29,0.82);color:#F4F1EA;border-radius:9px;padding:6px 12px;font-family:Galmuri11,monospace;font-size:11.5px;white-space:nowrap;z-index:60">{{ uiTextV }}</span>
               </sc-if>
+              <!-- 화면(UI) 블록으로 만든 요소들 -->
+              <sc-if value="{{ hasScreenColor }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;background:{{ screenColorV }};z-index:34;pointer-events:none"></span>
+              </sc-if>
+              <sc-for list="{{ uiWidgets }}" as="u" hint-placeholder-count="0">
+                <span style="position:absolute;left:{{ u.left }};top:{{ u.top }};right:{{ u.right }};bottom:{{ u.bottom }};transform:{{ u.tf }};z-index:64;display:flex;flex-direction:column;align-items:{{ u.align }};gap:4px;max-width:74%">
+                  <sc-if value="{{ u.isLabel }}" hint-placeholder-val="{{ false }}">
+                    <span style="background:rgba(255,255,255,0.94);border:1px solid #CFC7B6;border-radius:7px;padding:4px 9px;font-family:Galmuri11,monospace;font-size:11px;color:#16181D;white-space:pre-wrap">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isButton }}" hint-placeholder-val="{{ false }}">
+                    <span onClick="{{ u.click }}" style="background:{{ u.color }};color:#FFFFFF;border-radius:9px;padding:7px 15px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 rgba(22,24,29,0.22);min-height:30px;display:flex;align-items:center">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isBar }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:3px;align-items:{{ u.align }}">
+                      <span style="font-family:Galmuri11,monospace;font-size:9.5px;color:#16181D;background:rgba(255,255,255,0.9);border-radius:4px;padding:1px 5px">{{ u.name }} {{ u.pct }}</span>
+                      <span style="width:104px;height:9px;background:rgba(22,24,29,0.2);border-radius:99px;overflow:hidden;display:block">
+                        <span style="display:block;height:100%;width:{{ u.pct }};background:{{ u.color }}"></span>
+                      </span>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isPanel }}" hint-placeholder-val="{{ false }}">
+                    <span style="background:rgba(22,24,29,0.88);color:#F4F1EA;border-radius:11px;padding:9px 13px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;max-width:220px">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isImage }}" hint-placeholder-val="{{ false }}">
+                    <span role="img" aria-label="{{ u.name }}" style="width:36px;height:36px;image-rendering:pixelated;background-image:{{ u.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  </sc-if>
+                </span>
+              </sc-for>
+              <sc-if value="{{ uiPadOn }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;left:10px;bottom:10px;z-index:70;display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(2,32px);gap:4px">
+                  <sc-for list="{{ padKeys }}" as="p" hint-placeholder-count="0">
+                    <span onMouseDown="{{ p.press }}" style="grid-column:{{ p.col }};grid-row:{{ p.row }};background:rgba(22,24,29,0.78);color:#F4F1EA;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;user-select:none">{{ p.t }}</span>
+                  </sc-for>
+                </span>
+              </sc-if>
+              <sc-if value="{{ hasDialog }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;z-index:90;background:rgba(22,24,29,0.55);display:flex;align-items:center;justify-content:center;padding:16px">
+                  <span style="background:#FFFFFF;border-radius:13px;padding:15px;display:flex;flex-direction:column;gap:11px;max-width:80%">
+                    <span style="font-size:12.5px;line-height:1.55;color:#16181D;white-space:pre-wrap">{{ dialogMsg }}</span>
+                    <span onClick="{{ dialogOk }}" style="align-self:flex-end;background:#2F6F5E;color:#FFFFFF;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer">확인</span>
+                  </span>
+                </span>
+              </sc-if>
+
 
               <span onClick="{{ stopIt }}" style="position:absolute;right:8px;bottom:8px;width:52%;display:flex;flex-direction:column;gap:5px;z-index:75;background:rgba(22,24,29,0.72);border-radius:10px;padding:7px;backdrop-filter:blur(2px)">
                 <span style="display:flex;flex-direction:column;gap:3px;max-height:96px;overflow-y:auto">
@@ -1218,7 +1280,16 @@
           </span>
 
           <div style="position:relative;min-height:0;height:100%">
-          <div ref="{{ wsRef }}" onMouseDown="{{ wsDown }}" onWheel="{{ wsWheel }}" style="position:relative;min-height:0;height:100%;overflow:hidden;background:#F7F5EF;background-image:radial-gradient(#DDD5C4 1.2px,transparent 1.2px);background-size:22px 22px;user-select:none;cursor:grab">
+          <div ref="{{ wsRef }}" onMouseDown="{{ wsDown }}" onContextMenu="{{ wsMenu }}" style="position:relative;min-height:0;height:100%;overflow:hidden;background:#F7F5EF;background-image:radial-gradient(#DDD5C4 1.2px,transparent 1.2px);background-size:22px 22px;user-select:none;cursor:grab">
+            <sc-if value="{{ ctxOn }}" hint-placeholder-val="{{ false }}">
+              <div class="dv-pop" style="position:absolute;left:{{ ctxX }};top:{{ ctxY }};z-index:960;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:5px;box-shadow:0 18px 40px -14px rgba(22,24,29,0.4);display:flex;flex-direction:column;min-width:186px">
+                <sc-for list="{{ ctxItems }}" as="m" hint-placeholder-count="4">
+                  <span onClick="{{ m.go }}" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;color:{{ m.fg }}" style-hover="background:#F7F5EF">
+                    <iconify-icon icon="{{ m.ic }}" width="13"></iconify-icon><span>{{ m.t }}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </sc-if>
             <div style="position:relative;width:2600px;height:1800px">
               <!-- 붙을 자리 안내선 -->
               <sc-if value="{{ ghost }}" hint-placeholder-val="{{ false }}">
@@ -1439,6 +1510,18 @@
             </span>
           </div>
 
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.96);border:1px solid #E3DCCC;border-radius:11px;padding:5px 8px;box-shadow:0 6px 18px -8px rgba(22,24,29,0.28);pointer-events:auto;flex-shrink:0;white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:#8A9099">
+              <iconify-icon icon="lucide:grid-3x3" width="12"></iconify-icon><span>맵 크기</span>
+            </span>
+            <input value="{{ mapWv }}" onChange="{{ setMapW }}" title="가로 칸 수" style="width:46px;background:#F7F5EF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:11px;text-align:center;outline:none" />
+            <span style="font-size:11px;color:#8A9099">×</span>
+            <input value="{{ mapHv }}" onChange="{{ setMapH }}" title="세로 칸 수" style="width:46px;background:#F7F5EF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:11px;text-align:center;outline:none" />
+            <span onClick="{{ toggleBound }}" title="{{ boundHint }}" style="display:flex;align-items:center;gap:5px;font-family:Galmuri11,monospace;font-size:10.5px;background:{{ boundBg }};border:1px solid {{ boundBd }};color:{{ boundFg }};border-radius:7px;padding:6px 9px;cursor:pointer">
+              <iconify-icon icon="{{ boundIcon }}" width="11"></iconify-icon><span>{{ boundLabel }}</span>
+            </span>
+          </div>
+
           <span style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.9);border:1px solid #E3DCCC;border-radius:9px;padding:9px 12px;font-size:12px;color:#5B616C;min-width:0;box-shadow:0 6px 18px -10px rgba(22,24,29,0.24);pointer-events:auto">
             <iconify-icon icon="{{ modeIcon }}" width="13" style="color:#2F6F5E;flex-shrink:0"></iconify-icon>
             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ modeHint }}</span>
@@ -1618,6 +1701,24 @@
               <span style="font-size:10.5px;color:#A0A6AF">{{ v.scope }}</span>
             </div>
           </sc-for>
+          <sc-if value="{{ noRealtimeVars }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12.5px;line-height:1.7;color:#8A9099">아직 실시간 변수가 없습니다. «실시간 변수 [ 이름 ] 을 ( 값 ) 으로 정하기» 블록을 실행하면 서버(game_vars)에 저장되고 여기에 실제 값이 나옵니다.</span>
+          </sc-if>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:11px">
+          <span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700">
+            <iconify-icon icon="lucide:blocks" width="14" style="color:#0F766E"></iconify-icon>
+            <span>블록으로 테이블·컬럼 만들기</span>
+          </span>
+          <span style="font-size:12.5px;line-height:1.7;color:#5B616C">코드를 쓰지 않고 블록으로 표를 만듭니다. 누르면 지금 고른 오브젝트의 블록 판에 바로 놓입니다.</span>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <sc-for list="{{ dbQuickBlocks }}" as="q" hint-placeholder-count="5">
+              <span onClick="{{ q.add }}" style="display:flex;align-items:center;gap:6px;background:#0F766E;color:#FFFFFF;border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#16181D">
+                <iconify-icon icon="lucide:plus" width="12"></iconify-icon><span>{{ q.t }}</span>
+              </span>
+            </sc-for>
+          </div>
         </div>
         <div style="background:#FFF7E6;border:1px solid #F2D9A0;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:10px">
           <span style="font-size:13.5px;font-weight:700;color:#6B4E06;display:flex;align-items:center;gap:7px">
@@ -1799,148 +1900,158 @@
 
   <!-- ══════════ 커뮤니티 ══════════ -->
   <sc-if value="{{ r_community }}" hint-placeholder-val="{{ false }}">
-  <section style="max-width:1360px;margin:0 auto;padding:36px 32px 72px;display:grid;grid-template-columns:236px minmax(0,1fr) 300px;gap:24px;align-items:start">
-    <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:5px;position:sticky;top:96px">
-      <span style="font-size:11.5px;font-weight:700;color:#8A9099;padding:6px 8px">게시판</span>
-      <sc-for list="{{ boardList }}" as="b" hint-placeholder-count="4">
-        <div onClick="{{ b.go }}" style="display:flex;align-items:center;gap:10px;padding:11px;border-radius:10px;cursor:pointer;background:{{ b.bg }}" style-hover="background:#F4F1EA">
-          <iconify-icon icon="{{ b.icon }}" width="16" style="color:{{ b.color }}"></iconify-icon>
-          <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
-            <span style="font-size:13.5px;font-weight:600">{{ b.name }}</span>
-            <span style="font-size:11px;color:#8A9099">{{ b.postsK }}개 글</span>
-          </span>
-        </div>
-      </sc-for>
-      <button onClick="{{ openCompose }}" style="margin-top:8px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">{{ composeLabel }}</button>
+  <section style="max-width:900px;margin:0 auto;padding:28px 20px 72px;display:flex;flex-direction:column;gap:18px">
+
+    <!-- 머리말 -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-family:Galmuri11,monospace;font-size:11px;color:#F2B23E;letter-spacing:0.08em">COMMUNITY</span>
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:26px;font-weight:700;line-height:1.2">{{ boardTitle }}</h1>
+        <span style="font-size:13px;color:#8A9099;padding-bottom:3px">{{ boardDesc }}</span>
+      </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
-      <div style="display:flex;flex-direction:column;gap:7px">
-        <span style="font-family:Galmuri11,monospace;font-size:11.5px;color:#F2B23E;letter-spacing:0.08em">COMMUNITY</span>
-        <h1 style="margin:0;font-size:27px;font-weight:700">{{ boardTitle }}</h1>
-        <p style="margin:0;font-size:14px;color:#6E7480">{{ boardDesc }}</p>
+    <!-- 게시판 고르기 + 글쓰기 -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #E3DCCC;padding-bottom:14px">
+      <sc-for list="{{ boardList }}" as="b" hint-placeholder-count="4">
+        <span onClick="{{ b.go }}" style="display:flex;align-items:center;gap:7px;background:{{ b.chipBg }};border:1px solid {{ b.chipBd }};color:{{ b.chipFg }};border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#2F6F5E">
+          <iconify-icon icon="{{ b.icon }}" width="14"></iconify-icon>
+          <span>{{ b.name }}</span>
+          <span style="font-family:Galmuri11,monospace;font-size:10.5px;color:{{ b.countFg }}">{{ b.postsK }}</span>
+        </span>
+      </sc-for>
+      <button onClick="{{ openCompose }}" style="margin-left:auto;display:flex;align-items:center;gap:7px;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#16181D">
+        <iconify-icon icon="lucide:pencil-line" width="14"></iconify-icon><span>{{ composeLabel }}</span>
+      </button>
+    </div>
+
+    <!-- 글쓰기 -->
+    <sc-if value="{{ composing }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px solid #2F6F5E;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <input value="{{ postTitle }}" onChange="{{ setPostTitle }}" placeholder="제목 · 40자 이내" style="border:0;border-bottom:1px solid #EFEADE;padding:6px 2px 10px;font-family:inherit;font-size:17px;font-weight:700;outline:none" />
+        <textarea ref="{{ bodyRef }}" value="{{ postBody }}" onChange="{{ setPostBody }}" placeholder="무엇을 만들었고 어디서 막혔는지 적어 주세요" style="border:0;padding:2px;font-family:inherit;font-size:14px;line-height:1.75;min-height:120px;resize:vertical;outline:none"></textarea>
+        <div style="display:flex;flex-direction:column;gap:8px;background:#F7F5EF;border-radius:10px;padding:12px">
+          <span style="display:flex;align-items:center;gap:8px">
+            <iconify-icon icon="lucide:bar-chart-3" width="14" style="color:#4A5FD1"></iconify-icon>
+            <span style="font-size:12.5px;font-weight:700">투표 붙이기</span>
+            <span onClick="{{ togglePoll }}" style="margin-left:auto;font-size:12px;font-weight:700;color:#2F6F5E;cursor:pointer">{{ pollToggleLabel }}</span>
+          </span>
+          <sc-if value="{{ pollOn }}" hint-placeholder-val="{{ false }}">
+            <span style="display:flex;flex-direction:column;gap:7px">
+              <input value="{{ pollQ }}" onChange="{{ setPollQ }}" placeholder="투표 질문" style="border:1px solid #E3DCCC;border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13px;outline:none" />
+              <sc-for list="{{ pollOpts }}" as="op" hint-placeholder-count="2">
+                <span style="display:flex;gap:6px;align-items:center">
+                  <input value="{{ op.v }}" onChange="{{ op.set }}" placeholder="{{ op.ph }}" style="flex:1;min-width:0;border:1px solid #E3DCCC;border-radius:8px;padding:8px 11px;font-family:inherit;font-size:13px;outline:none" />
+                  <span onClick="{{ op.remove }}" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#C6CBD3" style-hover="background:#FDECEA;color:#C0392B"><iconify-icon icon="lucide:x" width="12"></iconify-icon></span>
+                </span>
+              </sc-for>
+              <span onClick="{{ addPollOpt }}" style="font-size:12px;font-weight:700;color:#4A5FD1;cursor:pointer">+ 항목 추가</span>
+            </span>
+          </sc-if>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button onClick="{{ submitPost }}" style="background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#16181D">올리기</button>
+          <button onClick="{{ cancelCompose }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">취소</button>
+          <span style="margin-left:auto;font-size:12px;color:#8A9099">{{ postSaveHint }}</span>
+        </div>
       </div>
-      <sc-if value="{{ composing }}" hint-placeholder-val="{{ false }}">
-        <div style="background:#FFFFFF;border:1px solid #2F6F5E;border-radius:15px;padding:18px;display:flex;flex-direction:column;gap:11px">
-          <span style="font-size:14px;font-weight:700">{{ boardTitle }} 에 글쓰기</span>
-          <span style="font-size:11.5px;font-weight:700;color:#8A9099">제목</span>
-          <input value="{{ postTitle }}" onChange="{{ setPostTitle }}" placeholder="제목 · 40자 이내 (필터 적용)" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14px;outline:none" />
-          <span style="font-size:11.5px;font-weight:700;color:#8A9099">내용</span>
-          <textarea ref="{{ bodyRef }}" value="{{ postBody }}" onChange="{{ setPostBody }}" placeholder="무엇을 만들었고 어디서 막혔는지 적어 주세요" style="border:1px solid #E3DCCC;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13.5px;line-height:1.7;min-height:110px;resize:vertical;outline:none"></textarea>
-          <div style="display:flex;flex-direction:column;gap:7px;background:#F7F5EF;border-radius:10px;padding:11px">
-            <span style="display:flex;align-items:center;gap:8px">
-              <iconify-icon icon="lucide:bar-chart-3" width="14" style="color:#4A5FD1"></iconify-icon>
-              <span style="font-size:12.5px;font-weight:700">투표</span>
-              <span onClick="{{ togglePoll }}" style="margin-left:auto;font-size:11.5px;font-weight:600;color:#2F6F5E;cursor:pointer">{{ pollToggleLabel }}</span>
-            </span>
-            <sc-if value="{{ pollOn }}" hint-placeholder-val="{{ false }}">
-              <span style="display:flex;flex-direction:column;gap:6px">
-                <input value="{{ pollQ }}" onChange="{{ setPollQ }}" placeholder="투표 질문 (예: 다음에 뭘 만들까요?)" style="border:1px solid #E3DCCC;border-radius:8px;padding:9px 11px;font-family:inherit;font-size:12.5px;outline:none" />
-                <sc-for list="{{ pollOpts }}" as="op" hint-placeholder-count="2">
-                  <span style="display:flex;gap:6px;align-items:center">
-                    <input value="{{ op.v }}" onChange="{{ op.set }}" placeholder="{{ op.ph }}" style="flex:1;min-width:0;border:1px solid #E3DCCC;border-radius:8px;padding:8px 11px;font-family:inherit;font-size:12.5px;outline:none" />
-                    <span onClick="{{ op.remove }}" style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#C6CBD3" style-hover="background:#FDECEA;color:#C0392B"><iconify-icon icon="lucide:x" width="12"></iconify-icon></span>
-                  </span>
-                </sc-for>
-                <span onClick="{{ addPollOpt }}" style="font-size:11.5px;font-weight:600;color:#4A5FD1;cursor:pointer">+ 항목 추가</span>
-              </span>
-            </sc-if>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button onClick="{{ submitPost }}" style="background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">올리기</button>
-            <button onClick="{{ cancelCompose }}" style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">취소</button>
-            <span style="margin-left:auto;font-size:12px;color:#8A9099">{{ postSaveHint }}</span>
-          </div>
-        </div>
-      </sc-if>
-      <sc-if value="{{ boardEmpty }}" hint-placeholder-val="{{ false }}">
-        <div style="background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:15px;padding:34px;display:flex;flex-direction:column;align-items:center;gap:10px">
-          <iconify-icon icon="lucide:message-square-plus" width="26" style="color:#CFC7B6"></iconify-icon>
-          <span style="font-size:14.5px;font-weight:700;color:#3A3F49">{{ boardTitle }}에 아직 글이 없습니다</span>
-          <span style="font-size:13px;color:#8A9099;text-align:center;line-height:1.7">첫 글을 올려 보세요. 투표도 함께 넣을 수 있습니다.</span>
-          <button onClick="{{ openCompose }}" style="margin-top:4px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">글쓰기</button>
-        </div>
-      </sc-if>
+    </sc-if>
+
+    <!-- 빈 게시판 -->
+    <sc-if value="{{ boardEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:14px;padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:9px">
+        <iconify-icon icon="lucide:message-square-plus" width="24" style="color:#CFC7B6"></iconify-icon>
+        <span style="font-size:15px;font-weight:700;color:#3A3F49">{{ boardTitle }}에 아직 글이 없습니다</span>
+        <span style="font-size:13px;color:#8A9099;text-align:center;line-height:1.7">첫 글을 올려 보세요. 투표도 함께 넣을 수 있습니다.</span>
+      </div>
+    </sc-if>
+
+    <!-- 글 목록 -->
+    <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;overflow:hidden;display:flex;flex-direction:column">
       <sc-for list="{{ postList }}" as="p" hint-placeholder-count="6">
-        <article onClick="{{ p.open }}" style="background:{{ p.bg }};border:1px solid {{ p.bd }};border-radius:15px;padding:18px;display:flex;gap:15px;cursor:pointer" style-hover="border-color:#2F6F5E">
-          <span style="display:flex;flex-direction:column;align-items:center;gap:3px;width:52px;flex-shrink:0;background:#F7F5EF;border-radius:11px;padding:11px 0">
-            <span onClick="{{ p.like }}" style="cursor:pointer;color:{{ p.likeColor }};display:flex" style-hover="opacity:0.7"><iconify-icon icon="lucide:arrow-big-up" width="17"></iconify-icon></span>
-            <span style="font-family:Galmuri11,monospace;font-size:13px;font-weight:700">{{ p.likes }}</span>
-            <span onClick="{{ p.dislike }}" style="cursor:pointer;color:{{ p.dislikeColor }};display:flex" style-hover="opacity:0.7"><iconify-icon icon="lucide:arrow-big-down" width="17"></iconify-icon></span>
-          </span>
-          <span style="display:flex;flex-direction:column;gap:8px;min-width:0;flex:1">
-            <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <sc-if value="{{ p.pinned }}" hint-placeholder-val="{{ false }}">
-                <span style="font-size:11px;font-weight:700;background:#F2B23E;color:#16181D;border-radius:5px;padding:3px 7px">고정</span>
-              </sc-if>
-              <sc-if value="{{ p.answered }}" hint-placeholder-val="{{ false }}">
-                <span style="font-size:11px;font-weight:700;background:#E4EFE9;color:#2F6F5E;border-radius:5px;padding:3px 7px">운영팀 답변</span>
-              </sc-if>
-              <span style="font-size:11.5px;color:#8A9099">{{ p.board }}</span>
-            </span>
-            <span style="font-size:16px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ p.title }}</span>
-            <span style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A9099">
-              <span role="img" aria-label="" style="width:20px;height:20px;border-radius:99px;background:#F0ECE1;image-rendering:pixelated;flex-shrink:0;background-image:{{ p.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
-              <span style="font-weight:600;color:#3A3F49">{{ p.author }}</span>
-              <span>· {{ p.ago }}</span>
-              <span onClick="{{ p.open }}" style="display:flex;align-items:center;gap:4px;color:#4A5FD1;font-weight:600;background:#EEF1FB;border-radius:7px;padding:4px 9px;cursor:pointer" style-hover="background:#4A5FD1;color:#FFFFFF"><iconify-icon icon="lucide:message-circle" width="13"></iconify-icon><span>댓글 {{ p.comments }}</span></span>
-            </span>
-            <sc-if value="{{ p.isOpen }}" hint-placeholder-val="{{ false }}">
-              <span style="display:flex;flex-direction:column;gap:11px;border-top:1px solid #EFEADE;padding-top:13px">
-                <span style="font-size:14px;line-height:1.8;color:#3A3F49;white-space:pre-wrap">
-                  <sc-for list="{{ p.rich }}" as="seg" hint-placeholder-count="1">
-                    <span style="font-weight:{{ seg.weight }};font-style:{{ seg.style }};text-decoration:{{ seg.deco }};color:{{ seg.color }};background:{{ seg.bg }};font-size:{{ seg.size }}">{{ seg.t }}</span>
-                  </sc-for>
-                </span>
-                <sc-if value="{{ p.hasPoll }}" hint-placeholder-val="{{ false }}">
-                  <span style="display:flex;flex-direction:column;gap:7px;background:#F7F5EF;border-radius:11px;padding:13px">
-                    <span style="font-size:13.5px;font-weight:700;color:#16181D">{{ p.pollQ }}</span>
-                    <sc-for list="{{ p.pollOpts }}" as="po" hint-placeholder-count="2">
-                      <span onClick="{{ po.vote }}" style="position:relative;display:flex;align-items:center;gap:8px;border:1px solid {{ po.bd }};border-radius:9px;padding:9px 11px;cursor:pointer;overflow:hidden;background:#FFFFFF" style-hover="border-color:#4A5FD1">
-                        <span style="position:absolute;left:0;top:0;bottom:0;width:{{ po.pct }};background:#EEF1FB"></span>
-                        <span style="position:relative;font-size:12.5px;font-weight:600;color:#16181D;flex:1">{{ po.t }}</span>
-                        <span style="position:relative;font-family:Galmuri11,monospace;font-size:11px;color:#4A5FD1">{{ po.count }}표 · {{ po.pct }}</span>
-                      </span>
-                    </sc-for>
-                    <span style="font-size:11px;color:#8A9099">{{ p.pollTotal }}명 참여 · 다시 누르면 투표를 바꿉니다</span>
-                  </span>
+        <article style="display:flex;flex-direction:column;border-top:1px solid #F2EEE4">
+          <span onClick="{{ p.open }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer" style-hover="background:#FAF8F3">
+            <span style="display:flex;flex-direction:column;gap:5px;min-width:0;flex:1">
+              <span style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <sc-if value="{{ p.pinned }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:10.5px;font-weight:700;background:#F2B23E;color:#16181D;border-radius:5px;padding:2px 6px">고정</span>
                 </sc-if>
-                <sc-for list="{{ p.thread }}" as="c" hint-placeholder-count="1">
-                  <span style="display:flex;flex-direction:column;gap:4px;background:#F7F5EF;border-radius:10px;padding:10px 12px">
-                    <span style="font-size:12px;font-weight:700;color:#16181D">{{ c.author }} · {{ c.ago }}</span>
-                    <span style="font-size:13px;line-height:1.7;color:#3A3F49">{{ c.body }}</span>
-                  </span>
-                </sc-for>
-                <span style="display:flex;gap:7px" onClick="{{ stopIt }}">
-                  <input value="{{ commentDraft }}" onChange="{{ setComment }}" onKeyDown="{{ commentKey }}" placeholder="댓글 쓰기 (필터 적용)" style="flex:1;min-width:0;border:1px solid #E3DCCC;border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13px;outline:none" />
-                  <button onClick="{{ p.addComment }}" style="background:#16181D;color:#FFFFFF;border:0;border-radius:9px;padding:9px 15px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">등록</button>
-                </span>
+                <sc-if value="{{ p.answered }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:10.5px;font-weight:700;background:#E4EFE9;color:#2F6F5E;border-radius:5px;padding:2px 6px">답변</span>
+                </sc-if>
+                <span style="font-size:15px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ p.title }}</span>
               </span>
-            </sc-if>
+              <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:#8A9099;flex-wrap:wrap">
+                <span style="font-weight:600;color:#3A3F49">{{ p.author }}</span>
+                <span>{{ p.ago }}</span>
+                <span style="color:#CFC7B6">·</span>
+                <span>{{ p.board }}</span>
+              </span>
+            </span>
+            <span style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+              <span style="display:flex;flex-direction:column;align-items:center;gap:1px;min-width:34px">
+                <span onClick="{{ p.like }}" style="cursor:pointer;color:{{ p.likeColor }};display:flex" style-hover="opacity:0.65"><iconify-icon icon="lucide:arrow-big-up" width="16"></iconify-icon></span>
+                <span style="font-family:Galmuri11,monospace;font-size:12px;font-weight:700;color:#16181D">{{ p.likes }}</span>
+                <span onClick="{{ p.dislike }}" style="cursor:pointer;color:{{ p.dislikeColor }};display:flex" style-hover="opacity:0.65"><iconify-icon icon="lucide:arrow-big-down" width="16"></iconify-icon></span>
+              </span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#5B616C;min-width:40px">
+                <iconify-icon icon="lucide:message-circle" width="13"></iconify-icon><span>{{ p.comments }}</span>
+              </span>
+            </span>
           </span>
+
+          <sc-if value="{{ p.isOpen }}" hint-placeholder-val="{{ false }}">
+            <span style="display:flex;flex-direction:column;gap:13px;padding:2px 18px 18px">
+              <span style="font-size:14px;line-height:1.85;color:#3A3F49;background:#FAF8F3;border-radius:11px;padding:14px 16px;display:block"><sc-for list="{{ p.rich }}" as="seg" hint-placeholder-count="1"><span style="white-space:pre-wrap;font-weight:{{ seg.weight }};font-style:{{ seg.style }};text-decoration:{{ seg.deco }};color:{{ seg.color }};background:{{ seg.bg }};font-size:{{ seg.size }}">{{ seg.t }}</span></sc-for></span>
+              <sc-if value="{{ p.hasPoll }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;flex-direction:column;gap:7px">
+                  <span style="font-size:13.5px;font-weight:700;color:#16181D">{{ p.pollQ }}</span>
+                  <sc-for list="{{ p.pollOpts }}" as="po" hint-placeholder-count="2">
+                    <span onClick="{{ po.vote }}" style="position:relative;display:flex;align-items:center;gap:8px;border:1px solid {{ po.bd }};border-radius:9px;padding:9px 12px;cursor:pointer;overflow:hidden;background:#FFFFFF" style-hover="border-color:#4A5FD1">
+                      <span style="position:absolute;left:0;top:0;bottom:0;width:{{ po.pct }};background:#EEF1FB"></span>
+                      <span style="position:relative;font-size:13px;font-weight:600;color:#16181D;flex:1">{{ po.t }}</span>
+                      <span style="position:relative;font-family:Galmuri11,monospace;font-size:10.5px;color:#4A5FD1">{{ po.count }}표 · {{ po.pct }}</span>
+                    </span>
+                  </sc-for>
+                  <span style="font-size:11.5px;color:#8A9099">{{ p.pollTotal }}명 참여 · 다시 누르면 투표를 바꿉니다</span>
+                </span>
+              </sc-if>
+              <sc-for list="{{ p.thread }}" as="c" hint-placeholder-count="1">
+                <span style="display:flex;flex-direction:column;gap:4px;border-left:2px solid #E4EFE9;padding:2px 0 2px 12px">
+                  <span style="font-size:12px;font-weight:700;color:#16181D">{{ c.author }} <span style="font-weight:500;color:#8A9099">{{ c.ago }}</span></span>
+                  <span style="font-size:13.5px;line-height:1.7;color:#3A3F49">{{ c.body }}</span>
+                </span>
+              </sc-for>
+              <span style="display:flex;gap:7px" onClick="{{ stopIt }}">
+                <input value="{{ commentDraft }}" onChange="{{ setComment }}" onKeyDown="{{ commentKey }}" placeholder="댓글 쓰기" style="flex:1;min-width:0;border:1px solid #E3DCCC;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:13px;outline:none" />
+                <button onClick="{{ p.addComment }}" style="background:#16181D;color:#FFFFFF;border:0;border-radius:9px;padding:10px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">등록</button>
+              </span>
+            </span>
+          </sc-if>
         </article>
       </sc-for>
     </div>
 
-    <aside style="display:flex;flex-direction:column;gap:16px;position:sticky;top:96px">
-      <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
-        <span style="font-size:14px;font-weight:700">이번 주 인기 태그</span>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
+    <!-- 태그 · 규칙 -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:15px;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:13px;font-weight:700">태그로 찾기</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
           <sc-for list="{{ hotTags }}" as="t" hint-placeholder-count="8">
             <span onClick="{{ t.go }}" style="font-size:12px;color:{{ t.fg }};background:{{ t.bg }};border-radius:99px;padding:6px 11px;cursor:pointer">#{{ t.t }}</span>
           </sc-for>
         </div>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
-        <span style="font-size:14px;font-weight:700">커뮤니티 규칙</span>
+      <div style="flex:1;min-width:240px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:15px;display:flex;flex-direction:column;gap:9px">
+        <span style="font-size:13px;font-weight:700">커뮤니티 규칙</span>
         <sc-for list="{{ commRules }}" as="r" hint-placeholder-count="4">
-          <span style="font-size:12.5px;line-height:1.65;color:#5B616C;display:flex;gap:8px">
-            <iconify-icon icon="lucide:check" width="14" style="color:#2F6F5E;flex-shrink:0;margin-top:2px"></iconify-icon><span>{{ r }}</span>
+          <span style="font-size:12.5px;line-height:1.6;color:#5B616C;display:flex;gap:7px">
+            <iconify-icon icon="lucide:check" width="13" style="color:#2F6F5E;flex-shrink:0;margin-top:2px"></iconify-icon><span>{{ r }}</span>
           </span>
         </sc-for>
-        <span onClick="{{ goGuideline }}" style="font-size:12.5px;font-weight:600;color:#2F6F5E;cursor:pointer">전체 가이드라인 보기 →</span>
+        <span onClick="{{ goGuideline }}" style="font-size:12.5px;font-weight:700;color:#2F6F5E;cursor:pointer">전체 가이드라인 →</span>
       </div>
-    </aside>
+    </div>
   </section>
   </sc-if>
 
@@ -2307,13 +2418,16 @@
   </sc-if>
 
   <sc-if value="{{ bigPlay }}" hint-placeholder-val="{{ false }}">
-    <div style="position:fixed;inset:0;z-index:95;background:#101216;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px">
-      <div style="width:min(94vw,calc((100vh - 170px) * 4 / 3));display:flex;align-items:center;gap:10px">
+    <div ref="{{ fullRef }}" style="position:fixed;inset:0;z-index:95;background:#0B0D10;overflow:hidden">
+      <div style="position:absolute;left:0;right:0;top:0;z-index:80;display:flex;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(rgba(11,13,16,0.85),rgba(11,13,16,0))">
         <span style="font-family:Galmuri11,monospace;font-size:12px;color:#6FD3C7">{{ playTitle }}</span>
         <span style="font-size:12px;color:rgba(244,241,234,0.5)">방향키 · 스페이스 · 클릭으로 조작</span>
         <span style="margin-left:auto;display:flex;gap:7px">
           <button onClick="{{ runScript }}" style="display:flex;align-items:center;gap:6px;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:9px;padding:8px 14px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">
             <iconify-icon icon="{{ playIcon }}" width="13"></iconify-icon><span>{{ playLabel }}</span>
+          </button>
+          <button onClick="{{ goFull }}" style="display:flex;align-items:center;gap:6px;background:rgba(244,241,234,0.1);color:#F4F1EA;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">
+            <iconify-icon icon="lucide:expand" width="13"></iconify-icon><span>전체화면</span>
           </button>
           <button onClick="{{ closeBig }}" style="display:flex;align-items:center;gap:6px;background:rgba(244,241,234,0.1);color:#F4F1EA;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">
             <iconify-icon icon="lucide:minimize-2" width="13"></iconify-icon><span>{{ closeBigLabel }}</span>
@@ -2321,7 +2435,7 @@
         </span>
       </div>
 
-      <div onClick="{{ stageClick }}" style="position:relative;width:min(94vw,calc((100vh - 170px) * 4 / 3));aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#E7EFE9;box-shadow:0 30px 70px -20px rgba(0,0,0,0.7)">
+      <div onClick="{{ stageClick }}" style="position:absolute;inset:0;overflow:hidden;background:#E7EFE9">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
             <span role="img" aria-label="" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ stageBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
@@ -2350,7 +2464,22 @@
             </span>
           </sc-for>
         </div>
-        <span style="position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:60">
+        <span style="position:absolute;right:16px;top:64px;z-index:72;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.72);border:1px solid rgba(111,211,199,0.35);border-radius:99px;padding:6px 12px;font-family:Galmuri11,monospace;font-size:11px;color:#6FD3C7">
+            <span style="width:7px;height:7px;border-radius:99px;background:#6FD3C7"></span>
+            <span>접속 {{ peerCount }}명</span>
+          </span>
+          <sc-for list="{{ rosterList }}" as="pr" hint-placeholder-count="0">
+            <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.6);border-radius:8px;padding:4px 9px;font-size:11px;color:#F4F1EA">
+              <span role="img" aria-label="" style="width:14px;height:14px;image-rendering:pixelated;background-image:{{ pr.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;flex-shrink:0"></span>
+              <span>{{ pr.name }}</span>
+              <sc-if value="{{ pr.isMe }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:Galmuri11,monospace;font-size:9px;color:#6FD3C7">나</span>
+              </sc-if>
+            </span>
+          </sc-for>
+        </span>
+        <span style="position:absolute;left:16px;top:64px;display:flex;flex-direction:column;gap:6px;z-index:60">
           <sc-for list="{{ monitorList }}" as="m" hint-placeholder-count="0">
             <span style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.92);border:1px solid #CFC7B6;border-radius:9px;padding:5px 11px;font-family:Galmuri11,monospace;font-size:13px;color:#16181D">
               <span>{{ m.k }}</span><span style="color:#2F6F5E">{{ m.v }}</span>
@@ -2360,6 +2489,50 @@
         <sc-if value="{{ hasUiText }}" hint-placeholder-val="{{ false }}">
           <span style="position:absolute;left:50%;top:20px;transform:translateX(-50%);background:rgba(22,24,29,0.82);color:#F4F1EA;border-radius:11px;padding:9px 18px;font-family:Galmuri11,monospace;font-size:15px;white-space:nowrap;z-index:60">{{ uiTextV }}</span>
         </sc-if>
+              <!-- 화면(UI) 블록으로 만든 요소들 -->
+              <sc-if value="{{ hasScreenColor }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;background:{{ screenColorV }};z-index:34;pointer-events:none"></span>
+              </sc-if>
+              <sc-for list="{{ uiWidgets }}" as="u" hint-placeholder-count="0">
+                <span style="position:absolute;left:{{ u.left }};top:{{ u.top }};right:{{ u.right }};bottom:{{ u.bottom }};transform:{{ u.tf }};z-index:64;display:flex;flex-direction:column;align-items:{{ u.align }};gap:4px;max-width:74%">
+                  <sc-if value="{{ u.isLabel }}" hint-placeholder-val="{{ false }}">
+                    <span style="background:rgba(255,255,255,0.94);border:1px solid #CFC7B6;border-radius:7px;padding:4px 9px;font-family:Galmuri11,monospace;font-size:11px;color:#16181D;white-space:pre-wrap">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isButton }}" hint-placeholder-val="{{ false }}">
+                    <span onClick="{{ u.click }}" style="background:{{ u.color }};color:#FFFFFF;border-radius:9px;padding:7px 15px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 rgba(22,24,29,0.22);min-height:30px;display:flex;align-items:center">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isBar }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:3px;align-items:{{ u.align }}">
+                      <span style="font-family:Galmuri11,monospace;font-size:9.5px;color:#16181D;background:rgba(255,255,255,0.9);border-radius:4px;padding:1px 5px">{{ u.name }} {{ u.pct }}</span>
+                      <span style="width:104px;height:9px;background:rgba(22,24,29,0.2);border-radius:99px;overflow:hidden;display:block">
+                        <span style="display:block;height:100%;width:{{ u.pct }};background:{{ u.color }}"></span>
+                      </span>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isPanel }}" hint-placeholder-val="{{ false }}">
+                    <span style="background:rgba(22,24,29,0.88);color:#F4F1EA;border-radius:11px;padding:9px 13px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;max-width:220px">{{ u.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ u.isImage }}" hint-placeholder-val="{{ false }}">
+                    <span role="img" aria-label="{{ u.name }}" style="width:36px;height:36px;image-rendering:pixelated;background-image:{{ u.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  </sc-if>
+                </span>
+              </sc-for>
+              <sc-if value="{{ uiPadOn }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;left:10px;bottom:10px;z-index:70;display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(2,32px);gap:4px">
+                  <sc-for list="{{ padKeys }}" as="p" hint-placeholder-count="0">
+                    <span onMouseDown="{{ p.press }}" style="grid-column:{{ p.col }};grid-row:{{ p.row }};background:rgba(22,24,29,0.78);color:#F4F1EA;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;user-select:none">{{ p.t }}</span>
+                  </sc-for>
+                </span>
+              </sc-if>
+              <sc-if value="{{ hasDialog }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;z-index:90;background:rgba(22,24,29,0.55);display:flex;align-items:center;justify-content:center;padding:16px">
+                  <span style="background:#FFFFFF;border-radius:13px;padding:15px;display:flex;flex-direction:column;gap:11px;max-width:80%">
+                    <span style="font-size:12.5px;line-height:1.55;color:#16181D;white-space:pre-wrap">{{ dialogMsg }}</span>
+                    <span onClick="{{ dialogOk }}" style="align-self:flex-end;background:#2F6F5E;color:#FFFFFF;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer">확인</span>
+                  </span>
+                </span>
+              </sc-if>
+
 
         <span onClick="{{ stopIt }}" style="position:absolute;right:14px;bottom:14px;width:300px;display:flex;flex-direction:column;gap:5px;z-index:75;background:rgba(22,24,29,0.72);border-radius:10px;padding:7px;backdrop-filter:blur(2px)">
           <span style="display:flex;flex-direction:column;gap:3px;max-height:96px;overflow-y:auto">
@@ -2384,7 +2557,7 @@
         </sc-if>
       </div>
 
-      <div style="width:min(94vw,calc((100vh - 170px) * 4 / 3));display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+      <div style="width:min(100vw,calc((100dvh - 92px) * 4 / 3));display:flex;flex-wrap:wrap;gap:7px;align-items:center">
         <sc-for list="{{ runVars }}" as="v" hint-placeholder-count="2">
           <span style="display:flex;align-items:center;gap:7px;background:rgba(244,241,234,0.09);border-radius:9px;padding:6px 12px;font-family:Galmuri11,monospace;font-size:12px;color:#F4F1EA">
             <span>{{ v.k }}</span><span style="color:#F2B23E">{{ v.v }}</span>
@@ -2689,6 +2862,16 @@ class Component extends DCLogic {
     askInput: "",
     bigPlay: false,
     camT: "none",
+    mapW: 40,
+    mapH: 25,
+    mapBound: "infinite",
+    uiWidgets: [],
+    rtVars: {},
+    rtScope: {},
+    rowsView: {},
+    uiPad: false,
+    uiDialogMsg: "",
+    screenColor: "",
     chatLog: [],
     chatDraft: "",
     tagsDef: [],
@@ -2730,8 +2913,16 @@ class Component extends DCLogic {
     tagFilter: null,
   };
 
-  MW = 40;
-  MH = 25;
+  get MW() { return Math.max(8, Math.min(9999, Number(this.state.mapW) || 40)); }
+  get MH() { return Math.max(6, Math.min(9999, Number(this.state.mapH) || 25)); }
+  TILE = 12;
+
+  // 오브젝트가 나갈 수 있는 범위 — 맵 칸 수에 그대로 비례한다. «무한» 이면 제한이 없다.
+  worldBounds() {
+    // 무한: 벽이 없다. 카메라가 따라가고 바닥은 맵 칸 크기 그대로 이어진다.
+    if (this.state.mapBound === "infinite") return null;
+    return { x: (this.MW * this.TILE) / 2, y: (this.MH * this.TILE * 1.2) / 2 };
+  }
 
   seedMap() {
     const t = {};
@@ -2862,7 +3053,7 @@ class Component extends DCLogic {
   // 칸 크기 조절 — 드래그하는 동안 폭만 바꾼다
   dragPane(key, min, max, dir) {
     return (e) => {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       const start = e.clientX;
       const base = this.state[key];
       const move = (ev) => {
@@ -2878,7 +3069,66 @@ class Component extends DCLogic {
     };
   }
 
-  wsRef = (el) => { this._ws = el; };
+  tidyWs = () => {
+    this.setStacks((list) => list.map((s, i) => Object.assign({}, s, { x: 40, y: 28 + i * 240 })));
+    this.say("스크립트를 위에서부터 정리했습니다.");
+  };
+
+  wsRef = (el) => {
+    this._ws = el;
+    if (!el || el._wheelBound) return;
+    el._wheelBound = true;
+    // React 는 휠을 소극적으로 등록해 preventDefault 가 막힌다 → 직접 등록한다
+    el.addEventListener("wheel", (e) => this.wsWheel(e), { passive: false });
+  };
+
+  // 블록을 우클릭하면 복사 · 복제 · 삭제 메뉴를 띄운다 (브라우저 기본 메뉴는 막는다)
+  wsMenu = (e) => {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    const host = e.target.closest ? e.target.closest("[data-b]") : null;
+    const id = host && host.getAttribute("data-b");
+    const box = this._ws && this._ws.getBoundingClientRect();
+    this.setState({
+      ctxMenu: {
+        id: id || null,
+        x: Math.round(e.clientX - (box ? box.left : 0)),
+        y: Math.round(e.clientY - (box ? box.top : 0)),
+      },
+    });
+  };
+
+  // 블록 하나(또는 아래까지)를 복제해 옆에 놓는다
+  dupBlock(id, deep) {
+    const B = window.DotBlocks;
+    if (!B || !id) return;
+    const list = this.model();
+    const found = B.findBlock(list, id);
+    if (!found) { this.setState({ ctxMenu: null }); return this.say("복제할 블록을 찾지 못했습니다.", "warn"); }
+    const clone = B.cloneBlock(found.block, !!deep);
+    if (!clone) { this.setState({ ctxMenu: null }); return; }
+    const row = B.flatten(list).find((r) => r.block && r.block.id === id);
+    list.push({
+      root: clone,
+      x: (row ? row.x : 40) + 34,
+      y: (row ? row.y : 40) + 34,
+    });
+    this.setState({ ctxMenu: null }, () => {
+      this.touchModel();
+      this.say(deep ? "아래까지 복제했습니다." : "블록 하나를 복사했습니다.");
+    });
+  }
+
+  delBlock(id) {
+    const B = window.DotBlocks;
+    if (!B || !id) return;
+    const list = this.model();
+    const blk = B.detach(list, id);
+    this.setState({ ctxMenu: null }, () => {
+      this.touchModel();
+      this.say(blk ? "블록을 삭제했습니다." : "삭제할 블록을 찾지 못했습니다.", blk ? "ok" : "warn");
+    });
+  }
 
   // 처음 열었을 때 보여줄 예시 스크립트 (실제로 실행된다)
   seedBlocks() {
@@ -3000,6 +3250,109 @@ class Component extends DCLogic {
   };
 
   // ── 실시간 값 읽고 쓰기 (환경 변수가 있으면 Supabase, 없으면 로컬)
+  // ── 표(game_rows) 에 실제로 읽고 쓴다 ─────────────────────
+  localRow(tbl, row) {
+    this._rows = this._rows || {};
+    (this._rows[tbl] = this._rows[tbl] || []).push(row);
+    this.setState((p) => ({ rowsView: Object.assign({}, p.rowsView, { [tbl]: (this._rows[tbl] || []).slice() }) }));
+  }
+
+  async rowAdd(tbl, row) {
+    this.localRow(tbl, row);
+    if (window.DotDB && window.DotDB.isLive && window.DotDB.addRowByName) {
+      const t0 = (this.state.tables || []).find((x) => x.name === tbl);
+      try {
+        const ok = await window.DotDB.addRowByName(this.state.worldId, tbl, row, !!(t0 && t0.perPlayer));
+        if (ok) { await this.loadDbData(); return true; }
+      } catch (e) {}
+      if (!this._rowWarned) {
+        this._rowWarned = true;
+        this.say("표 데이터는 로그인한 뒤에만 서버에 저장됩니다 — 지금은 이 브라우저에만 남습니다.", "warn");
+      }
+    }
+    return false;
+  }
+
+  async cellWrite(tbl, col, v) {
+    const rows = (this._rows && this._rows[tbl]) || [];
+    if (rows.length) rows[rows.length - 1] = Object.assign({}, rows[rows.length - 1], { [col]: v });
+    else this.localRow(tbl, { [col]: v });
+    this.setState((p) => ({ rowsView: Object.assign({}, p.rowsView, { [tbl]: ((this._rows || {})[tbl] || []).slice() }) }));
+    if (window.DotDB && window.DotDB.isLive && window.DotDB.writeCell) {
+      const t0 = (this.state.tables || []).find((x) => x.name === tbl);
+      try {
+        const ok = await window.DotDB.writeCell(this.state.worldId, tbl, col, v, !!(t0 && t0.perPlayer));
+        if (ok) { await this.loadDbData(); return true; }
+      } catch (e) {}
+    }
+    return false;
+  }
+
+  async cellRead(tbl, col) {
+    if (window.DotDB && window.DotDB.isLive && window.DotDB.readCell) {
+      try {
+        const v = await window.DotDB.readCell(this.state.worldId, tbl, col);
+        if (v !== null && v !== undefined) return isNaN(Number(v)) ? v : Number(v);
+      } catch (e) {}
+    }
+    const rows = (this._rows && this._rows[tbl]) || [];
+    const last = rows[rows.length - 1] || {};
+    const v = last[col];
+    return v === undefined ? 0 : (isNaN(Number(v)) ? v : Number(v));
+  }
+
+  // 실시간 변수 · 표 데이터를 서버에서 읽어 DB 탭에 그대로 보여 준다
+  async loadDbData() {
+    if (!(window.DotDB && window.DotDB.isLive)) return;
+    try {
+      const vars = await window.DotDB.getVars(this.state.worldId);
+      if (vars && vars.length) {
+        const rv = {}, sc = {};
+        vars.forEach((r) => {
+          if (String(r.key).indexOf("list.") === 0) return;
+          rv[r.key] = typeof r.value === "object" ? JSON.stringify(r.value) : r.value;
+          sc[r.key] = r.player_id ? "player" : "global";
+        });
+        this._vars = Object.assign({}, this._vars, rv);
+        // 서버 값을 덮어쓰되, 아직 서버에 못 올린 로컬 값은 남긴다
+        this.setState((p) => ({
+          rtVars: Object.assign({}, p.rtVars, rv),
+          rtScope: Object.assign({}, p.rtScope, sc),
+        }));
+      }
+      const tabs = window.DotDB.listTables ? await window.DotDB.listTables(this.state.worldId) : null;
+      const rows = window.DotDB.listRows ? await window.DotDB.listRows(this.state.worldId) : null;
+      if (tabs && rows) {
+        const byId = {};
+        tabs.forEach((x) => { byId[x.id] = x.name; });
+        const grouped = {};
+        rows.forEach((r) => {
+          const n = byId[r.table_id];
+          if (!n) return;
+          (grouped[n] = grouped[n] || []).push(r.data || {});
+        });
+        // 서버에 아직 없는 표·행은 그대로 둔다 (로그인 전에는 서버에 못 쓰기 때문)
+        const merged = Object.assign({}, this._rows || {});
+        Object.keys(grouped).forEach((k) => { if (grouped[k].length) merged[k] = grouped[k]; });
+        this._rows = merged;
+        this.setState((p) => ({
+          rowsView: merged,
+          tables: (tabs || []).reduce((acc, x) => (
+            acc.some((y) => y.name === x.name) ? acc : acc.concat([{ name: x.name, perPlayer: !!x.per_player, cols: (x.cols || []).map((c) => (typeof c === "string" ? { name: c, type: "글자" } : c)) }])
+          ), (p.tables || []).slice()),
+        }));
+      }
+    } catch (e) {}
+  }
+
+  watchDb() {
+    if (this._dbCh || !(window.DotDB && window.DotDB.isLive)) return;
+    try {
+      this._dbCh = window.DotDB.subscribeVars(this.state.worldId, () => this.loadDbData());
+      if (window.DotDB.subscribeRows) this._rowCh = window.DotDB.subscribeRows(this.state.worldId, () => this.loadDbData());
+    } catch (e) {}
+  }
+
   async dbRead(key) {
     const cache = this._vars || {};
     if (window.DotDB && window.DotDB.isLive) {
@@ -3017,6 +3370,10 @@ class Component extends DCLogic {
 
   async dbWrite(key, v, perPlayer) {
     this._vars = Object.assign({}, this._vars, { [key]: v });
+    this.setState((p) => ({
+      rtVars: Object.assign({}, p.rtVars, { [key]: v }),
+      rtScope: Object.assign({}, p.rtScope, { [key]: perPlayer ? "player" : "global" }),
+    }));
     this.setState((p) => ({ runVars: Object.assign({}, p.runVars, { [key]: v }) }));
     if (window.DotDB && window.DotDB.isLive) {
       try { await window.DotDB.setVar(this.state.worldId, key, v, !!perPlayer); return true; } catch (e) {}
@@ -3059,7 +3416,9 @@ class Component extends DCLogic {
     this._answer = "";
     this.penRedraw();
     this.applyCam();
-    this._rows = {};
+    this._rows = this._rows || {};
+    this._uiClicks = {};
+    this.setState({ uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
     this._keys = new Set();
     this._onKey = (ev) => {
       const m = { ArrowUp: "위쪽", ArrowDown: "아래쪽", ArrowLeft: "왼쪽", ArrowRight: "오른쪽", " ": "스페이스",
@@ -3088,8 +3447,11 @@ class Component extends DCLogic {
             else if (!this.blocked(o.x, p.y)) o.y = p.y;
             else { o.x = p.x; o.y = p.y; }
           }
-          o.x = Math.max(-236, Math.min(236, o.x));
-          o.y = Math.max(-176, Math.min(176, o.y));
+          const bb = this.worldBounds();
+          if (bb) {
+            o.x = Math.max(-bb.x, Math.min(bb.x, o.x));
+            o.y = Math.max(-bb.y, Math.min(bb.y, o.y));
+          }
           if (p && o.pen && (p.x !== o.x || p.y !== o.y)) this.penMove(o, p);
           this._prevPos[o.id] = { x: o.x, y: o.y };
         });
@@ -3117,7 +3479,15 @@ class Component extends DCLogic {
         if (sc) { this.stopAll(); this.gotoScene(sc.id); }
       },
       signal: (sig) => this.fireSignal(sig),
-      objByName: (n) => this._live.find((o) => o.name === n),
+      objByName: (n) => {
+        const live = this._live || [];
+        if (n) {
+          const hit = live.find((o) => o.name === n);
+          if (hit) return hit;
+        }
+        const cur = live.find((o) => o.id === this.state.objId);
+        return live.find((o) => o !== cur && o.on !== false) || null;
+      },
       distTo: (self, n) => {
         const o = this._live.find((x) => x.name === n);
         return o ? Math.round(Math.hypot(o.x - self.x, o.y - self.y)) : 0;
@@ -3141,7 +3511,36 @@ class Component extends DCLogic {
       volume: (n) => { this._vol = n; },
       penClear: () => { this._penSegs = []; this.penRedraw(); },
       uiText: (m) => this.setState({ uiText: m }),
-      camFollow: (name) => { this._cam.follow = name; this.camTrack(); },
+      camFollow: (name, self) => {
+        // 고른 것이 없으면 이 블록을 실행한 오브젝트를 따라간다
+        this._cam.follow = (name && String(name).trim()) || (self && (self.name || self.id)) || null;
+        this.camTrack();
+        this.say("카메라가 «" + this._cam.follow + "» 을 따라갑니다.");
+      },
+      bounds: () => this.worldBounds() || { x: 100000, y: 100000 },
+      // ── 화면(UI) 블록 ────────────────────────────────────
+      uiSet: (w) => {
+        const name = String(w.name || "이름없음");
+        this.setState((p) => {
+          const list = (p.uiWidgets || []).filter((x) => x.name !== name);
+          return { uiWidgets: list.concat([Object.assign({}, w, { name: name })]) };
+        });
+      },
+      uiRemove: (name) => this.setState((p) => ({ uiWidgets: (p.uiWidgets || []).filter((x) => x.name !== String(name)) })),
+      uiClearAll: () => this.setState({ uiWidgets: [], uiPad: false, uiText: "" }),
+      uiDialog: (msg) => new Promise((resolve) => {
+        this._uiDialogResolve = resolve;
+        this.setState({ uiDialogMsg: String(msg) });
+      }),
+      screenColor: (c) => this.setState({ screenColor: this.namedColor(c) }),
+      uiPad: (on) => this.setState({ uiPad: !!on }),
+      uiClicked: (name) => {
+        const hit = (this._uiClicks || {})[String(name)];
+        if (!hit) return false;
+        // 한 번 읽으면 사라진다 (스크래치의 «클릭했는가?» 처럼)
+        if (Date.now() - hit > 400) { delete this._uiClicks[String(name)]; return false; }
+        return true;
+      },
       camZoom: (n) => { this._cam.z = Math.max(0.5, Math.min(4, n || 1)); this.applyCam(); },
       camReset: () => { this._cam = { x: 0, y: 0, z: 1, sx: 0, sy: 0, follow: null }; this.applyCam(); },
       shake: (sec) => this.camShake(sec),
@@ -3162,7 +3561,7 @@ class Component extends DCLogic {
         self.followSpeed = Math.max(0.2, Number(sp) || 3);
         if (this._followT) return;
         this._followT = setInterval(() => {
-          if (!this.state.running || !this._live) return;
+          if (!this._live) return;
           let moved = false;
           this._live.forEach((o) => {
             if (!o.followName) return;
@@ -3306,19 +3705,15 @@ class Component extends DCLogic {
         this.setState((p) => ({ tiles: Object.assign({}, p.tiles, { [key]: c }) }), () => this.drawMap());
       },
       // ── 실시간 DB: game_vars / game_rows 에 실제로 읽고 쓴다
-      dbGet: async (tbl, col) => await this.dbRead(tbl + "." + col),
-      dbSet: async (tbl, col, v) => await this.dbWrite(tbl + "." + col, v, true),
+      dbGet: async (tbl, col) => await this.cellRead(tbl, col),
+      dbSet: async (tbl, col, v) => await this.cellWrite(tbl, col, v),
       dbTop: async (tbl, col) => {
-        const rows = this._rows && this._rows[tbl];
-        if (rows && rows.length) return Math.max.apply(null, rows.map((r) => Number(r[col]) || 0));
-        return await this.dbRead(tbl + "." + col);
+        const rows = (this.state.rowsView || {})[tbl] || (this._rows && this._rows[tbl]) || [];
+        if (rows.length) return Math.max.apply(null, rows.map((r) => Number(r[col]) || 0));
+        return await this.cellRead(tbl, col);
       },
-      dbRows: async (tbl) => ((this._rows && this._rows[tbl]) || []).length,
-      dbAddRow: async (tbl, v) => {
-        this._rows = this._rows || {};
-        (this._rows[tbl] = this._rows[tbl] || []).push({ 점수: v, 이름: (this.state.liveMe && this.state.liveMe.name) || "손님" });
-        await this.dbWrite(tbl + ".점수", v, true);
-      },
+      dbRows: async (tbl) => (((this.state.rowsView || {})[tbl]) || (this._rows && this._rows[tbl]) || []).length,
+      dbAddRow: async (tbl, v) => await this.rowAdd(tbl, { 점수: v, 이름: (this.state.liveMe && this.state.liveMe.name) || "손님" }),
       // 블록으로 테이블·컬럼을 정의한다
       hasTable: (n) => (this.state.tables || []).some((t) => t.name === n),
       tableCreate: async (n, perPlayer) => {
@@ -3335,14 +3730,18 @@ class Component extends DCLogic {
         this.say("블록이 «" + n + "» 테이블을 만들었습니다.");
       },
       colAdd: async (n, col, type) => {
-        const t0 = (this.state.tables || []).find((x) => x.name === n);
-        if (!t0) { this.say("«" + n + "» 테이블이 없습니다 — 테이블 만들기 블록을 먼저 실행하세요.", "warn"); return; }
-        if (t0.cols.some((x) => x.name === col)) return;
-        const cols = t0.cols.concat([{ name: col, type: type }]);
-        this.setState((p) => ({
-          tables: (p.tables || []).map((t) => (t.name === n ? Object.assign({}, t, { cols: cols }) : t)),
-        }));
-        await this.pushTable(n, cols, t0.perPlayer);
+        // setState 는 곧바로 반영되지 않는다 — 컬럼을 연달아 추가해도 잃지 않도록 최신 값에서 계산한다
+        let cols = null, perPlayer = false, missing = false;
+        await new Promise((resolve) => this.setState((p) => {
+          const t0 = (p.tables || []).find((x) => x.name === n);
+          if (!t0) { missing = true; return null; }
+          perPlayer = t0.perPlayer;
+          if (t0.cols.some((x) => x.name === col)) { cols = t0.cols; return null; }
+          cols = t0.cols.concat([{ name: col, type: type }]);
+          return { tables: (p.tables || []).map((x) => (x.name === n ? Object.assign({}, x, { cols: cols }) : x)) };
+        }, resolve));
+        if (missing) { this.say("«" + n + "» 테이블이 없습니다 — 테이블 만들기 블록을 먼저 실행하세요.", "warn"); return; }
+        await this.pushTable(n, cols, perPlayer);
         this.say("«" + n + "» 에 컬럼 «" + col + "» 을 추가했습니다.");
       },
       colDrop: async (n, col) => {
@@ -3399,6 +3798,37 @@ class Component extends DCLogic {
   };
 
   fireKey(k) { if (this._rt) this._rt.start(this.sceneStacks(), "key", k); }
+  fireUi(name) {
+    this._uiClicks = this._uiClicks || {};
+    this._uiClicks[String(name)] = Date.now();
+    if (this._rt && this.state.running) this._rt.start(this.sceneStacks(), "ui", name);
+  }
+  namedColor(c) {
+    return { "검정": "#16181D", "빨강": "#C0392B", "초록": "#2F6F5E", "파랑": "#4A5FD1",
+      "노랑": "#F2B23E", "흰색": "#FFFFFF", "주황": "#E0653A", "보라": "#8D6BD8" }[c] || c || "#16181D";
+  }
+  // UI 위젯 9칸 배치 → 실행화면 안의 위치
+  uiSpot(pos) {
+    const P = {
+      "왼쪽 위": ["8px", "8px", "auto", "auto", "flex-start"],
+      "가운데 위": ["50%", "8px", "auto", "auto", "center"],
+      "오른쪽 위": ["auto", "8px", "8px", "auto", "flex-end"],
+      "왼쪽 가운데": ["8px", "50%", "auto", "auto", "flex-start"],
+      "화면 가운데": ["50%", "50%", "auto", "auto", "center"],
+      "오른쪽 가운데": ["auto", "50%", "8px", "auto", "flex-end"],
+      "왼쪽 아래": ["8px", "auto", "auto", "8px", "flex-start"],
+      "가운데 아래": ["50%", "auto", "auto", "8px", "center"],
+      "오른쪽 아래": ["auto", "auto", "8px", "8px", "flex-end"],
+    };
+    const v = P[pos] || P["왼쪽 위"];
+    const tf = (v[0] === "50%" ? "translateX(-50%)" : "") + (v[1] === "50%" ? " translateY(-50%)" : "");
+    return { left: v[0], top: v[1], right: v[2], bottom: v[3], align: v[4], tf: tf.trim() || "none" };
+  }
+  uiConfirm = () => {
+    const r = this._uiDialogResolve;
+    this._uiDialogResolve = null;
+    this.setState({ uiDialogMsg: "" }, () => { if (r) r(true); });
+  };
   fireSignal(s) { if (this._rt) this._rt.start(this.sceneStacks(), "signal", s); }
   fireClick(id) {
     if (!this.state.running) { this.setState({ objId: id }); return; }
@@ -3425,7 +3855,8 @@ class Component extends DCLogic {
     this._penSegs = [];
     this.penRedraw();
     this.stopAnims();
-    this.setState({ running: false, camT: "none", uiText: "", asking: false });
+    this._uiClicks = {};
+    this.setState({ running: false, camT: "none", uiText: "", asking: false, uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
   };
 
   // ── 블록 모델: 하나의 실제 트리를 직접 고친다 (사본 없음) ──
@@ -3504,13 +3935,13 @@ class Component extends DCLogic {
           bg: String(val) === o ? "#F1F7F4" : "transparent",
           fg: String(val) === o ? "#2F6F5E" : "#2A2D36",
           pick: (e) => {
-            e.stopPropagation(); e.preventDefault();
+            e.stopPropagation(); if (e.cancelable) e.preventDefault();
             this.setInput(block.id, p.k, o);
             this.setState({ openSel: null });
           },
         })),
         toggle: (e) => {
-          e.stopPropagation(); e.preventDefault();
+          e.stopPropagation(); if (e.cancelable) e.preventDefault();
           this.setState((s2) => ({ openSel: s2.openSel === key ? null : key }));
         },
         bg: "#FFFFFF", fg: "#16181D", br: "99px", pad: "3px 8px", border: "0", minW: "0",
@@ -3647,7 +4078,16 @@ class Component extends DCLogic {
     }
     this._mpSelf = self;
     this._peers = this._peers || {};
-    this._mpId = this._mpId || "u" + Math.random().toString(36).slice(2, 8);
+    // 기기(브라우저)마다 고정된 id — 탭을 여러 개 열어도 한 사람으로 센다
+    if (!this._mpId) {
+      let dev = null;
+      try { dev = localStorage.getItem("dotverse.dev"); } catch (e) {}
+      if (!dev) {
+        dev = "u" + Math.random().toString(36).slice(2, 8);
+        try { localStorage.setItem("dotverse.dev", dev); } catch (e) {}
+      }
+      this._mpId = dev;
+    }
     this._mpName = this._mpName || (S().me && S().me.name) || "플레이어";
     if (this._mpOn) return;
     this._mpOn = true;
@@ -3655,6 +4095,8 @@ class Component extends DCLogic {
     const onMsg = (p) => {
       if (!p || p.id === this._mpId || p.room !== this._mpRoom) return;
       if (p.chat) { this.pushChat(p.name || "손님", p.chat); return; }
+      // 월드 상태(오브젝트 위치·모양·말풍선)를 받은 경우
+      if (p.world) return this.applyWorld(p.world);
       const known = !!this._peers[p.id];
       this._peers[p.id] = Object.assign({ t: Date.now() }, p);
       if (!known) {
@@ -3686,6 +4128,18 @@ class Component extends DCLogic {
         x: Math.round(o.x), y: Math.round(o.y), art: o.art,
         scale: o.scale || 1, say: o.say || "", t: Date.now(),
       };
+      // 스크립트를 돌리는 쪽이 오브젝트 전체 상태를 같이 보낸다 (남들 화면도 똑같이 움직인다)
+      if (this.state.running && this._live) {
+        this._wt = (this._wt || 0) + 1;
+        if (this._wt % 2 === 0) {
+          p.world = this._live.filter((o2) => !o2.synthetic && o2.id !== (this._mpSelf || {}).id)
+            .map((o2) => ({
+              id: o2.id, x: Math.round(o2.x), y: Math.round(o2.y), art: o2.art,
+              scale: Math.round((o2.scale || 1) * 100) / 100, rot: Math.round(o2.rot || 0),
+              on: o2.on !== false, say: o2.say || "", text: o2.text,
+            }));
+        }
+      }
       if (this._mpBc) { try { this._mpBc.postMessage(p); } catch (err) {} }
       if (this._mpCh) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (err) {} }
       // 오래 소식이 없는 사람은 화면에서 지운다
@@ -3719,6 +4173,25 @@ class Component extends DCLogic {
     this._mpTimer = setInterval(send, 120);
     this.say("멀티플레이를 시작했습니다 — 같은 방(" + this._mpRoom + ")에 들어온 사람이 화면에 보입니다.");
   };
+
+  // 남이 보낸 오브젝트 상태를 내 화면에 그대로 반영한다
+  applyWorld(list) {
+    if (!Array.isArray(list) || !list.length) return;
+    // 내가 스크립트를 돌리는 중이면 내 계산이 우선이다 (덮어쓰면 서로 튄다)
+    if (this.state.running) return;
+    if (!this._live) this._live = (this.curObjects() || []).map((o) => Object.assign({}, o));
+    let hit = false;
+    list.forEach((r) => {
+      const o = this._live.find((x) => x.id === r.id);
+      if (!o) return;
+      hit = true;
+      o.x = r.x; o.y = r.y; o.rot = r.rot; o.scale = r.scale;
+      o.on = r.on; o.say = r.say;
+      if (r.art) o.art = r.art;
+      if (r.text !== undefined) o.text = r.text;
+    });
+    if (hit) this.tick();
+  }
 
   mpStop = () => {
     clearInterval(this._mpTimer);
@@ -4137,7 +4610,7 @@ class Component extends DCLogic {
   // ── 커뮤니티 ───────────────────────────────────────────────
   allPosts() {
     const s = S();
-    return (this.state.myPosts || []).concat(this.state.dbLoaded ? (this.state.livePosts || []) : (s.posts || []));
+    return (this.state.myPosts || []).concat(this.state.livePosts || []);
   }
 
   submitPost = async () => {
@@ -4258,7 +4731,7 @@ class Component extends DCLogic {
   // 휠로도 조립소를 움직인다 (Shift = 가로)
   wsWheel = (e) => {
     if (!this._ws) return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     if (e.shiftKey) this._ws.scrollLeft += e.deltaY;
     else { this._ws.scrollTop += e.deltaY; this._ws.scrollLeft += e.deltaX; }
   };
@@ -4285,7 +4758,7 @@ class Component extends DCLogic {
   }
 
   grabNew = (e, defId) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const B = window.DotBlocks;
     if (!B || !this._ws) return;
     const blk = B.make(defId);
@@ -4297,7 +4770,7 @@ class Component extends DCLogic {
   };
 
   grabExisting = (e, id) => {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     const B = window.DotBlocks;
     if (!B || !this._ws || this._dragging) return;
@@ -4458,6 +4931,9 @@ class Component extends DCLogic {
       shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
       favs: this.state.favArts || [],
       hideLayers: this.state.hideLayers || {},
+      mapW: this.state.mapW || 40,
+      mapH: this.state.mapH || 25,
+      mapBound: this.state.mapBound || "map",
     };
     if (!window.DotDB || !window.DotDB.isLive) {
       try { localStorage.setItem(LS("studio"), JSON.stringify(payload)); } catch (e) {}
@@ -4573,6 +5049,9 @@ class Component extends DCLogic {
     if (payload.sigs) next.sigsDef = payload.sigs;
     if (payload.favs) next.favArts = payload.favs;
     if (payload.hideLayers) next.hideLayers = payload.hideLayers;
+    if (payload.mapW) next.mapW = payload.mapW;
+    if (payload.mapH) next.mapH = payload.mapH;
+    if (payload.mapBound) next.mapBound = payload.mapBound;
     const tiles = typeof payload.tiles === "string" ? this.unpackTiles(payload.tiles) : payload.tiles;
     if (tiles) { next.tiles = tiles; this._baseKey = null; }
     // 사진 오브젝트를 맵 캔버스에도 쓸 수 있게 준비한다
@@ -4627,6 +5106,7 @@ class Component extends DCLogic {
 
   // 빈 공간 드래그 = 조립소 화면 이동
   wsPan = (e) => {
+    if (this.state.ctxMenu) this.setState({ ctxMenu: null });
     if (this.state.openSel) this.setState({ openSel: null });
     if (!this._ws || e.target.closest("[data-b]")) return;
     const sx = e.clientX, sy = e.clientY;
@@ -4809,6 +5289,9 @@ class Component extends DCLogic {
 
   // 맵 탭을 열지 않아도 실행화면에 쓸 맵 그림을 만든다 (보이는 캔버스와 무관)
   buildStageBg() {
+    const key = JSON.stringify([this.MW, this.MH, Object.keys(this.state.tiles || {}).length, this.state.hideLayers]);
+    if (this._stageBgKey === key) return;
+    this._stageBgKey = key;
     const tiles = this.state.tiles;
     if (!tiles) return;
     if (this._stageKey === tiles && this._stageBgHad === !!this._bg) return;
@@ -4930,7 +5413,7 @@ class Component extends DCLogic {
   camTrack() {
     const c = this._cam;
     if (!c || !c.follow || !this._live) return;
-    const o = this._live.find((x) => x.name === c.follow);
+    const o = this._live.find((x) => x.name === c.follow) || this._live.find((x) => x.id === c.follow);
     if (!o) return;
     c.x = o.x; c.y = o.y;
     this.applyCam();
@@ -5000,11 +5483,44 @@ class Component extends DCLogic {
   }
 
   // ── 크게 실행 (같은 창 / 새 탭) ────────────────────────────
-  openBig = () => {
-    this.setState({ bigPlay: true }, () => { if (!this.state.running) this.runAll(); });
+  // 브라우저 전체화면으로 (F11 없이)
+  goFull = () => {
+    const el = this._fullBox || document.documentElement;
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } catch (e) { this.say("이 브라우저에서는 전체화면을 쓸 수 없습니다.", "warn"); }
   };
 
+  fullRef = (el) => { this._fullBox = el; };
+
+  openBig = () => {
+    this.setState({ bigPlay: true }, () => {
+      if (!this.state.running) this.runAll();
+      this.enterWorld();
+    });
+  };
+
+  // 월드에 들어간다: 내 아바타로 멀티플레이 참가 + 카메라 따라가기
+  enterWorld() {
+    const objs = this.curObjects();
+    const me = objs.find((o) => o.player) || objs[0];
+    if (!me) return;
+    if (!this._mpOn) this.mpStart(this.state.mpRoom || "기본방", me);
+    this._cam = this._cam || {};
+    if (!this._cam.follow) { this._cam.follow = me.name || me.id; this.camTrack(); }
+  }
+
+  // 전체화면일 때는 브라우저 전체화면도 함께 끈다
+  exitFull() {
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+  }
+
   closeBig = () => {
+    this.exitFull();
+    this.mpStop();
+    if (this._cam) { this._cam.follow = null; this.camTrack(); }
     if (this.state.route === "play") { try { window.close(); } catch (e) {} }
     this.setState({ bigPlay: false });
   };
@@ -5049,7 +5565,62 @@ class Component extends DCLogic {
     }), () => { this.syncMyArts(); this.drawGridFrom(this._grid); this.drawMap(); });
   }
 
+  // 폰트·아이콘·supabase-js 를 화면이 뜬 뒤에 붙인다.
+  // helmet 에 두면 CDN 이 느리거나 막힌 곳에서 문서 로드가 끝나지 않아 화면이 멈춘 것처럼 보인다.
+  loadVendors() {
+    if (this._vendorsT) return;
+    this._vendorsT = 1;
+
+    // 글꼴: media="print" 로 붙여야 그리기를 막지 않는다. 도착하면 all 로 바꿔 적용한다.
+    const font = document.createElement("link");
+    font.rel = "stylesheet";
+    font.media = "print";
+    font.href = "https://cdn.jsdelivr.net/gh/quiple/galmuri/dist/galmuri.css";
+    font.onload = () => { font.__ok = 1; font.media = "all"; };
+    font.onerror = () => this.dropVendor(font);
+    document.head.appendChild(font);
+    this._vFont = font;
+
+    // 아이콘: 없으면 글자 라벨만 남는다 (화면은 그대로 동작)
+    const icon = document.createElement("script");
+    icon.src = "https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js";
+    icon.async = true;
+    icon.onload = () => { icon.__ok = 1; };
+    icon.onerror = () => this.dropVendor(icon);
+    document.head.appendChild(icon);
+    this._vIcon = icon;
+
+    const sb = document.createElement("script");
+    sb.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
+    sb.async = true;
+    sb.onload = () => { sb.__ok = 1; document.dispatchEvent(new Event("dv-supabase")); };
+    sb.onerror = () => {
+      this.dropVendor(sb);
+      this.say("Supabase 스크립트를 불러오지 못했습니다 — 인터넷 연결을 확인하세요.", "warn");
+    };
+    document.head.appendChild(sb);
+    this._vSb = sb;
+
+    // 요청이 매달려 있으면 onload·onerror 둘 다 오지 않는다 — 시간이 지나면 직접 끊는다
+    this._vendorAbort = setTimeout(() => {
+      [this._vFont, this._vIcon, this._vSb].forEach((el) => { if (el && !el.__ok) this.dropVendor(el); });
+      if (!window.supabase) this.say("Supabase 스크립트를 불러오지 못했습니다 — 화면은 그대로 쓸 수 있습니다.", "warn");
+    }, 6000);
+  }
+
+  dropVendor(el) {
+    if (!el || !el.parentNode) return;
+    el.onload = null;
+    el.onerror = null;
+    el.parentNode.removeChild(el);
+  }
+
   componentDidMount() {
+    // load 가 끝난 뒤에 붙여야 CDN 이 막힌 곳에서도 문서 로드가 완료된다
+    if (document.readyState === "complete") setTimeout(() => this.loadVendors(), 0);
+    else window.addEventListener("load", () => setTimeout(() => this.loadVendors(), 0), { once: true });
+    // 디버그 손잡이 — 콘솔에서 상태를 확인할 때 쓴다
+    try { window.__dotverse = this; } catch (e) {}
     const s = SEED();
     // seed.js · blocks-engine.js 가 늦게 붙어도 준비되면 바로 초기화한다
     this.initSeed();
@@ -5057,17 +5628,27 @@ class Component extends DCLogic {
       let tries = 0;
       this._seedT = setInterval(() => {
         this.initSeed();
-        if (this._seeded || ++tries > 200) { clearInterval(this._seedT); this._seedT = null; }
-      }, 60);
+        if (this._seeded || ++tries > 40) { clearInterval(this._seedT); this._seedT = null; }
+      }, 100);
     }
     // 랜딩 화면에서만 단어를 굴린다 — 다른 화면에서는 전체 리렌더가 일어나지 않게
+    // 단어 릴은 DOM 만 직접 바꾼다 — 상태를 바꾸면 앱 전체가 다시 그려져 화면이 멈춘다
+    this._roll = 0;
     this._t = setInterval(() => {
-      if (this.state.route !== "landing" || document.hidden) return;
-      this.setState((st) => ({ roll: (st.roll + 1) % (s.rollWords || [1]).length }));
+      if (document.hidden || !this._reel || this.state.route !== "landing") return;
+      const words = (SEED().rollWords || []);
+      if (!words.length) return;
+      this._roll = (this._roll + 1) % words.length;
+      this._reel.style.transform = "translateY(" + (-this._roll * 72) + "px)";
+      if (this._reelBox) this._reelBox.style.width = ((words[this._roll] || "").length * 52 + 4) + "px";
     }, 1900);
     this.setState({ live: !!(window.DotDB && window.DotDB.isLive) });
     this.loadLive();
+    this.loadDbData();
+    this.watchDb();
     this.syncFuncs();
+    this.syncMyArts();
+    this.ensureSeedSprites();
     this.restoreCommunity();
     this.restoreMap();
     this.restoreArts();
@@ -5096,9 +5677,11 @@ class Component extends DCLogic {
 
     // 알림은 주기적으로 다시 읽고, 새 것이 오면 오른쪽 아래에 띄운다
     this._nt = setInterval(() => {
-      if (!document.hidden) this.loadNotifs();
-    }, 20000);
-    setTimeout(() => this.loadNotifs(true), 1500);
+      if (document.hidden) return;
+      if (!this.state.signedIn || !(window.DotDB && window.DotDB.isLive)) return;
+      this.loadNotifs();
+    }, 60000);
+    setTimeout(() => { if (window.DotDB && window.DotDB.isLive) this.loadNotifs(true); }, 2500);
     this._auto = setInterval(() => {
       if (document.hidden || this.state.running || this.state.saving) return;
       if (!this.state.signedIn || !(window.DotDB && window.DotDB.isLive)) return;
@@ -5112,13 +5695,26 @@ class Component extends DCLogic {
     }, 2000);
 
     // «새 톭에서 허러이» — #play 로 열리면 바로 큰 화면 실행
+    // supabase-js 는 비동기로 붙는다 — 도착하면 연결 상태를 다시 읽는다
+    const relink = () => {
+      const live = !!(window.DotDB && window.DotDB.isLive);
+      if (live && !this.state.live) {
+        this.setState({ live: true });
+        this.loadLive();
+        this.loadDbData();
+        this.watchDb();
+      }
+    };
+    document.addEventListener("dv-supabase", () => setTimeout(relink, 60));
+    this._linkT = setInterval(() => { if (this.state.live) { clearInterval(this._linkT); this._linkT = null; return; } relink(); }, 1500);
+    setTimeout(() => { if (this._linkT) { clearInterval(this._linkT); this._linkT = null; } }, 30000);
     if ((location.hash || "") === "#play") {
       setTimeout(() => this.setState({ route: "play", bigPlay: true }, () => this.runAll()), 400);
     }
   }
 
   componentWillUnmount() {
-    clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
+    clearTimeout(this._vendorAbort); clearInterval(this._linkT); clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
     this.stopAnims();
     clearTimeout(this._toast); clearTimeout(this._menuT);
     if (this._onMouse) {
@@ -5188,7 +5784,8 @@ class Component extends DCLogic {
         }));
       }
       if (a) {
-        next.liveAssets = a.map((x) => ({
+        const spriteAdd = {};
+        next.liveAssets = a.map((x) => Object.assign({}, {
           id: x.id, name: x.name, kind: x.kind,
           author: (x.profiles && x.profiles.display_name) || "익명",
           handle: (x.profiles && x.profiles.handle) || "unknown",
@@ -5196,8 +5793,12 @@ class Component extends DCLogic {
           license: x.license === "cc0" ? "CC0" : (x.license === "cc_by" ? "CC BY" : "리메이크 전용"),
           frames: (x.frames || []).length || 1,
           size: (x.width || 16) + "×" + (x.height || 16),
-          tags: x.tags || [], art: "chest",
+          tags: x.tags || [],
+          art: x.image_url ? "srv" + x.id : this.guessArt(x),
+          imageUrl: x.image_url || null,
         }));
+        a.forEach((x) => { if (x.image_url) spriteAdd["srv" + x.id] = x.image_url; });
+        if (Object.keys(spriteAdd).length) next.sprites = Object.assign({}, this.state.sprites, spriteAdd);
       }
       if (t) {
         next.tables = t.map((x) => ({
@@ -5273,6 +5874,7 @@ class Component extends DCLogic {
         this.loadMyWorlds();
         if (this._swapUser) this.reloadUserData();
       });
+      return next.liveWorlds;
     } catch (e) { /* 연결이 안 되면 예시 데이터로 둘러본다 */ }
   }
 
@@ -5354,8 +5956,9 @@ class Component extends DCLogic {
   // 모양 파일을 못 찾았을 때 쓰는 표시 (안 보이는 대신 자리를 알려 준다)
   // 기본 도트 모양이 비어 있으면(불러오기·복원 뒤) 다시 만든다
   ensureSeedSprites() {
+    if (this._seedSpritesDone) return;
     const sp = this.state.sprites || {};
-    if (sp.slime) return;
+    if (sp.slime) { this._seedSpritesDone = true; return; }
     const seed = SEED();
     if (!seed || !seed.art) return;
     const add = {};
@@ -5368,6 +5971,7 @@ class Component extends DCLogic {
       this._spriteCanvas[k] = this._spriteCanvas[k] || this.makeSpriteCanvas(seed.art[k], 8);
     });
     if (Object.keys(add).length) {
+      this._seedSpritesDone = true;
       setTimeout(() => this.setState((p) => ({ sprites: Object.assign({}, add, p.sprites) })), 0);
     }
   }
@@ -5377,6 +5981,7 @@ class Component extends DCLogic {
     if (!key) return this.missingSprite();
     const sp = this.state.sprites || {};
     if (sp[key]) return sp[key];
+    if (this._sprCache && this._sprCache[key]) return this._sprCache[key];
     // 내가 찍은 도트 모양 (my0, my0#1 …)
     const m = String(key).match(/^my(\d+)(?:#(\d+))?$/);
     if (m) {
@@ -5422,11 +6027,10 @@ class Component extends DCLogic {
     } catch (e) { return u; }
   }
 
+  // 상태를 건드리지 않는 캐시 — 렌더 중에 불려도 다시 그리기를 부르지 않는다
   cacheSprite(key, url) {
-    this._late = this._late || {};
-    if (this._late[key]) return;
-    this._late[key] = 1;
-    setTimeout(() => this.setState((p) => ({ sprites: Object.assign({}, p.sprites, { [key]: url }) })), 0);
+    this._sprCache = this._sprCache || {};
+    this._sprCache[key] = url;
   }
 
   missingSprite() {
@@ -5503,6 +6107,43 @@ class Component extends DCLogic {
     }));
     return c;
   }
+
+  // 블록 하나를 지금 고른 오브젝트의 블록 판에 놓는다
+  dropBlock(defId) {
+    const B = window.DotBlocks;
+    if (!B || !B.make) return;
+    if (!this.state.objId) return this.say("먼저 오브젝트를 고르세요.", "warn");
+    const root = B.make(defId);
+    const stacks = this.stacksOf(this.state.objId) || [];
+    const y = 30 + stacks.length * 96;
+    this.setStacks(() => stacks.concat([{ root: root, x: 40, y: y }]));
+    this.setState({ tab: "blocks", selBlockCat: "실시간 DB" });
+    this.say("«" + (B.DEFS[defId] ? "블록" : defId) + "» 을 블록 판에 놓았습니다. 이름과 값을 눌러 고치세요.");
+  }
+
+  // 사진이 없는 오브젝트에 어울리는 기본 모양을 고른다 (전부 표지판으로 보이지 않게)
+  guessArt(x) {
+    const name = String((x && (x.name || x.title)) || "") + " " + ((x && x.tags) || []).join(" ");
+    const rule = [
+      [/소리|음악|효과음|sound|bgm/i, "lamp"], [/나무|숲|식물|tree/i, "tree"],
+      [/상자|보물|가방|chest|box/i, "chest"], [/열쇠|키|key/i, "key"],
+      [/코인|동전|점수|coin/i, "coin"], [/포탈|문|이동|portal/i, "portal"],
+      [/불|횃불|램프|조명|torch|light/i, "torch"], [/화분|항아리|병|pot/i, "pot"],
+      [/간판|표지|안내|sign/i, "sign"], [/슬라임|캐릭터|아바타|몬스터|npc/i, "slime"],
+    ];
+    for (const [re, art] of rule) if (re.test(name)) return art;
+    // 규칙에 걸리지 않으면 이름을 흩어 모양을 돌려 준다 — 한 종류로 몰리지 않게
+    const pool = ["slime", "tree", "chest", "pot", "coin", "key", "torch", "portal", "lamp"];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 100000;
+    return pool[h % pool.length];
+  }
+
+  dotRef = (el) => {
+    if (this._dot === el) return;
+    this._dot = el;
+    if (el) this.drawGridFrom(this._grid || this.state.grid);
+  };
 
   drawGrid() {
     const cv = this._dot, grid = this.state.grid;
@@ -5831,10 +6472,19 @@ class Component extends DCLogic {
 
   dropToast = (id) => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) }));
 
+  // 렌더가 끝난 뒤에만 준비 작업을 한다 (렌더 도중 setState 는 무한 리렌더를 만든다)
+  componentDidUpdate() {
+    // 렌더가 몰릴 때는 준비 작업을 미룬다 (그리는 도중 setState 로 되돌아오지 않게)
+    if (this._prepT) return;
+    this._prepT = setTimeout(() => {
+      this._prepT = null;
+      this.syncFuncs();
+      this.syncMyArts();
+      this.ensureSeedSprites();
+    }, 120);
+  }
+
   renderVals() {
-    this.syncFuncs();
-    this.syncMyArts();
-    this.ensureSeedSprites();
     const s = S();
     const sp = this.state.sprites;
     const st = this.state;
@@ -5883,7 +6533,7 @@ class Component extends DCLogic {
       })),
     }));
 
-    const worldsSrc = st.dbLoaded ? (st.liveWorlds || []) : (s.worlds || []);
+    const worldsSrc = st.liveWorlds || [];
     const needWorlds = ["landing", "home", "profile", "world", "search"].indexOf(st.route) >= 0;
     const worlds = (needWorlds ? worldsSrc : []).map((w) => ({
       id: w.id, title: w.title, summary: w.summary, author: w.author, handle: w.handle,
@@ -5900,8 +6550,8 @@ class Component extends DCLogic {
     }));
 
     const needCreators = ["landing", "home"].indexOf(st.route) >= 0;
-    const creatorsSrc = st.dbLoaded ? (st.liveCreators || []) : (s.creators || []);
-    const creators = this.memo("creators", [needCreators, st.follows, st.sprites, creatorsSrc], () => (needCreators ? creatorsSrc : []).map((c) => {
+    const creatorsSrc = st.liveCreators || [];
+    const creators = this.memo("creators", [needCreators, st.follows, creatorsSrc], () => (needCreators ? creatorsSrc : []).map((c) => {
       const on = !!st.follows[c.handle];
       const isMe = !!(st.liveMe && st.liveMe.handle === c.handle);
       return {
@@ -5920,7 +6570,7 @@ class Component extends DCLogic {
       };
     }));
 
-    const topComments = (needCreators ? (st.dbLoaded ? (st.liveComments || []) : (s.comments || [])) : []).map((c) => ({
+    const topComments = (needCreators ? (st.liveComments || []) : []).map((c) => ({
       world: c.world, author: c.author, handle: c.handle, body: c.body, ago: c.ago,
       likes: kfmt(c.likes), dislikes: c.dislikes, replies: c.replies,
       sprite: spr(authorArt[c.author] || c.art),
@@ -5928,12 +6578,12 @@ class Component extends DCLogic {
     }));
 
     const needAssets = ["landing", "assets", "profile", "studio", "world"].indexOf(st.route) >= 0;
-    const assetsSrc = st.dbLoaded ? (st.liveAssets || []) : (s.assets || []);
-    const assets = this.memo("assets", [needAssets, sp, assetsSrc], () => (needAssets ? assetsSrc : []).map((a) => ({
+    const assetsSrc = st.liveAssets || [];
+    const assets = this.memo("assets", [needAssets, assetsSrc], () => (needAssets ? assetsSrc : []).map((a) => ({
       id: a.id, name: a.name, handle: a.handle, author: a.author, size: a.size,
       frames: a.frames, license: a.license, kind: a.kind, tags: a.tags,
       usesK: kfmt(a.uses), likesK: kfmt(a.likes), dislikes: a.dislikes,
-      sprite: spr(a.art),
+      sprite: a.imageUrl ? cssUrl(a.imageUrl) : spr(a.art),
       preview: (e) => {
         if (e) e.stopPropagation();
         this.setState({ pvId: a.id });
@@ -6031,12 +6681,16 @@ class Component extends DCLogic {
 
       // 랜딩
       rollWords: s.rollWords || [],
-      rollY: -(st.roll * 72) + "px",
+      rollRef: (el) => { this._reel = el; },
+      rollBoxRef: (el) => { this._reelBox = el; },
+      rollY: "0px",
       // 단어 길이에 맞춰 칸 폭도 함께 줄인다 (짧은 단어 뒤에 빈 구멍이 생기지 않게)
-      rollW: (((s.rollWords || [])[st.roll] || "").length * 52 + 4) + "px",
+      rollW: (((s.rollWords || [])[0] || "").length * 52 + 4) + "px",
       heroStats: [
-        { v: "1,284,900", k: "게시된 월드" }, { v: String(window.DotBlocks ? window.DotBlocks.count() : 0), k: "블록 개수" },
-        { v: "86,412", k: "공유 오브젝트" }, { v: "12.4만", k: "오늘 플레이" },
+        { v: String((st.liveWorlds || []).length), k: "게시된 월드" },
+        { v: String(window.DotBlocks ? window.DotBlocks.count() : 0), k: "블록 개수" },
+        { v: String((st.liveAssets || []).length), k: "공유 오브젝트" },
+        { v: String((st.liveWorlds || []).reduce((a, w) => a + (w.plays || 0), 0)), k: "누적 플레이" },
       ],
       heroBlocks: [
         "플레이어가 들어왔을 때",
@@ -6112,6 +6766,19 @@ class Component extends DCLogic {
         { ic: "lucide:share-2", t: "도트 오브젝트를 공유할 수 있습니다", d: "원작자 표기와 원본 링크가 자동으로 붙습니다." },
         { ic: "lucide:bar-chart-3", t: "대시보드로 접속자를 봅니다", d: "월드별 접속자 수, 평균 플레이 시간, 활동 수." },
       ],
+      connOff: !(window.DotDB && window.DotDB.isLive),
+      connColor: (window.DotDB && window.DotDB.isLive) ? "#2F6F5E" : "#C0392B",
+      connLabel: (window.DotDB && window.DotDB.isLive) ? "Supabase 연결됨 — 계정과 저장이 서버에 남습니다" : "Supabase 미연결 — 계정을 만들 수 없습니다",
+      envUrl: st.envUrl || "",
+      envKey: st.envKey || "",
+      setEnvUrl: (e) => this.setState({ envUrl: e.target.value }),
+      setEnvKey: (e) => this.setState({ envKey: e.target.value }),
+      saveEnv: () => {
+        const url = (st.envUrl || "").trim(), key = (st.envKey || "").trim();
+        if (!/^https?:\/\//.test(url) || key.length < 20) return this.say("URL 과 키를 다시 확인해 주세요.", "warn");
+        try { localStorage.setItem("dotverse.env", JSON.stringify({ SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key })); } catch (e) {}
+        location.reload();
+      },
       isSignup: st.authMode === "signup",
       loginBg: st.authMode === "login" ? "#FFFFFF" : "transparent",
       loginFg: st.authMode === "login" ? "#16181D" : "#6E7480",
@@ -6142,9 +6809,7 @@ class Component extends DCLogic {
       doAuth: async () => {
         const f = st.authForm || {};
         if (!(window.DotDB && window.DotDB.isLive)) {
-          this.setState({ signedIn: true, route: "home" });
-          window.scrollTo(0, 0);
-          return this.say("서버 연결이 없어 둘러보기 모드로 들어갑니다.");
+          return this.say("Supabase 가 연결되지 않아 계정을 만들 수 없습니다. 아래에서 접속 정보를 넣어 주세요.", "warn");
         }
         if (!f.email || !f.pw) return this.say("이메일과 비밀번호를 적어주세요.");
         const r = st.authMode === "signup"
@@ -6158,18 +6823,25 @@ class Component extends DCLogic {
       },
 
       // ───────── 홈
-      drafts: [
-        { title: "지하 3층 상점가", meta: "블록 214 · 3시간 전", pct: "68%", sprite: spr("chest") },
-        { title: "야간 산책 리메이크", meta: "블록 96 · 어제", pct: "41%", sprite: spr("lamp") },
-        { title: "온실 갤러리 2관", meta: "블록 38 · 지난주", pct: "18%", sprite: spr("pot") },
-      ],
+      drafts: (st.liveMyWorlds || []).slice(0, 3).map((w) => ({
+        title: w.title,
+        meta: (w.blocks === undefined ? this.countBlocks() : w.blocks) + "개 블록 · " + w.ago,
+        pct: (w.published ? 100 : 50) + "%",
+        sprite: spr(w.art || "portal"),
+      })),
+      noDrafts: !(st.liveMyWorlds || []).length,
+
       feedFilters: ["전체", "새 작품", "리메이크"].map((t) => ({
         t: t,
         bg: (st.feedFilter || "전체") === t ? "#16181D" : "#FFFFFF",
         fg: (st.feedFilter || "전체") === t ? "#FFFFFF" : "#6E7480",
         go: () => this.setState({ feedFilter: t }),
       })),
-      meStats: [{ v: "38", k: "월드" }, { v: "2.4만", k: "팔로워" }, { v: "126", k: "오브젝트" }],
+      meStats: [
+        { v: String((st.liveMyWorlds || []).length), k: "월드" },
+        { v: String((st.liveMe && st.liveMe.followers) || 0), k: "팔로워" },
+        { v: String((st.liveAssets || []).filter((a) => st.liveMe && a.handle === st.liveMe.handle).length), k: "오브젝트" },
+      ],
 
       // ───────── 검색
       searchTerm: st.q || "방탈출",
@@ -6376,6 +7048,22 @@ class Component extends DCLogic {
         grab: (e) => this.grabNew(e, b),
       })),
       wsRef: this.wsRef,
+      wsMenu: this.wsMenu,
+      ctxOn: !!st.ctxMenu,
+      ctxX: ((st.ctxMenu && st.ctxMenu.x) || 0) + "px",
+      ctxY: ((st.ctxMenu && st.ctxMenu.y) || 0) + "px",
+      ctxItems: (() => {
+        const m = st.ctxMenu;
+        if (!m) return [];
+        if (!m.id) return [{ t: "블록 정리하기", ic: "lucide:align-left", fg: "#3A3F47", go: () => { this.setState({ ctxMenu: null }); this.tidyWs(); } },
+          { t: "닫기", ic: "lucide:x", fg: "#8A9099", go: () => this.setState({ ctxMenu: null }) }];
+        return [
+          { t: "블록 하나 복사", ic: "lucide:copy", fg: "#3A3F47", go: () => this.dupBlock(m.id, false) },
+          { t: "아래까지 복제", ic: "lucide:copy-plus", fg: "#3A3F47", go: () => this.dupBlock(m.id, true) },
+          { t: "블록 삭제", ic: "lucide:trash-2", fg: "#C0392B", go: () => this.delBlock(m.id) },
+          { t: "닫기", ic: "lucide:x", fg: "#8A9099", go: () => this.setState({ ctxMenu: null }) },
+        ];
+      })(),
       wsDown: this.wsPan,
       wsWheel: this.wsWheel,
       trashRef: this.trashRef,
@@ -6412,11 +7100,19 @@ class Component extends DCLogic {
       ghostX: (st.ghost ? st.ghost.x : 0) + "px",
       ghostY: (st.ghost ? st.ghost.y - 3 : 0) + "px",
       ghostW: (st.ghost && st.ghost.kind === "slot" ? 46 : 168) + "px",
-      tidyWs: () => {
+      tidyWs: this.tidyWs,
+      _tidyOld: () => {
         this.setStacks((list) => list.map((s, i) => Object.assign({}, s, { x: 40, y: 28 + i * 240 })));
         this.say("스크립트를 위에서부터 정리했습니다.");
       },
       clearWs: () => { this.setStacks(() => []); this.say("이 오브젝트의 블록을 모두 지웠습니다."); },
+      dbQuickBlocks: [
+        { id: "db_create", t: "테이블 만들기" },
+        { id: "db_add_col", t: "컬럼 추가하기" },
+        { id: "db_add_row", t: "행 추가하기" },
+        { id: "db_set", t: "값 저장하기" },
+        { id: "rt_set", t: "실시간 변수 정하기" },
+      ].map((q) => Object.assign({}, q, { add: () => this.dropBlock(q.id) })),
       paletteBlocks: (window.DotBlocks ? window.DotBlocks.byCat(st.selBlockCat) : []).map((d) => ({
         c: d.c,
         radius: d.shape === "bool" ? "99px" : (d.shape === "num" ? "13px" : (d.shape === "hat" ? "13px 13px 8px 8px" : "8px")),
@@ -6462,6 +7158,11 @@ class Component extends DCLogic {
         ring: st.objId === o.id ? "0 0 0 2px rgba(47,111,94,0.55)" : "none",
         click: () => this.fireClick(o.id),
       })),
+      peerCount: this.peerList().length + 1,
+      rosterList: [{ name: (this._mpName || "나"), art: st.myCostume || "slime", isMe: true }]
+        .concat(this.peerList().map((p) => ({ name: p.name || "손님", art: p.art, isMe: false })))
+        .slice(0, 8)
+        .map((p) => ({ name: p.name, isMe: p.isMe, sprite: spr(p.art) })),
       peers: this.peerList().map((p, i) => ({
         name: p.name,
         sprite: spr(p.art),
@@ -6483,6 +7184,31 @@ class Component extends DCLogic {
         .map((v) => ({ k: v.name, v: String(st.running ? (st.runVars || {})[v.name] : v.value) })),
       uiTextV: st.uiText || "",
       hasUiText: !!st.uiText,
+      uiWidgets: (st.uiWidgets || []).map((w) => {
+        const p = this.uiSpot(w.pos);
+        return {
+          name: w.name, text: w.text === undefined ? "" : String(w.text),
+          left: p.left, top: p.top, right: p.right, bottom: p.bottom, tf: p.tf, align: p.align,
+          isLabel: w.kind === "label", isButton: w.kind === "button", isBar: w.kind === "bar",
+          isPanel: w.kind === "panel", isImage: w.kind === "image",
+          color: this.namedColor(w.color || "초록"),
+          pct: Math.max(0, Math.min(100, Number(w.value) || 0)) + "%",
+          sprite: spr(w.art),
+          click: () => this.fireUi(w.name),
+        };
+      }),
+      uiPadOn: !!st.uiPad,
+      padKeys: [
+        { t: "↑", k: "위쪽", col: "2", row: "1" },
+        { t: "←", k: "왼쪽", col: "1", row: "2" },
+        { t: "↓", k: "아래쪽", col: "2", row: "2" },
+        { t: "→", k: "오른쪽", col: "3", row: "2" },
+      ].map((p) => Object.assign({}, p, { press: () => this.fireKey(p.k) })),
+      hasDialog: !!st.uiDialogMsg,
+      dialogMsg: st.uiDialogMsg || "",
+      dialogOk: this.uiConfirm,
+      hasScreenColor: !!st.screenColor,
+      screenColorV: st.screenColor || "transparent",
       asking: !!st.asking,
       askMsg: st.askMsg || "",
       askInput: st.askInput || "",
@@ -6493,9 +7219,11 @@ class Component extends DCLogic {
       addTextObject: this.addTextObject,
       openBig: this.openBig,
       closeBig: this.closeBig,
+      goFull: this.goFull,
+      fullRef: this.fullRef,
       closeBigLabel: st.route === "play" ? "닫기" : "작업화면으로",
       bigPlay: !!st.bigPlay,
-      playTitle: "심야 도서관 방탈출 · " + (st.scenes.find((x) => x.id === st.sceneId) || {}).name,
+      playTitle: (st.worldTitle || "제목 없는 작품") + " · " + ((st.scenes.find((x) => x.id === st.sceneId) || {}).name || ""),
       playIcon: st.running ? "lucide:rotate-ccw" : "lucide:play",
       playLabel: st.running ? "다시 시작" : "시작",
       palTabs: [{ k: "blocks", t: "블록" }, { k: "attr", t: "속성" }].map((t) => ({
@@ -6695,17 +7423,24 @@ class Component extends DCLogic {
           this.setObjects((list) => list.filter((x) => x.id !== o.id));
         },
       })),
-      inspectorFields: [
-        { k: "이름", v: "차원 포탈" }, { k: "위치 x / y", v: "18 / 11" },
-        { k: "높이 (z)", v: "1 · 플레이어 위" }, { k: "충돌", v: "통과 가능" },
-        { k: "코스튬 강제", v: "아니요 · 플레이어 선택" },
-      ],
-      runtimeVars: [
-        { k: "접속자수", v: "4", scope: "실시간", color: "#0F766E" },
-        { k: "남은시간", v: "38", scope: "실시간", color: "#0F766E" },
-        { k: "콤보", v: "7", scope: "로컬", color: "#4A5FD1" },
-        { k: "먹은코인", v: "[ 3개 ]", scope: "로컬", color: "#4A5FD1" },
-      ],
+      inspectorFields: (() => {
+        const o = this.curObjects().find((x) => x.id === st.objId) || this.curObjects()[0];
+        if (!o) return [];
+        return [
+          { k: "이름", v: o.name || "오브젝트" },
+          { k: "위치 x / y", v: Math.round(o.x) + " / " + Math.round(o.y) },
+          { k: "크기", v: Math.round((o.scale || 1) * 100) + "%" },
+          { k: "방향", v: Math.round(o.rot || 0) + "°" },
+          { k: "보이기", v: o.on ? "보임" : "숨김" },
+        ];
+      })(),
+      runtimeVars: Object.keys(st.rtVars || {}).map((k) => ({ k: k, v: String((st.rtVars || {})[k]), scope: "실시간", color: "#0F766E" }))
+        .concat((st.varsDef || []).map((v) => ({
+          k: v.name, v: String(st.running ? ((st.runVars || {})[v.name]) : v.value), scope: "로컬", color: "#4A5FD1",
+        })))
+        .concat((st.listsDef || []).map((l) => ({
+          k: l.name, v: "[ " + (l.items || []).length + "개 ]", scope: "로컬", color: "#4A5FD1",
+        }))),
       dotTools: [
         { ic: "lucide:pencil", k: "pen" }, { ic: "mdi:eraser", k: "erase" },
         { ic: "lucide:paint-bucket", k: "fill" }, { ic: "lucide:pipette", k: "pick" },
@@ -6730,7 +7465,7 @@ class Component extends DCLogic {
       canvasSizes: [
         { t: "16 × 16", on: true }, { t: "32 × 32" }, { t: "48 × 48" }, { t: "커스텀…" },
       ].map((c) => ({ t: c.t, bg: c.on ? "#16181D" : "#FFFFFF", fg: c.on ? "#FFFFFF" : "#3A3F49" })),
-      dotRef: (el) => { this._dot = el; if (el) this.drawGridFrom(this._grid || st.grid); },
+      dotRef: this.dotRef,
       dotDown: this.dotDown, dotMove: this.dotMove, dotUp: this.dotUp,
       clearGrid: () => {
         this._grid = Array.from({ length: 16 }, () => new Array(16).fill(null));
@@ -6860,7 +7595,7 @@ class Component extends DCLogic {
       })),
       mapRef: this.mapRef,
       mapDown: (e) => {
-        if (st.mapTool === "hand" || st.mapTool === "select" || e.button === 1 || e.altKey) { e.preventDefault(); this.panMap(e); return; }
+        if (st.mapTool === "hand" || st.mapTool === "select" || e.button === 1 || e.altKey) { if (e.cancelable) e.preventDefault(); this.panMap(e); return; }
         this._painting = true; this.paintMap(e);
       },
       mapMove: (e) => { this.hoverMap(e); if (this._painting) this.paintMap(e); },
@@ -6898,9 +7633,8 @@ class Component extends DCLogic {
         go: () => this.setState({ objCat: c }),
       })),
       panelObjects: (() => {
-        this.syncMyArts();
-        const baseSrc = st.dbLoaded ? (st.liveAssets || []) : (s.assets || []);
-        const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art || "chest", tags: a.tags || [] }));
+        const baseSrc = st.liveAssets || [];
+        const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art, imageUrl: a.imageUrl || null, tags: a.tags || [] }));
         const mine = (st.shapes || []).map((sh, i) => ({
           name: sh.name, handle: "나", uses: 0, art: "my" + i, tags: ["전체"],
         })).concat((st.imgArts || []).map((a) => ({
@@ -6915,7 +7649,7 @@ class Component extends DCLogic {
         return list.map((a) => ({
           name: a.name, handle: a.handle,
           usesK: a.uses ? kfmt(a.uses) : "내가 만든 도트",
-          sprite: spr(a.art),
+          sprite: a.imageUrl ? cssUrl(a.imageUrl) : spr(a.art),
           on: st.placeArt === a.art,
           fav: (st.favArts || []).indexOf(a.art) >= 0,
           favIcon: (st.favArts || []).indexOf(a.art) >= 0 ? "lucide:star" : "lucide:star-off",
@@ -6944,6 +7678,26 @@ class Component extends DCLogic {
       clearBg: this.clearBg,
       hasBg: !!st.hasBg,
       bgLabel: st.hasBg ? (st.bgName || "배경 교체") : "배경 사진 올리기",
+      mapWv: String(st.mapW || 40),
+      mapHv: String(st.mapH || 25),
+      setMapW: (e) => {
+        const v = Math.max(8, Math.min(9999, parseInt(e.target.value, 10) || 40));
+        this.setState({ mapW: v }, () => { this._baseKey = null; this.drawMap(); this.tick(); });
+      },
+      setMapH: (e) => {
+        const v = Math.max(6, Math.min(9999, parseInt(e.target.value, 10) || 25));
+        this.setState({ mapH: v }, () => { this._baseKey = null; this.drawMap(); this.tick(); });
+      },
+      boundLabel: st.mapBound === "infinite" ? "무한" : "맵 크기",
+      boundIcon: st.mapBound === "infinite" ? "lucide:infinity" : "lucide:square",
+      boundHint: st.mapBound === "infinite"
+        ? "무한: 오브젝트가 맵 밖으로 계속 나갈 수 있습니다 (카메라 따라가기와 함께 쓰세요)"
+        : "맵 크기: 맵 칸 수(" + this.MW + "×" + this.MH + ")에 비례한 범위까지만 나갈 수 있습니다",
+      boundBg: st.mapBound === "infinite" ? "#16181D" : "#FFFFFF",
+      boundBd: st.mapBound === "infinite" ? "#16181D" : "#E3DCCC",
+      boundFg: st.mapBound === "infinite" ? "#FFFFFF" : "#5B616C",
+      toggleBound: () => this.setState((p) => ({ mapBound: p.mapBound === "infinite" ? "map" : "infinite" }),
+        () => this.say(this.state.mapBound === "infinite" ? "이제 맵 밖으로 무한히 나갈 수 있습니다." : "맵 칸 수에 맞춰 경계를 둡니다.")),
       mapHints: [
         { ic: "lucide:brush", t: "바닥 · 벽 · 오브젝트를 칸 단위로 찍습니다" },
         { ic: "lucide:shield", t: "«경계» 로 갈 수 없는 구역을 닫습니다" },
@@ -6954,11 +7708,11 @@ class Component extends DCLogic {
       dbTables: (st.tables || []).map((t) => ({
         name: t.name,
         scope: t.perPlayer ? "플레이어별" : "월드 전역",
-        rows: ((this._rows && this._rows[t.name]) || []).length,
+        rows: (((st.rowsView || {})[t.name]) || []).length,
         tag: t.saved ? "REALTIME" : "저장 안 됨",
         cols: t.cols.map(() => "1fr").join(" "),
         head: t.cols.map((c) => c.name + " · " + c.type),
-        cells: ((this._rows && this._rows[t.name]) || []).slice(0, 6)
+        cells: (((st.rowsView || {})[t.name]) || []).slice(0, 8)
           .reduce((a, row) => a.concat(t.cols.map((c) => String(row[c.name] === undefined ? "" : row[c.name]))), []),
         remove: () => this.setState((p) => ({ tables: p.tables.filter((x) => x.name !== t.name) })),
       })),
@@ -7052,16 +7806,16 @@ class Component extends DCLogic {
         "테이블 [ 방문기록 ] 의 행 개수",
         "테이블 [ 랭킹 ] 이 바뀌었을 때",
       ],
-      realtimeVars: [
-        { k: "접속자수", v: "4", scope: "전역" }, { k: "남은시간", v: "38", scope: "전역" },
-        { k: "문열림", v: "false", scope: "전역" }, { k: "내점수", v: "1240", scope: "플레이어별" },
-      ],
-      localVars: [
-        "로컬 변수 [ 콤보 ] = 7",
-        "로컬 리스트 [ 먹은코인 ] = [ 코인A, 코인B, 코인C ]",
-        "로컬 변수 [ 화면흔들림 ] = 0.2",
-      ],
-      envStatus: st.live ? "연결됨 · env 에서 URL/KEY 로드" : "환경 변수 미설정 · 데모 데이터로 실행 중",
+      // 실제 game_vars 값만 보여준다 (없으면 비어 있다)
+      realtimeVars: Object.keys(st.rtVars || {}).map((k) => ({
+        k: k,
+        v: String((st.rtVars || {})[k]),
+        scope: ((st.rtScope || {})[k] === "player") ? "플레이어별" : "전역",
+      })),
+      noRealtimeVars: !Object.keys(st.rtVars || {}).length,
+      localVars: (st.varsDef || []).map((v) => "로컬 변수 [ " + v.name + " ] = " + String(st.running ? ((st.runVars || {})[v.name]) : v.value))
+        .concat((st.listsDef || []).map((l) => "로컬 리스트 [ " + l.name + " ] = [ " + (l.items || []).join(", ") + " ]")),
+      envStatus: (window.DotDB && window.DotDB.isLive) ? "Supabase 연결됨 — 계정·저장·실시간이 모두 서버로 갑니다" : "Supabase 미연결 — 저장·로그인·실시간이 동작하지 않습니다",
       publishFields: [
         { label: "제목", hint: "40자 이내 · 필터 적용", v: "심야 도서관 방탈출", h: "auto" },
         { label: "한 줄 소개", hint: "검색과 카드에 노출됩니다", v: "불이 꺼진 도서관에서 네 명이 흩어진 열쇠를 맞춘다.", h: "auto" },
@@ -7109,9 +7863,9 @@ class Component extends DCLogic {
         if (!r || !r.ok) {
           return this.say("게시하지 못했습니다: " + ((r && r.reason) || "알 수 없는 오류"), "warn");
         }
-        await this.loadLive();
+        const fresh = await this.loadLive();
         await this.loadMyWorlds();
-        const up = (this.state.liveWorlds || []).some((w) => w.id === st.worldId);
+        const up = (fresh || []).some((w) => w.id === st.worldId);
         if (up) {
           this.setState({ route: "home" }, () => window.scrollTo(0, 0));
           this.say("«" + title + "» 을 게시했습니다. 둘러보기 목록에 올라갔습니다.");
@@ -7122,7 +7876,9 @@ class Component extends DCLogic {
 
       // ───────── 공유 오브젝트 라이브러리
       assetStats: [
-        { v: "86,412", k: "공유 오브젝트" }, { v: "1,204만", k: "누적 사용" }, { v: "31,908", k: "제작자" },
+        { v: String((st.liveAssets || []).length), k: "공유 오브젝트" },
+        { v: kfmt((st.liveAssets || []).reduce((a, x) => a + (x.uses || 0), 0)), k: "누적 사용" },
+        { v: String(Object.keys((st.liveAssets || []).reduce((a, x) => { a[x.handle] = 1; return a; }, {})).length), k: "제작자" },
       ],
       assetKinds: ["전체", "오브젝트", "캐릭터", "애니메이션", "타일", "이펙트", "배경"].map((k) => ({
         t: k,
@@ -7148,7 +7904,11 @@ class Component extends DCLogic {
       // ───────── 커뮤니티
       boardList: (s.boards || []).map((b) => ({
         name: b.name, icon: b.icon, color: b.color,
-        postsK: st.dbLoaded ? String((st.boardCounts || {})[b.slug] || 0) : kfmt(b.posts),
+        chipBg: st.board === b.slug ? "#16181D" : "#FFFFFF",
+        chipBd: st.board === b.slug ? "#16181D" : "#E3DCCC",
+        chipFg: st.board === b.slug ? "#FFFFFF" : "#3A3F49",
+        countFg: st.board === b.slug ? "rgba(244,241,234,0.6)" : "#A0A6AF",
+        postsK: String((st.boardCounts || {})[b.slug] || 0),
         bg: st.board === b.slug ? "#F4F1EA" : "transparent",
         go: () => this.setState({ board: b.slug, postOpen: null }, () => this.loadPosts()),
       })),
