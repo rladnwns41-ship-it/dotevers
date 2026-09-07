@@ -24,13 +24,27 @@
     async recentWorlds(limit = 8) {
       const c = init();
       if (!c) return null;
-      const { data, error } = await c
+      // 컬럼 구성이 달라도 실패하지 않게: 넓게 읽고 앱에서 정리한다
+      let { data, error } = await c
         .from("worlds")
-        .select("id,title,summary,thumb_url,category,like_count,dislike_count,comment_count,play_count,published_at,profiles(display_name,handle)")
+        .select("*,profiles(display_name,handle,avatar_art)")
         .eq("status", "published")
         .order("published_at", { ascending: false })
         .limit(limit);
-      return error ? null : data;
+      if (error) {
+        const r = await c.from("worlds").select("*").eq("status", "published").limit(limit);
+        if (r.error) {
+          // status 컬럼조차 없으면 전부 읽는다
+          const r2 = await c.from("worlds").select("*").limit(limit);
+          if (r2.error) return null;
+          data = r2.data;
+        } else data = r.data;
+      }
+      return (data || []).map((w) => Object.assign({
+        summary: "", thumb_url: null, category: "adventure",
+        like_count: 0, dislike_count: 0, comment_count: 0, play_count: 0,
+        profiles: null,
+      }, w));
     },
     // 공유된 도트 오브젝트 라이브러리
     async sharedAssets({ kind = null, limit = 24 } = {}) {
@@ -38,13 +52,20 @@
       if (!c) return null;
       let q = c
         .from("assets")
-        .select("id,name,kind,width,height,palette,frames,license,use_count,like_count,dislike_count,tags,profiles(display_name,handle)")
+        .select("*,profiles(display_name,handle)")
         .eq("is_public", true)
-        .order("use_count", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(limit);
       if (kind) q = q.eq("kind", kind);
-      const { data, error } = await q;
-      return error ? null : data;
+      let { data, error } = await q;
+      if (error) {
+        const r = await c.from("assets").select("*").eq("is_public", true).limit(limit);
+        if (r.error) return null;
+        data = r.data;
+      }
+      return (data || []).map((x) => Object.assign({
+        use_count: 0, like_count: 0, dislike_count: 0, tags: [], license: "cc_by", profiles: null,
+      }, x));
     },
     // 공유 오브젝트 가져오기 (원작자 표기 유지 사본)
     async forkAsset(assetId, worldId) {
@@ -103,9 +124,15 @@
         world_id: worldId, key: key, value: value,
         player_id: perPlayer && u && u.user ? u.user.id : null,
       };
-      const { error } = await c.from("game_vars").upsert(row, {
-        onConflict: "world_id,player_id,key",
+      let { error } = await c.from("game_vars").upsert(row, {
+        onConflict: "world_id,key,player_id",
       });
+      if (error) {
+        // 예전 스키마(기본키 3열)에서도 동작하도록 한 번 더 시도한다
+        const r2 = await c.from("game_vars").upsert(row, { onConflict: "world_id,player_id,key" });
+        error = r2.error;
+      }
+      if (error) console.warn("[dotverse] 실시간 변수 저장 실패:", error.message);
       return !error;
     },
     async getVars(worldId) {
@@ -130,6 +157,55 @@
         })),
         is_per_player: !!perPlayer,
       });
+      return !error;
+    },
+    // 테이블 정의를 만들거나 덮어쓴다 (컬럼 추가·삭제가 실제로 남게)
+    async upsertTable(worldId, name, cols, perPlayer) {
+      const c = init();
+      if (!c) return false;
+      const u = await this.ensureUser();
+      if (!u) return false;
+      const columns = (cols || []).map((x) => ({
+        name: x.name,
+        type: x.type === "숫자" ? "number" : (x.type === "참/거짓" ? "bool" : (x.type === "글자" ? "text" : (x.type || "text"))),
+      }));
+      const { data: got } = await c.from("game_tables")
+        .select("id").eq("world_id", worldId).eq("name", name).limit(1);
+      if (got && got[0]) {
+        const { error } = await c.from("game_tables")
+          .update({ columns: columns, is_per_player: !!perPlayer }).eq("id", got[0].id);
+        return !error;
+      }
+      const { error } = await c.from("game_tables").insert({
+        world_id: worldId, name: name, columns: columns, is_per_player: !!perPlayer,
+      });
+      return !error;
+    },
+    async dropTable(worldId, name) {
+      const c = init();
+      if (!c) return false;
+      const { data: got } = await c.from("game_tables")
+        .select("id").eq("world_id", worldId).eq("name", name).limit(1);
+      if (!got || !got[0]) return true;
+      await c.from("game_rows").delete().eq("table_id", got[0].id);
+      const { error } = await c.from("game_tables").delete().eq("id", got[0].id);
+      return !error;
+    },
+    // 내가 올린 오브젝트만
+    async myAssets(limit = 60) {
+      const c = init();
+      if (!c) return null;
+      const u = await this.me();
+      if (!u) return null;
+      const { data, error } = await c.from("assets")
+        .select("*").eq("owner_id", u.id)
+        .order("created_at", { ascending: false }).limit(limit);
+      return error ? null : (data || []);
+    },
+    async deleteAsset(id) {
+      const c = init();
+      if (!c) return false;
+      const { error } = await c.from("assets").delete().eq("id", id);
       return !error;
     },
     async listTables(worldId) {
@@ -407,11 +483,14 @@
     async listCreators(limit = 12) {
       const c = init();
       if (!c) return null;
-      const { data, error } = await c.from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      return error ? null : data;
+      let { data, error } = await c.from("profiles")
+        .select("*").order("created_at", { ascending: false }).limit(limit);
+      if (error) {
+        const r = await c.from("profiles").select("*").limit(limit);
+        if (r.error) return null;
+        data = r.data;
+      }
+      return data || [];
     },
     async myProfile() {
       const c = init();
@@ -451,17 +530,27 @@
       if (!c) return null;
       const u = await this.me();
       if (!u) return null;
-      const { data, error } = await c.from("worlds")
+      let { data, error } = await c.from("worlds")
         .select("*").eq("owner_id", u.id).order("created_at", { ascending: false });
-      return error ? null : data;
+      if (error) {
+        const r = await c.from("worlds").select("*").eq("owner_id", u.id);
+        if (r.error) return null;
+        data = r.data;
+      }
+      return data || [];
     },
     async worldsOf(ownerId, limit = 24) {
       const c = init();
       if (!c) return null;
-      const { data, error } = await c.from("worlds")
+      let { data, error } = await c.from("worlds")
         .select("*").eq("owner_id", ownerId).eq("status", "published")
         .order("published_at", { ascending: false }).limit(limit);
-      return error ? null : data;
+      if (error) {
+        const r = await c.from("worlds").select("*").eq("owner_id", ownerId).limit(limit);
+        if (r.error) return null;
+        data = r.data;
+      }
+      return data || [];
     },
     // 최근 달린 댓글 (첫 화면 «이야기» 칸)
     async recentComments(limit = 6) {
@@ -738,12 +827,23 @@
     async notifications() {
       const c = init();
       if (!c) return null;
+      const u = await this.me();
+      if (!u) return null;
       const { data, error } = await c
         .from("notifications")
         .select("*, actor:actor_id(display_name,handle)")
+        .eq("user_id", u.id)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(30);
       return error ? null : data;
+    },
+    // 새 알림을 실시간으로 받는다
+    notifChannel(onRow) {
+      const c = init();
+      if (!c) return null;
+      return c.channel("notif")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (m) => onRow(m.new || m.record))
+        .subscribe();
     },
     // 작품 실시간 변수 구독
     subscribeVars(worldId, onChange) {
@@ -752,6 +852,68 @@
       return c
         .channel("world:" + worldId)
         .on("postgres_changes", { event: "*", schema: "public", table: "game_vars", filter: "world_id=eq." + worldId }, onChange)
+        .subscribe();
+    },
+    // 작품의 모든 표 데이터 (DB 탭에서 실제 행을 보여 준다)
+    async listRows(worldId, limit = 500) {
+      const c = init();
+      if (!c) return null;
+      const { data, error } = await c.from("game_rows")
+        .select("id,table_id,data,player_id,created_at")
+        .eq("world_id", worldId)
+        .order("created_at", { ascending: true })
+        .limit(limit);
+      return error ? null : (data || []);
+    },
+    // 표 이름으로 행을 넣는다 (없는 표는 만든다)
+    async tableIdByName(worldId, name, perPlayer) {
+      const c = init();
+      if (!c) return null;
+      let { data } = await c.from("game_tables").select("id").eq("world_id", worldId).eq("name", name).limit(1);
+      if (!data || !data[0]) {
+        await this.upsertTable(worldId, name, [], !!perPlayer);
+        const r = await c.from("game_tables").select("id").eq("world_id", worldId).eq("name", name).limit(1);
+        data = r.data;
+      }
+      return (data && data[0] && data[0].id) || null;
+    },
+    async addRowByName(worldId, name, row, perPlayer) {
+      const id = await this.tableIdByName(worldId, name, perPlayer);
+      if (!id) return false;
+      return await this.addRow(worldId, id, row, perPlayer);
+    },
+    // 표의 마지막 행에서 컬럼 하나를 읽고 쓴다
+    async readCell(worldId, name, col) {
+      const c = init();
+      if (!c) return null;
+      const id = await this.tableIdByName(worldId, name, false);
+      if (!id) return null;
+      const { data } = await c.from("game_rows").select("id,data")
+        .eq("table_id", id).order("created_at", { ascending: false }).limit(1);
+      if (!data || !data[0]) return null;
+      return (data[0].data || {})[col];
+    },
+    async writeCell(worldId, name, col, value, perPlayer) {
+      const c = init();
+      if (!c) return false;
+      const id = await this.tableIdByName(worldId, name, perPlayer);
+      if (!id) return false;
+      const { data } = await c.from("game_rows").select("id,data")
+        .eq("table_id", id).order("created_at", { ascending: false }).limit(1);
+      if (data && data[0]) {
+        const next = Object.assign({}, data[0].data || {}, { [col]: value });
+        const { error } = await c.from("game_rows").update({ data: next }).eq("id", data[0].id);
+        return !error;
+      }
+      return await this.addRow(worldId, id, { [col]: value }, perPlayer);
+    },
+    // 표 데이터 변화 구독
+    subscribeRows(worldId, onChange) {
+      const c = init();
+      if (!c) return null;
+      return c
+        .channel("rows:" + worldId)
+        .on("postgres_changes", { event: "*", schema: "public", table: "game_rows", filter: "world_id=eq." + worldId }, onChange)
         .subscribe();
     },
   };
