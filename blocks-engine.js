@@ -378,6 +378,37 @@
   def({ id: "list_index", cat: "변수·리스트", shape: "num", c: C2.list,
     parts: [{ t: "sel", k: "name", opts: ["__LIST__"], def: "기록" }, { t: "lbl", v: "에서" }, { t: "slot", k: "v", accept: "num", def: 0 }, { t: "lbl", v: "의 순서" }] });
 
+
+  // ── 화면(UI) 블록 ─────────────────────────────────────────
+  const UIPOS = ["왼쪽 위", "가운데 위", "오른쪽 위", "왼쪽 가운데", "화면 가운데", "오른쪽 가운데", "왼쪽 아래", "가운데 아래", "오른쪽 아래"];
+  const UICOL = ["초록", "빨강", "파랑", "노랑", "검정", "흰색", "주황", "보라"];
+  def({ id: "ui_label", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "글자판" }, { t: "txt", k: "name", def: "점수판" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS, def: "왼쪽 위" }, { t: "lbl", v: "에" }, { t: "slot", k: "msg", accept: "num", def: "점수 0" }, { t: "lbl", v: "로 보이기" }] });
+  def({ id: "ui_button", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "버튼" }, { t: "txt", k: "name", def: "확인" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS, def: "가운데 아래" }, { t: "lbl", v: "에 만들기 · 색" }, { t: "sel", k: "color", opts: UICOL, def: "초록" }] });
+  def({ id: "when_ui_click", cat: "이벤트", shape: "hat", c: C.event,
+    parts: [{ t: "lbl", v: "버튼" }, { t: "txt", k: "name", def: "확인" }, { t: "lbl", v: "을 눌렀을 때" }] });
+  def({ id: "ui_bar", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "막대" }, { t: "txt", k: "name", def: "체력" }, { t: "lbl", v: "을" }, { t: "slot", k: "v", accept: "num", def: 100 }, { t: "lbl", v: "% ·" }, { t: "sel", k: "pos", opts: UIPOS, def: "왼쪽 위" }, { t: "lbl", v: "·" }, { t: "sel", k: "color", opts: UICOL, def: "빨강" }] });
+  def({ id: "ui_panel", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "패널" }, { t: "txt", k: "name", def: "안내" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS, def: "화면 가운데" }, { t: "lbl", v: "에" }, { t: "slot", k: "msg", accept: "num", def: "여기를 지나가세요" }, { t: "lbl", v: "로 열기" }] });
+  def({ id: "ui_image", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "그림판" }, { t: "txt", k: "name", def: "열쇠칸" }, { t: "lbl", v: "에 모양" }, { t: "sel", k: "art", opts: ["__ART__"], def: "" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS, def: "오른쪽 위" }, { t: "lbl", v: "에 보이기" }] });
+  def({ id: "ui_remove", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "화면 요소" }, { t: "txt", k: "name", def: "점수판" }, { t: "lbl", v: "지우기" }] });
+  def({ id: "ui_all_clear", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "화면 요소 모두 지우기" }] });
+  def({ id: "ui_dialog", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "대화상자에" }, { t: "slot", k: "msg", accept: "num", def: "문이 열렸습니다" }, { t: "lbl", v: "을 띄우고 기다리기" }] });
+  def({ id: "ui_toast", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "알림" }, { t: "slot", k: "msg", accept: "num", def: "열쇠를 얻었습니다" }, { t: "lbl", v: "띄우기" }] });
+  def({ id: "ui_screen_color", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "화면 바탕색을" }, { t: "sel", k: "color", opts: UICOL, def: "검정" }, { t: "lbl", v: "으로 정하기" }] });
+  def({ id: "ui_pad", cat: "카메라·UI", shape: "stack", c: C.obj,
+    parts: [{ t: "lbl", v: "화면 조작 버튼(방향키)을" }, { t: "sel", k: "on", opts: ["보이기", "숨기기"], def: "보이기" }] });
+  def({ id: "ui_clicked", cat: "판단·논리", shape: "bool", c: C.logic,
+    parts: [{ t: "lbl", v: "버튼" }, { t: "txt", k: "name", def: "확인" }, { t: "lbl", v: "을 눌렀는가?" }] });
+
   // 카메라·UI
   def({ id: "ui_clear", cat: "카메라·UI", shape: "stack", c: C.obj, parts: [{ t: "lbl", v: "화면 글자 지우기" }] });
   def({ id: "cam_reset", cat: "카메라·UI", shape: "stack", c: C.obj, parts: [{ t: "lbl", v: "카메라 원래대로" }] });
@@ -939,10 +970,12 @@
           }
           case "set_x": self.x = await num("n"); ctx.onFrame(); break;
           case "set_y": self.y = await num("n"); ctx.onFrame(); break;
-          case "bounce_edge":
-            if (self.x > 220 || self.x < -220) self.x = Math.max(-220, Math.min(220, self.x));
-            if (self.y > 160 || self.y < -160) self.y = Math.max(-160, Math.min(160, self.y));
+          case "bounce_edge": {
+            const bb = (ctx.bounds && ctx.bounds()) || { x: 220, y: 160 };
+            if (self.x > bb.x || self.x < -bb.x) { self.x = Math.max(-bb.x, Math.min(bb.x, self.x)); self.rot = 180 - (self.rot || 0); }
+            if (self.y > bb.y || self.y < -bb.y) { self.y = Math.max(-bb.y, Math.min(bb.y, self.y)); self.rot = -(self.rot || 0); }
             ctx.onFrame(); break;
+          }
           case "point_to": { const o = ctx.objByName(I.name); if (o) self.rot = Math.atan2(o.y - self.y, o.x - self.x) * 180 / Math.PI; ctx.onFrame(); break; }
           case "change_size": self.scale = (self.scale || 1) + (await num("n")) / 100; ctx.onFrame(); break;
           case "set_alpha": self.alpha = 1 - (await num("n")) / 100; ctx.onFrame(); break;
@@ -962,7 +995,18 @@
           case "pen_size": self.penSize = await num("n"); break;
           case "pen_clear": ctx.penClear(); break;
           case "ui_text": ctx.uiText(await val(I.msg, self)); break;
-          case "cam_follow": ctx.camFollow(I.name); break;
+          case "cam_follow": ctx.camFollow(I.name, self); break;
+          case "ui_label": ctx.uiSet({ kind: "label", name: I.name, pos: I.pos, text: String(await val(I.msg, self)) }); break;
+          case "ui_button": ctx.uiSet({ kind: "button", name: I.name, pos: I.pos, color: I.color, text: I.name }); break;
+          case "ui_bar": ctx.uiSet({ kind: "bar", name: I.name, pos: I.pos, color: I.color, value: await num("v") }); break;
+          case "ui_panel": ctx.uiSet({ kind: "panel", name: I.name, pos: I.pos, text: String(await val(I.msg, self)) }); break;
+          case "ui_image": ctx.uiSet({ kind: "image", name: I.name, pos: I.pos, art: ctx.artId(I.art) || I.art }); break;
+          case "ui_remove": ctx.uiRemove(I.name); break;
+          case "ui_all_clear": ctx.uiClearAll(); break;
+          case "ui_dialog": await ctx.uiDialog(String(await val(I.msg, self))); break;
+          case "ui_toast": ctx.toast(String(await val(I.msg, self))); break;
+          case "ui_screen_color": ctx.screenColor(I.color); break;
+          case "ui_pad": ctx.uiPad(I.on !== "숨기기"); break;
           case "cam_zoom": ctx.camZoom(await num("n")); break;
           case "shake": await ctx.shake(await num("sec")); break;
           case "reset_timer": ctx.resetTimer(); break;
@@ -984,7 +1028,7 @@
           case "set_tile": ctx.setTile(await num("x"), await num("y"), I.t); break;
           case "speak": ctx.speak(await val(I.msg, self)); break;
           case "set_rot": self.rot = await num("n"); ctx.onFrame(); break;
-          case "move_random": self.x = Math.round(Math.random() * 420 - 210); self.y = Math.round(Math.random() * 300 - 150); ctx.onFrame(); break;
+          case "move_random": { const bb = (ctx.bounds && ctx.bounds()) || { x: 210, y: 150 }; self.x = Math.round((Math.random() * 2 - 1) * bb.x); self.y = Math.round((Math.random() * 2 - 1) * bb.y); ctx.onFrame(); break; }
           case "move_to_obj": { const o = ctx.objByName(I.name); if (o) { self.x = o.x; self.y = o.y; } ctx.onFrame(); break; }
           case "next_shape": ctx.nextShape(self); break;
           case "set_shape": self.art = ctx.artId(I.art) || self.art; ctx.onFrame(); break;
@@ -1176,6 +1220,7 @@
             if (kind === "scene" && root.def !== "when_scene_start") return;
             if (kind === "mouse" && root.def !== "when_mouse") return;
             if (kind === "clone" && !(root.def === "when_clone_start" && objId === extra)) return;
+            if (kind === "ui" && !(root.def === "when_ui_click" && String(root.inputs.name || "확인") === String(extra))) return;
             jobs.push(runChain(root.next, self));
           });
         });
@@ -1184,13 +1229,37 @@
     };
   }
 
+  // 블록 한 개(또는 아래까지)를 새 정체로 복제한다
+  function cloneBlock(b, deep) {
+    if (!b) return null;
+    const out = make(b.def);
+    if (!out) return null;
+    Object.keys(b.inputs || {}).forEach((k) => {
+      const v = b.inputs[k];
+      out.inputs[k] = (v && typeof v === "object" && v.def) ? cloneBlock(v, true) : v;
+    });
+    if (b.body) out.body = (b.body || []).map((x) => cloneBlock(x, true));
+    out.next = deep ? cloneBlock(b.next, true) : null;
+    return out;
+  }
+
+  // 스택 목록에서 id 로 블록과 그 스택을 찾는다
+  function findBlock(stacks, id) {
+    const rows = flatten(stacks || []);
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].block && rows[i].block.id === id) return { block: rows[i].block, stack: rows[i].stack || null };
+    }
+    return null;
+  }
+
   window.DotBlocks = {
+    cloneBlock: cloneBlock, findBlock: findBlock,
     DEFS: D, ROW_H: ROW_H, INDENT: INDENT,
     make: make, isValue: isValue, flatten: flatten, targets: targets,
     nearest: nearest, detach: detach, attach: attach, makeRuntime: makeRuntime,
     byCat: (cat) => Object.keys(D).filter((k) => D[k].cat === cat).map((k) => D[k]),
     syncFuncs: syncFuncs,
-    cats: ["이벤트", "움직임", "생김새", "소리", "붓", "흐름", "판단·논리", "계산", "변수·리스트", "함수", "실시간 DB", "멀티플레이", "오브젝트·맵", "카메라·UI", "확장"],
+    cats: ["이벤트", "실시간 DB", "움직임", "생김새", "카메라·UI", "소리", "붓", "흐름", "판단·논리", "계산", "변수·리스트", "함수", "멀티플레이", "오브젝트·맵", "확장"],
     count: () => Object.keys(D).length,
   };
 })();
