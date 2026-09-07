@@ -888,8 +888,11 @@
       if (!c) return null;
       const id = await this.tableIdByName(worldId, name, false);
       if (!id) return null;
-      const { data } = await c.from("game_rows").select("id,data")
-        .eq("table_id", id).order("created_at", { ascending: false }).limit(1);
+      const { data: u } = await c.auth.getUser();
+      let q = c.from("game_rows").select("id,data,player_id").eq("table_id", id);
+      // 플레이어별 표는 내 행만 읽는다
+      if (u && u.user) q = q.or("player_id.is.null,player_id.eq." + u.user.id);
+      const { data } = await q.order("created_at", { ascending: false }).limit(1);
       if (!data || !data[0]) return null;
       return (data[0].data || {})[col];
     },
