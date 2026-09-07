@@ -28,7 +28,10 @@
   * ::-webkit-scrollbar-thumb { background: #CFC7B6; border: 3px solid transparent; border-radius: 99px; background-clip: padding-box; }
   * ::-webkit-scrollbar-thumb:hover { background: #2F6F5E; border: 3px solid transparent; background-clip: padding-box; }
   /* 아이콘 CDN 이 막혔을 때: 빈 사각형이 아니라 작은 점으로 자리만 지킨다 */
-  iconify-icon { display: inline-block; min-width: 1em; min-height: 1em; }
+  /* 아이콘은 줄 높이에 끌려 위/아래로 밀리지 않게 격자 중앙에 둔다 */
+  iconify-icon { display: inline-grid; place-items: center; min-width: 1em; min-height: 1em; line-height: 1; vertical-align: middle; }
+  /* 둥근 아바타·버튼 안의 내용은 언제나 가운데 */
+  [style*="border-radius:99px"] > iconify-icon, [style*="border-radius: 99px"] > iconify-icon { margin: auto; }
   iconify-icon:not(:defined) {
     background: currentColor; opacity: 0.4; border-radius: 99px;
     width: 0.42em; height: 0.42em; min-width: 0.42em; min-height: 0.42em;
@@ -784,8 +787,8 @@
           <button onClick="{{ dislikeWorld }}" style="display:flex;align-items:center;gap:8px;background:{{ dislikeBg }};color:{{ dislikeFg }};border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">
             <iconify-icon icon="lucide:thumbs-down" width="16"></iconify-icon><span>{{ world.dislikes }}</span>
           </button>
-          <button onClick="{{ remakeWorld }}" style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#8D6BD8;color:#8D6BD8">
-            <iconify-icon icon="lucide:git-fork" width="16"></iconify-icon><span>리메이크</span>
+          <button onClick="{{ remakeWorld }}" style="display:flex;align-items:center;gap:8px;background:{{ remakeBg }};color:{{ remakeFg }};border:1px solid {{ remakeBd }};border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#2F6F5E">
+            <iconify-icon icon="{{ remakeIcon }}" width="16"></iconify-icon><span>{{ remakeLabel }}</span>
           </button>
           <button onClick="{{ shareWorld }}" style="display:flex;align-items:center;gap:8px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#2F6F5E">
             <iconify-icon icon="lucide:share-2" width="16"></iconify-icon><span>공유</span>
@@ -2206,13 +2209,13 @@
         </div>
       </sc-if>
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden">
-        <div style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));font-size:12.5px;font-weight:700;color:#6E7480;background:#F7F5EF;border-bottom:1px solid #EFEADE">
+        <div style="display:grid;grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,0.7fr)) minmax(0,1.5fr);font-size:12.5px;font-weight:700;color:#6E7480;background:#F7F5EF;border-bottom:1px solid #EFEADE">
           <span style="padding:13px 16px">작품</span><span style="padding:13px 12px">상태</span>
           <span style="padding:13px 12px">접속자</span><span style="padding:13px 12px">현재</span>
           <span style="padding:13px 12px">좋아요/싫어요</span><span style="padding:13px 12px">댓글</span>
         </div>
         <sc-for list="{{ myWorlds }}" as="w" hint-placeholder-count="0">
-          <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2.2fr) repeat(5,minmax(0,1fr));border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
+          <div onClick="{{ w.go }}" style="display:grid;grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,0.7fr)) minmax(0,1.5fr);border-bottom:1px solid #F5F1E8;cursor:pointer;align-items:center" style-hover="background:#F7F5EF">
             <span style="padding:13px 16px;display:flex;align-items:center;gap:11px;min-width:0">
               <span role="img" aria-label="" style="width:34px;height:34px;image-rendering:pixelated;background:#F7F5EF;border-radius:8px;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
               <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
@@ -2224,7 +2227,17 @@
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px">{{ w.playsK }}</span>
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px;color:#2F6F5E">{{ w.online }}</span>
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px">{{ w.likes }} / {{ w.dislikes }}</span>
-            <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px;color:#4A5FD1">{{ w.comments }}</span>
+            <span style="padding:13px 12px;display:flex;align-items:center;gap:7px">
+              <span style="font-family:Galmuri11,monospace;font-size:12px;color:#4A5FD1">{{ w.comments }}</span>
+              <span onClick="{{ w.edit }}" title="스튜디오에서 고치기" style="margin-left:auto;display:flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="border-color:#2F6F5E">
+                <iconify-icon icon="lucide:pencil-line" width="11"></iconify-icon><span>수정</span>
+              </span>
+              <sc-if value="{{ w.isDraft }}" hint-placeholder-val="{{ false }}">
+                <span onClick="{{ w.publish }}" title="공개하기" style="display:flex;align-items:center;gap:4px;background:#2F6F5E;color:#FFFFFF;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap" style-hover="background:#16181D">
+                  <iconify-icon icon="lucide:globe" width="11"></iconify-icon><span>공개</span>
+                </span>
+              </sc-if>
+            </span>
           </div>
         </sc-for>
       </div>
@@ -4327,6 +4340,38 @@ class Component extends DCLogic {
 
   uploadBanner = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "banner"); e.target.value = ""; };
   uploadAvatar = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "avatar"); e.target.value = ""; };
+
+  isMyWorld() {
+    const me = this.state.liveMe;
+    if (!me) return false;
+    const w = (this.state.liveWorlds || []).find((x) => x.id === this.state.worldId);
+    if (w) return w.handle === me.handle;
+    return (this.state.liveMyWorlds || []).some((x) => x.id === this.state.worldId);
+  }
+
+  // «만들기» — 빈 작품에서 새로 시작한다. 앞서 만들던 것은 저장본으로 남는다.
+  newWorld = () => {
+    const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    this._model = {}; this._rows = {}; this._live = null;
+    this._stageBgKey = null; this._baseKey = null;
+    try { localStorage.setItem(LS("worldId"), id); } catch (e) {}
+    this.setState({
+      route: "studio", tab: "blocks", worldId: id,
+      worldTitle: "", worldSummary: "", tagsDef: [],
+      scenes: [{ id: "s1", name: "1번 화면" }], sceneId: "s1",
+      objects: {}, objId: null, wsBy: {}, tiles: {},
+      varsDef: [], listsDef: [], funcsDef: [], signalsDef: [],
+      tables: [], rowsView: {}, rtVars: {}, rtScope: {},
+      shapes: [], imgArts: [], soundsDef: [],
+      saves: [], published: false, mapW: 40, mapH: 25, mapBound: "infinite",
+    }, () => {
+      this._seeded = false;
+      this.initSeed();
+      this.drawMap();
+      window.scrollTo(0, 0);
+      this.say("새 작품을 시작했습니다. 앞서 만들던 것은 프로필 › 내 월드에 남아 있습니다.");
+    });
+  };
 
   // 내가 만든 작품을 읽는다
   async loadMyWorlds() {
@@ -6521,6 +6566,23 @@ class Component extends DCLogic {
     // 글쓴이·제작자 아바타는 실제 프로필(avatar_art)에서 가져온다
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
+    const faceUrl = {}, faceArt = {};
+    const regFace = (p) => {
+      if (!p) return;
+      [p.name, p.handle].forEach((k) => {
+        if (!k) return;
+        if (p.avatarUrl) faceUrl[k] = p.avatarUrl;
+        if (p.art) faceArt[k] = p.art;
+      });
+    };
+    (st.liveCreators || []).forEach(regFace);
+    regFace(st.liveMe);
+    if (st.liveMe && st.avatarUrl) { faceUrl[st.liveMe.name] = st.avatarUrl; faceUrl[st.liveMe.handle] = st.avatarUrl; }
+    const face = (name, handle) => {
+      const u = faceUrl[name] || faceUrl[handle];
+      if (u) return cssUrl(u);
+      return spr(faceArt[name] || faceArt[handle] || authorArt[name] || authorArt[handle] || "slime");
+    };
     (st.liveCreators || []).forEach((c) => {
       if (c.name) authorArt[c.name] = c.art || "slime";
       if (c.handle) authorArt[c.handle] = c.art || "slime";
@@ -6571,7 +6633,7 @@ class Component extends DCLogic {
       catName: w.catName, online: w.online, ago: w.ago,
       likes: kfmt(w.likes + (st.reacts["w:" + w.id] === "like" ? 1 : 0)),
       dislikes: kfmt(w.dislikes), comments: kfmt(w.comments), playsK: kfmt(w.plays),
-      sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || authorArt[w.handle] || "slime"),
+      sprite: spr(w.art), authorSprite: face(w.author, w.handle),
       go: () => {
         this.go("world", { worldId: w.id })();
         this.loadWorldThread(w.id);
@@ -6604,7 +6666,7 @@ class Component extends DCLogic {
     const topComments = (needCreators ? (st.liveComments || []) : []).map((c) => ({
       world: c.world, author: c.author, handle: c.handle, body: c.body, ago: c.ago,
       likes: kfmt(c.likes), dislikes: c.dislikes, replies: c.replies,
-      sprite: spr(authorArt[c.author] || authorArt[c.handle] || "slime"),
+      sprite: face(c.author, c.handle),
       go: this.go("world", { worldId: (worldsSrc.find((w) => w.title === c.world) || {}).id || "w1" }),
     }));
 
@@ -6656,7 +6718,7 @@ class Component extends DCLogic {
       r_community: st.route === "community",
       r_profile: st.route === "profile",
       r_terms: st.route === "terms",
-      goLanding: this.go("landing"), goStudio: this.go("studio"), goAssets: this.go("assets"),
+      goLanding: this.go("landing"), goStudio: this.newWorld, goAssets: this.go("assets"),
       goTerms: this.go("terms", { legalDoc: "terms" }),
       goPrivacy: this.go("terms", { legalDoc: "privacy" }),
       goGuideline: this.go("terms", { legalDoc: "guideline" }),
@@ -6698,7 +6760,10 @@ class Component extends DCLogic {
         },
       })),
       noNotifs: st.dbLoaded && !(st.liveNotifs || []).length,
-      meSprite: spr("slime"),
+      meSprite: (() => {
+        const url = st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl);
+        return url ? cssUrl(url) : spr((st.liveMe && st.liveMe.art) || st.avatarArt || "slime");
+      })(),
       spritesReady: Object.keys(st.sprites || {}).length > 0,
       q: st.q,
       setQ: (e) => this.setState({ q: e.target.value }),
@@ -6950,7 +7015,7 @@ class Component extends DCLogic {
           likes: kfmt((w.likes || 0) + (r === "like" ? 1 : 0)),
           dislikes: kfmt((w.dislikes || 0) + (r === "dislike" ? 1 : 0)),
           comments: kfmt(w.comments || 0),
-          sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || authorArt[w.handle] || "slime"),
+          sprite: spr(w.art), authorSprite: face(w.author, w.handle),
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
@@ -6971,7 +7036,17 @@ class Component extends DCLogic {
       dislikeFg: st.reacts["w:" + st.worldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
+      remakeLabel: this.isMyWorld() ? "수정하기" : "리메이크",
+      remakeIcon: this.isMyWorld() ? "lucide:pencil-line" : "lucide:git-fork",
+      remakeBg: this.isMyWorld() ? "#16181D" : "#FFFFFF",
+      remakeFg: this.isMyWorld() ? "#FFFFFF" : "#2A2D36",
+      remakeBd: this.isMyWorld() ? "#16181D" : "#E3DCCC",
       remakeWorld: async () => {
+        if (this.isMyWorld()) {
+          this.setState({ route: "studio", tab: "blocks", worldId: st.worldId }, () => this.loadStudio());
+          window.scrollTo(0, 0);
+          return this.say("내 작품입니다 — 스튜디오에서 그대로 고칠 수 있습니다.");
+        }
         if (window.DotDB && window.DotDB.isLive) {
           const r = await window.DotDB.remakeWorld(st.worldId);
           if (r && r.id) {
@@ -8123,7 +8198,7 @@ class Component extends DCLogic {
       p_settings: (st.profileTab || 0) === 3,
       uploadBanner: this.uploadBanner,
       uploadAvatar: this.uploadAvatar,
-      goStudioNew: () => { this.setState({ route: "studio", tab: "blocks" }); window.scrollTo(0, 0); },
+      goStudioNew: this.newWorld,
       setName: st.setName || (st.liveMe && st.liveMe.name) || "",
       setMemo: st.setMemo !== "" ? st.setMemo : ((st.liveMe && st.liveMe.memo) || ""),
       onSetName: (e) => this.setState({ setName: e.target.value }),
@@ -8150,7 +8225,7 @@ class Component extends DCLogic {
       myWorldsSummary: (() => {
         const src = st.liveMyWorlds || [];
         const pub = src.filter((w) => w.status === "published").length;
-        return src.length + "개 · 게시 " + pub + " · 초안 " + (src.length - pub);
+        return src.length + "개 · 공개 " + pub + " · 비공개 " + (src.length - pub);
       })(),
       noMyWorlds: st.dbLoaded && !(st.liveMyWorlds || []).length,
       myReports: st.myReports || [],
@@ -8176,9 +8251,21 @@ class Component extends DCLogic {
         playsK: kfmt(w.plays || 0), online: w.online || 0,
         likes: kfmt(w.likes || 0), dislikes: w.dislikes || 0,
         comments: kfmt(w.comments || 0),
-        stText: w.status === "published" ? "게시 중" : "초안",
+        stText: w.status === "published" ? "공개" : "비공개",
         stBg: w.status === "published" ? "#E4EFE9" : "#F0ECE1",
         stFg: w.status === "published" ? "#2F6F5E" : "#8A9099",
+        isDraft: w.status !== "published",
+        edit: (e) => {
+          if (e) e.stopPropagation();
+          this.setState({ route: "studio", tab: "blocks", worldId: w.id }, () => this.loadStudio());
+          window.scrollTo(0, 0);
+        },
+        publish: (e) => {
+          if (e) e.stopPropagation();
+          this.setState({ route: "studio", tab: "publish", worldId: w.id, worldTitle: w.title }, () => this.loadStudio());
+          window.scrollTo(0, 0);
+          this.say("«" + w.title + "» 의 공개 설정입니다. 내용을 확인하고 게시하세요.");
+        },
         go: () => {
           if (w.status === "published") {
             this.go("world", { worldId: w.id })();
