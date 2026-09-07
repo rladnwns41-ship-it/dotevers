@@ -567,7 +567,7 @@
           </div>
           <div style="display:flex;gap:6px">
             <sc-for list="{{ feedFilters }}" as="f" hint-placeholder-count="3">
-              <span onClick="{{ f.go }}" style="font-size:12.5px;font-weight:600;color:{{ f.fg }};background:{{ f.bg }};border:1px solid #E3DCCC;border-radius:99px;padding:7px 12px;cursor:pointer" style-hover="border-color:#4A5FD1;color:#4A5FD1">{{ f }}</span>
+              <span onClick="{{ f.go }}" style="font-size:12.5px;font-weight:600;color:{{ f.fg }};background:{{ f.bg }};border:1px solid #E3DCCC;border-radius:99px;padding:7px 12px;cursor:pointer" style-hover="border-color:#4A5FD1;color:#4A5FD1">{{ f.t }}</span>
             </sc-for>
           </div>
         </div>
@@ -1427,12 +1427,12 @@
               </button>
             </span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding-bottom:6px">
+          <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;padding:4px 2px 6px">
             <sc-for list="{{ frames }}" as="fr" hint-placeholder-count="4">
               <span onClick="{{ fr.go }}" style="width:62px;height:62px;flex-shrink:0;border-radius:9px;border:{{ fr.border }};background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/12px 12px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">
                 <span role="img" aria-label="" style="width:84%;height:84%;image-rendering:pixelated;flex-shrink:0;background-image:{{ fr.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 <span style="position:absolute;bottom:2px;right:3px;font-family:Galmuri11,monospace;font-size:9px;color:#8A9099">{{ fr.n }}</span>
-                <span onClick="{{ fr.remove }}" style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:99px;background:#FFFFFF;border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center;color:#C0392B" style-hover="background:#C0392B;color:#FFFFFF"><iconify-icon icon="lucide:x" width="9"></iconify-icon></span>
+                <span onClick="{{ fr.remove }}" title="프레임 삭제" style="position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:99px;background:#FFFFFF;border:1px solid #E3DCCC;display:flex;align-items:center;justify-content:center;color:#C0392B" style-hover="background:#C0392B;color:#FFFFFF"><iconify-icon icon="lucide:x" width="9"></iconify-icon></span>
               </span>
             </sc-for>
             <span onClick="{{ addFrame }}" style="width:62px;height:62px;flex-shrink:0;border-radius:9px;border:1px dashed #CFC7B6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#8A9099" style-hover="border-color:#2F6F5E;color:#2F6F5E">
@@ -3308,8 +3308,10 @@ class Component extends DCLogic {
       const vars = await window.DotDB.getVars(this.state.worldId);
       if (vars && vars.length) {
         const rv = {}, sc = {};
+        const myUid = (this.state.liveMe && this.state.liveMe.id) || null;
         vars.forEach((r) => {
           if (String(r.key).indexOf("list.") === 0) return;
+          if (r.player_id && r.player_id !== myUid) return;
           rv[r.key] = typeof r.value === "object" ? JSON.stringify(r.value) : r.value;
           sc[r.key] = r.player_id ? "player" : "global";
         });
@@ -3325,10 +3327,13 @@ class Component extends DCLogic {
       if (tabs && rows) {
         const byId = {};
         tabs.forEach((x) => { byId[x.id] = x.name; });
+        const myId = (this.state.liveMe && this.state.liveMe.id) || null;
         const grouped = {};
         rows.forEach((r) => {
           const n = byId[r.table_id];
           if (!n) return;
+          // 플레이어별 행은 자기 것만 본다 (player_id 가 있는 행)
+          if (r.player_id && r.player_id !== myId) return;
           (grouped[n] = grouped[n] || []).push(r.data || {});
         });
         // 서버에 아직 없는 표·행은 그대로 둔다 (로그인 전에는 서버에 못 쓰기 때문)
@@ -5794,10 +5799,23 @@ class Component extends DCLogic {
           frames: (x.frames || []).length || 1,
           size: (x.width || 16) + "×" + (x.height || 16),
           tags: x.tags || [],
-          art: x.image_url ? "srv" + x.id : this.guessArt(x),
+          art: "srv" + x.id,
+          baseArt: this.guessArt(x),
           imageUrl: x.image_url || null,
+          isPublic: x.is_public !== false,
+          frameCells: Array.isArray(x.frames) ? x.frames : [],
+          ownerId: x.owner_id || null,
         }));
-        a.forEach((x) => { if (x.image_url) spriteAdd["srv" + x.id] = x.image_url; });
+        // 올린 그림이 있으면 그것을, 없으면 이름에 맞는 기본 도트를 이 키에 등록한다
+        a.forEach((x) => {
+          const key = "srv" + x.id;
+          if (x.image_url) { spriteAdd[key] = x.image_url; return; }
+          const fr = (x.frames || [])[0];
+          if (fr && Array.isArray(fr)) {
+            const url = this.dotsToSVG(fr);
+            if (url) spriteAdd[key] = url;
+          }
+        });
         if (Object.keys(spriteAdd).length) next.sprites = Object.assign({}, this.state.sprites, spriteAdd);
       }
       if (t) {
@@ -6369,9 +6387,16 @@ class Component extends DCLogic {
         const up = await window.DotDB.uploadMedia(this.state.worldId, "art/" + key, dataUrl);
         if (up) url = up;
       }
+      // Storage 업로드가 막혀도 그림이 남도록 픽셀 자체(frames)도 함께 보낸다
+      // 프레임(움직임) 전체를 함께 올린다 — 가져간 사람도 그대로 편집·재생할 수 있다
+      const sh = (this.state.shapes || [])[Number(String(key).replace("my", ""))];
+      const cells = (sh && sh.frames) ? sh.frames : [];
+      const rows = cells[0] || [];
+      const w = (rows[0] && rows[0].length) || rows.length || 16;
+      const h = rows.length || 16;
       const r = await window.DotDB.saveAsset({
-        name: name, kind: "object", width: 32, height: 32,
-        frames: [], imageUrl: url, license: "cc_by", tags: [], isPublic: false,
+        name: name, kind: "object", width: w, height: h,
+        frames: cells, imageUrl: url, license: "cc_by", tags: [], isPublic: false,
       });
       if (r) { this.say("«" + name + "» 을 서버에 저장했습니다."); this.loadLive(); }
       else this.say("서버에 저장하지 못했습니다 — 로그인 상태를 확인하세요.", "warn");
@@ -6493,8 +6518,14 @@ class Component extends DCLogic {
       return b ? 'url("' + b.replace(/"/g, "%22") + '")' : "none";
     };
     const spr = (k) => cssUrl(this.spriteOf(k));
+    // 글쓴이·제작자 아바타는 실제 프로필(avatar_art)에서 가져온다
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
+    (st.liveCreators || []).forEach((c) => {
+      if (c.name) authorArt[c.name] = c.art || "slime";
+      if (c.handle) authorArt[c.handle] = c.art || "slime";
+    });
+    if (st.liveMe && st.liveMe.name) authorArt[st.liveMe.name] = st.liveMe.art || "slime";
 
     const baseThread = st.comments || [];
 
@@ -6540,7 +6571,7 @@ class Component extends DCLogic {
       catName: w.catName, online: w.online, ago: w.ago,
       likes: kfmt(w.likes + (st.reacts["w:" + w.id] === "like" ? 1 : 0)),
       dislikes: kfmt(w.dislikes), comments: kfmt(w.comments), playsK: kfmt(w.plays),
-      sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || w.art),
+      sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || authorArt[w.handle] || "slime"),
       go: () => {
         this.go("world", { worldId: w.id })();
         this.loadWorldThread(w.id);
@@ -6573,17 +6604,17 @@ class Component extends DCLogic {
     const topComments = (needCreators ? (st.liveComments || []) : []).map((c) => ({
       world: c.world, author: c.author, handle: c.handle, body: c.body, ago: c.ago,
       likes: kfmt(c.likes), dislikes: c.dislikes, replies: c.replies,
-      sprite: spr(authorArt[c.author] || c.art),
+      sprite: spr(authorArt[c.author] || authorArt[c.handle] || "slime"),
       go: this.go("world", { worldId: (worldsSrc.find((w) => w.title === c.world) || {}).id || "w1" }),
     }));
 
     const needAssets = ["landing", "assets", "profile", "studio", "world"].indexOf(st.route) >= 0;
     const assetsSrc = st.liveAssets || [];
     const assets = this.memo("assets", [needAssets, assetsSrc], () => (needAssets ? assetsSrc : []).map((a) => ({
-      id: a.id, name: a.name, handle: a.handle, author: a.author, size: a.size,
-      frames: a.frames, license: a.license, kind: a.kind, tags: a.tags,
+      id: a.id, name: a.name, handle: a.handle, author: a.author, size: a.size, art: a.art, baseArt: a.baseArt,
+      frames: a.frames, frameCells: a.frameCells || [], license: a.license, kind: a.kind, tags: a.tags, isPublic: !!a.isPublic,
       usesK: kfmt(a.uses), likesK: kfmt(a.likes), dislikes: a.dislikes,
-      sprite: a.imageUrl ? cssUrl(a.imageUrl) : spr(a.art),
+      sprite: a.imageUrl ? cssUrl(a.imageUrl) : ((this.state.sprites || {})[a.art] ? spr(a.art) : spr(a.baseArt || a.art)),
       preview: (e) => {
         if (e) e.stopPropagation();
         this.setState({ pvId: a.id });
@@ -6592,8 +6623,24 @@ class Component extends DCLogic {
         if (e) e.stopPropagation();
         try {
           if (window.DotDB && window.DotDB.isLive) await window.DotDB.forkAsset(a.id, null);
-        } catch (err) { /* 데모 모드 */ }
-        this.say("«" + a.name + "» 을 내 라이브러리에 가져왔습니다. 원작자 @" + a.handle + " 표기가 함께 저장됩니다.");
+        } catch (err) {}
+        // 프레임을 내 «모양» 으로 들여와 바로 고치고 애니메이션도 쓸 수 있게 한다
+        const frames = (a.frameCells || []).filter((f) => Array.isArray(f));
+        if (frames.length) {
+          this.setState((p) => ({
+            shapes: (p.shapes || []).concat([{
+              name: a.name + " (@" + a.handle + ")",
+              frames: frames.map((f) => f.slice()),
+              speed: 6,
+            }]),
+          }), () => {
+            this._myKey = null;
+            this.syncMyArts();
+            this.say("«" + a.name + "» 을 " + frames.length + "개 프레임 그대로 가져왔습니다. 도트 탭에서 고칠 수 있습니다.");
+          });
+        } else {
+          this.say("«" + a.name + "» 을 내 라이브러리에 가져왔습니다. 원작자 @" + a.handle + " 표기가 함께 저장됩니다.");
+        }
       },
     })));
 
@@ -6903,7 +6950,7 @@ class Component extends DCLogic {
           likes: kfmt((w.likes || 0) + (r === "like" ? 1 : 0)),
           dislikes: kfmt((w.dislikes || 0) + (r === "dislike" ? 1 : 0)),
           comments: kfmt(w.comments || 0),
-          sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || w.art),
+          sprite: spr(w.art), authorSprite: spr(authorArt[w.author] || authorArt[w.handle] || "slime"),
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
@@ -7634,7 +7681,7 @@ class Component extends DCLogic {
       })),
       panelObjects: (() => {
         const baseSrc = st.liveAssets || [];
-        const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art, imageUrl: a.imageUrl || null, tags: a.tags || [] }));
+        const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art, baseArt: a.baseArt, imageUrl: a.imageUrl || null, tags: a.tags || [] }));
         const mine = (st.shapes || []).map((sh, i) => ({
           name: sh.name, handle: "나", uses: 0, art: "my" + i, tags: ["전체"],
         })).concat((st.imgArts || []).map((a) => ({
@@ -7649,7 +7696,7 @@ class Component extends DCLogic {
         return list.map((a) => ({
           name: a.name, handle: a.handle,
           usesK: a.uses ? kfmt(a.uses) : "내가 만든 도트",
-          sprite: a.imageUrl ? cssUrl(a.imageUrl) : spr(a.art),
+          sprite: a.imageUrl ? cssUrl(a.imageUrl) : ((st.sprites || {})[a.art] ? spr(a.art) : spr(a.baseArt || a.art)),
           on: st.placeArt === a.art,
           fav: (st.favArts || []).indexOf(a.art) >= 0,
           favIcon: (st.favArts || []).indexOf(a.art) >= 0 ? "lucide:star" : "lucide:star-off",
@@ -7663,9 +7710,22 @@ class Component extends DCLogic {
       panelEmpty: false,
       emptyDb: st.dbLoaded && !(st.liveWorlds || []).length,
       emptyAssets: st.dbLoaded && !(st.liveAssets || []).length,
-      noWorlds: needWorlds && !worlds.length,
+      // 팔로우한 사람의 작품만 남긴다 (아무도 팔로우하지 않았으면 비어 있다)
+      worlds: st.route === "home"
+        ? worlds.filter((w) => (st.follows || {})[w.handle])
+        : worlds,
+      noWorlds: needWorlds && !(st.route === "home"
+        ? worlds.filter((w) => (st.follows || {})[w.handle]).length
+        : worlds.length),
+      noFollows: st.route === "home" && !Object.keys(st.follows || {}).length,
       noCreators: needCreators && !creators.length,
-      noAssets: needAssets && !assets.length,
+      // 프로필의 «내가 공유한 오브젝트» 는 내가 올리고 공개로 둔 것만 센다
+      assets: st.route === "profile"
+        ? assets.filter((a) => a.isPublic && st.liveMe && a.handle === st.liveMe.handle)
+        : assets,
+      noAssets: needAssets && !(st.route === "profile"
+        ? assets.filter((a) => a.isPublic && st.liveMe && a.handle === st.liveMe.handle).length
+        : assets.length),
       noComments: st.route === "world" && !baseThread.length,
       boardEmpty: st.route === "community" && !this.allPosts().some((p) => {
         const bd = (s.boards || []).find((b) => b.slug === st.board);
