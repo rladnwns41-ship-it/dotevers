@@ -3974,8 +3974,8 @@ class Component extends DCLogic {
       return {
         isBlock: true, innerId: cur.id, innerC: id.c,
         innerBr: id.shape === "bool" ? "99px" : "12px",
-        inner: (id.parts || []).map((q) => this.partChip(q, id, cur)),
-        bg: "transparent", fg: "#F4F1EA", br: "99px", pad: "0", border: "0", minW: "0",
+        inner: (id.parts || []).map((q) => Object.assign({ v: "" }, this.partChip(q, id, cur))),
+        v: "", bg: "transparent", fg: "#F4F1EA", br: "99px", pad: "0", border: "0", minW: "0",
         grab: (e) => this.grabExisting(e, cur.id),
       };
     }
@@ -4126,11 +4126,33 @@ class Component extends DCLogic {
 
     // 1) Supabase 실시간 채널 (환경 변수가 있을 때)
     if (window.DotDB && window.DotDB.isLive && window.DotDB.init) {
-      try {
-        const c = window.DotDB.init();
-        this._mpCh = c.channel("play:" + this.state.worldId + ":" + this._mpRoom, { config: { broadcast: { self: false } } });
-        this._mpCh.on("broadcast", { event: "s" }, (m) => onMsg(m.payload)).subscribe();
-      } catch (err) { this._mpCh = null; }
+      // 채널이 «연결됨» 이 되기 전에 보낸 것은 버려진다 — 상태를 확인하고 보낸다
+      const openCh = () => {
+        try {
+          const c = window.DotDB.init();
+          if (this._mpCh) { try { this._mpCh.unsubscribe(); } catch (e) {} }
+          this._mpReady = false;
+          this._mpCh = c.channel("play:" + this.state.worldId + ":" + this._mpRoom, {
+            config: { broadcast: { self: false, ack: false } },
+          });
+          this._mpCh.on("broadcast", { event: "s" }, (m) => onMsg(m.payload));
+          this._mpCh.subscribe((status) => {
+            this._mpReady = status === "SUBSCRIBED";
+            if (status === "SUBSCRIBED") {
+              this.setState({ mpLive: true });
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+              this.setState({ mpLive: false });
+              // 끊기면 되살린다 — 방에 있는 동안은 계속 이어져야 한다
+              if (this._mpOn) {
+                clearTimeout(this._mpRetry);
+                this._mpRetry = setTimeout(openCh, 2000);
+              }
+            }
+          });
+        } catch (err) { this._mpCh = null; this._mpReady = false; }
+      };
+      this._openMpCh = openCh;
+      openCh();
     }
     // 2) 같은 브라우저의 다른 탭 (키가 없어도 바로 확인할 수 있게)
     try {
@@ -4159,7 +4181,7 @@ class Component extends DCLogic {
         }
       }
       if (this._mpBc) { try { this._mpBc.postMessage(p); } catch (err) {} }
-      if (this._mpCh) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (err) {} }
+      if (this._mpCh && this._mpReady) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (err) {} }
       // 오래 소식이 없는 사람은 화면에서 지운다
       let gone = false;
       Object.keys(this._peers).forEach((k) => {
@@ -4182,8 +4204,10 @@ class Component extends DCLogic {
       this._chatCh = window.DotDB.chatChannel(this.state.worldId, this._mpRoom, (row) => {
         const key = "db" + row.id;
         if ((this.state.chatLog || []).some((x) => x.id === key)) return;
+        // 내가 방금 보낸 줄은 이미 화면에 있다 — 두 번 쌓이지 않게 거른다
+        if (this._lastChat && row.body === this._lastChat.body && Date.now() - this._lastChat.t < 8000) return;
         this.setState((p) => ({
-          chatLog: (p.chatLog || []).concat([{ id: key, name: "손님", msg: row.body }]).slice(-40),
+          chatLog: (p.chatLog || []).concat([{ id: key, name: row.author_name || "손님", msg: row.body }]).slice(-40),
         }));
       });
     }
@@ -4212,6 +4236,11 @@ class Component extends DCLogic {
   }
 
   mpStop = () => {
+    clearTimeout(this._mpRetry);
+    this._mpRetry = null;
+    this._mpReady = false;
+    this._openMpCh = null;
+    this.setState({ mpLive: false });
     clearInterval(this._mpTimer);
     this._mpTimer = null;
     this._mpOn = false;
@@ -4410,6 +4439,23 @@ class Component extends DCLogic {
   mpNick = (n) => { this._mpName = String(n || "플레이어").slice(0, 12); };
 
   // 월드 안 채팅 — 알림이 아니라 실행화면 오른쪽 아래 작은 창에 쌓인다
+  // 익명 로그인이 꺼진 프로젝트에서는 손님이 아무것도 남길 수 없다 — 한 번만 알려 준다
+  warnGuest(what, err) {
+    // 데이터베이스 권한 문제는 원인을 정확히 알려 준다 (막연히 «실패» 라고 하지 않게)
+    const msg = String((err && (err.message || err)) || "");
+    if (/blocked_words|permission denied/i.test(msg)) {
+      if (this._permWarned) return;
+      this._permWarned = true;
+      return this.say("데이터베이스 권한 설정이 필요합니다 — migrate.sql 을 한 번 실행하세요.", "warn");
+    }
+    if (window.DotDB && window.DotDB.anonBlocked) {
+      if (this._guestWarned) return;
+      this._guestWarned = true;
+      return this.say(what + "은 로그인해야 남길 수 있습니다 — 오른쪽 위에서 로그인하세요.", "warn");
+    }
+    this.say(what + "을 남기지 못했습니다 — 잠시 후 다시 시도하세요.", "warn");
+  }
+
   pushChat(name, msg) {
     const line = { name: name, msg: String(msg), id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) };
     this.setState((p) => ({ chatLog: (p.chatLog || []).concat([line]).slice(-40) }));
@@ -4423,7 +4469,10 @@ class Component extends DCLogic {
     this.pushChat(name, text);
     // 데이터베이스에 남겨 나중에 들어온 사람도 대화를 볼 수 있게 한다
     if (window.DotDB && window.DotDB.isLive) {
-      window.DotDB.sendChat(this.state.worldId, this._mpRoom || "1번방", text);
+      this._lastChat = { body: text, t: Date.now() };
+      window.DotDB.sendChat(this.state.worldId, this._mpRoom || "1번방", text).then((ok) => {
+        if (ok === false || ok === null) this.warnGuest("채팅", window.DotDB.lastError);
+      });
     }
     const p = { chat: text, name: name, id: this._mpId || "me", room: this._mpRoom || "1번방", t: Date.now() };
     if (this._mpBc) { try { this._mpBc.postMessage(p); } catch (e) {} }
@@ -4704,6 +4753,7 @@ class Component extends DCLogic {
       const r = await window.DotDB.addComment({ postId: postId, body: b });
       this.setState({ commentDraft: "" });
       if (r) { await this.loadThread(postId); return; }
+      this.warnGuest("댓글", window.DotDB.lastError);
     }
     this.setState((p) => ({
       threads: Object.assign({}, p.threads, {
@@ -4720,12 +4770,19 @@ class Component extends DCLogic {
   // 작품 추천 · 비추천을 데이터베이스에 남긴다
   reactWorld(dir) {
     const key = "w:" + this.state.worldId;
-    const next = this.state.reacts[key] === dir ? null : dir;
+    const prev = this.state.reacts[key];
+    const next = prev === dir ? null : dir;
     this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: next }) }));
-    if (window.DotDB && window.DotDB.isLive) {
-      window.DotDB.vote("world", this.state.worldId, next === null ? null : (next === "like" ? 1 : -1))
-        .then(() => this.loadLive());
-    }
+    if (!(window.DotDB && window.DotDB.isLive)) return;
+    window.DotDB.vote("world", this.state.worldId, next === null ? null : (next === "like" ? 1 : -1))
+      .then((ok) => {
+        if (ok === false || ok === null) {
+          // 서버가 받지 않았으면 눌린 채로 두지 않는다
+          this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: prev }) }));
+          return this.warnGuest("추천");
+        }
+        this.loadLive();
+      });
   }
 
   // 오브젝트 추천도 같은 방식으로 남긴다
@@ -4992,14 +5049,28 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ saving: true });
-    const r = await window.DotDB.saveStudio(this.state.worldId, payload);
+    let r = await window.DotDB.saveStudio(this.state.worldId, payload);
+    // 이 id 가 이미 남의 것이면(로그인 계정이 바뀐 경우 등) 새 id 로 옮겨 담는다.
+    // 그러지 않으면 저장할 때마다 409·403 이 반복된다.
+    if (!r.ok && (r.reason === "taken" || r.reason === "not_owner")) {
+      const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      try { localStorage.setItem(LS("worldId"), id); } catch (e) {}
+      await new Promise((res) => this.setState({ worldId: id }, res));
+      r = await window.DotDB.saveStudio(id, payload);
+      if (r.ok) this.say("이 작품을 내 계정의 새 작품으로 옮겨 저장했습니다.");
+    }
     this.setState({ saving: false, saved: r.ok ? "v" + r.version : null });
     const quiet = this._quietSave;
     this._quietSave = false;
     if (!r.ok || !quiet) {
       this.say(r.ok
         ? "Supabase 에 v" + r.version + " 으로 저장했습니다."
-        : "저장하지 못했습니다 — " + (r.reason === "env" ? "환경 변수를 확인하세요" : r.reason),
+        : "저장하지 못했습니다 — " + ({
+            env: "서버 연결 정보를 확인하세요",
+            auth: "로그인해야 서버에 저장됩니다",
+            taken: "이 작품은 다른 계정의 것입니다",
+            not_owner: "이 작품은 다른 계정의 것입니다",
+          }[r.reason] || r.reason),
         r.ok ? "ok" : "warn");
     }
   };
