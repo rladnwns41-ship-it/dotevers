@@ -1371,8 +1371,9 @@
             </span>
           </sc-for>
         </div>
-        <span style="font-size:12px;font-weight:700;color:#8A9099">팔레트 · 16색</span>
+        <span style="font-size:12px;font-weight:700;color:#8A9099">팔레트 · 투명 + 16색</span>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+          <span onClick="{{ pickClear }}" title="투명 — 칠한 자리가 비어 배경이 비쳐 보입니다" style="aspect-ratio:1;border-radius:8px;border:{{ clearBorder }};cursor:pointer;background-color:#FFFFFF;background-image:linear-gradient(45deg,#E3DCCC 25%,transparent 25%),linear-gradient(-45deg,#E3DCCC 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#E3DCCC 75%),linear-gradient(-45deg,transparent 75%,#E3DCCC 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0"></span>
           <sc-for list="{{ swatches }}" as="s" hint-placeholder-count="16">
             <span onClick="{{ s.go }}" style="aspect-ratio:1;border-radius:8px;background:{{ s.c }};border:{{ s.border }};cursor:pointer"></span>
           </sc-for>
@@ -1447,6 +1448,18 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:11px">
+          <span style="font-size:14px;font-weight:700">배경 투명하게</span>
+          <span style="font-size:12.5px;line-height:1.65;color:#5B616C">바깥쪽으로 이어진 같은 색만 지웁니다. 그림 안쪽의 같은 색은 그대로 남습니다.</span>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span onClick="{{ clearBgOuter }}" style="display:flex;align-items:center;gap:6px;background:#16181D;color:#FFFFFF;border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
+              <iconify-icon icon="lucide:eraser" width="12"></iconify-icon><span>이 프레임 배경 지우기</span>
+            </span>
+            <span onClick="{{ clearBgAll }}" style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E3DCCC;color:#3A3F49;border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="border-color:#2F6F5E;color:#2F6F5E">
+              <iconify-icon icon="lucide:layers" width="12"></iconify-icon><span>모든 프레임</span>
+            </span>
+          </div>
+        </div>
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:13px">
           <span style="font-size:14px;font-weight:700">공유 설정</span>
           <span style="font-size:12.5px;line-height:1.65;color:#5B616C">공유로 두면 다른 사람이 이 오브젝트를 가져다 쓸 수 있고, 내 이름과 원본 링크가 함께 따라갑니다.</span>
@@ -6442,6 +6455,67 @@ class Component extends DCLogic {
     });
   }
 
+  // 가장자리에서 시작해 이어진 «같은 색» 만 투명으로 바꾼다.
+  // 그림 안쪽에 같은 색이 있어도 지워지지 않는다 (사진 배경 빼기와 같은 방식).
+  floodClear(grid) {
+    if (!grid || !grid.length) return { grid: grid, n: 0 };
+    const h = grid.length, w = grid[0].length;
+    const g = grid.map((r) => r.slice());
+    // 네 모서리에서 가장 많이 보이는 색을 배경으로 본다
+    const corners = [g[0][0], g[0][w - 1], g[h - 1][0], g[h - 1][w - 1]];
+    const tally = {};
+    corners.forEach((c) => { if (c) tally[c] = (tally[c] || 0) + 1; });
+    const bg = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0];
+    if (!bg) return { grid: g, n: 0 };
+    const seen = new Set();
+    const stack = [];
+    for (let x = 0; x < w; x++) { stack.push([x, 0]); stack.push([x, h - 1]); }
+    for (let y = 0; y < h; y++) { stack.push([0, y]); stack.push([w - 1, y]); }
+    let n = 0;
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      if (x < 0 || y < 0 || x >= w || y >= h) continue;
+      const k = x + "," + y;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      if (g[y][x] !== bg) continue;
+      g[y][x] = null;
+      n++;
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+    return { grid: g, n: n };
+  }
+
+  clearBackdrop(allFrames) {
+    const i = this.state.shapeIdx;
+    const sh = (this.state.shapes || [])[i];
+    if (!sh) {
+      const r = this.floodClear(this._grid);
+      if (!r.n) return this.say("지울 배경을 찾지 못했습니다 — 가장자리가 이미 비어 있습니다.");
+      this._grid = r.grid;
+      this.drawGridFrom(this._grid);
+      return this.say(r.n + "칸을 투명하게 바꿨습니다.");
+    }
+    let total = 0;
+    const frames = sh.frames.map((f, fi) => {
+      if (!allFrames && fi !== (this.state.frameIdx || 0)) return f;
+      const r = this.floodClear(f);
+      total += r.n;
+      return r.grid;
+    });
+    if (!total) return this.say("지울 배경을 찾지 못했습니다 — 가장자리가 이미 비어 있습니다.");
+    this.setState((p) => ({
+      shapes: (p.shapes || []).map((x, xi) => (xi === i ? Object.assign({}, x, { frames: frames }) : x)),
+    }), () => {
+      this._myKey = null;
+      this._grid = (frames[this.state.frameIdx || 0] || []).map((r) => r.slice());
+      this.drawGridFrom(this._grid);
+      this.syncMyArts();
+      this.persistArts();
+      this.say(total + "칸을 투명하게 바꿨습니다" + (allFrames ? " (모든 프레임)" : "") + ".");
+    });
+  }
+
   drawGridFrom(grid) {
     const cv = this._dot;
     if (!cv || !grid) return;
@@ -7705,6 +7779,11 @@ class Component extends DCLogic {
         border: st.picked === s.P[k] ? "2px solid #16181D" : "1px solid rgba(22,24,29,0.12)",
         go: () => this.setState({ picked: s.P[k] }),
       })),
+      pickClear: () => this.setState({ picked: "erase", dotTool: "pen" },
+        () => this.say("투명을 골랐습니다 — 칠하면 그 칸이 비워집니다.")),
+      clearBorder: st.picked === "erase" ? "2px solid #16181D" : "1px solid rgba(22,24,29,0.12)",
+      clearBgOuter: () => this.clearBackdrop(false),
+      clearBgAll: () => this.clearBackdrop(true),
       canvasSizes: [
         { t: "16 × 16", on: true }, { t: "32 × 32" }, { t: "48 × 48" }, { t: "커스텀…" },
       ].map((c) => ({ t: c.t, bg: c.on ? "#16181D" : "#FFFFFF", fg: c.on ? "#FFFFFF" : "#3A3F49" })),
