@@ -1591,10 +1591,13 @@
               <input value="{{ objQuery }}" onChange="{{ setObjQuery }}" placeholder="오브젝트 검색" style="flex:1;min-width:0;background:transparent;border:0;outline:none;font-family:inherit;font-size:12.5px;color:#16181D" />
             </span>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px;align-items:center">
             <sc-for list="{{ objCats }}" as="c" hint-placeholder-count="5">
               <span onClick="{{ c.go }}" style="font-size:11.5px;font-weight:600;border-radius:99px;padding:6px 11px;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.t }}</span>
             </sc-for>
+            <span onClick="{{ dedupeAssets }}" title="같은 이름으로 여러 번 올라간 내 오브젝트를 하나만 남깁니다" style="margin-left:auto;display:flex;align-items:center;gap:4px;border:1px solid #E3DCCC;border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;color:#5B616C;cursor:pointer;white-space:nowrap" style-hover="border-color:#2F6F5E;color:#2F6F5E">
+              <iconify-icon icon="lucide:layers" width="11"></iconify-icon><span>중복 정리</span>
+            </span>
           </div>
           <div style="flex:1;overflow-y:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px">
             <sc-for list="{{ panelObjects }}" as="o" hint-placeholder-count="6">
@@ -4443,10 +4446,10 @@ class Component extends DCLogic {
   warnGuest(what, err) {
     // 데이터베이스 권한 문제는 원인을 정확히 알려 준다 (막연히 «실패» 라고 하지 않게)
     const msg = String((err && (err.message || err)) || "");
-    if (/blocked_words|permission denied/i.test(msg)) {
+    if (/blocked_words|permission denied|target_id|target_type|violates not-null/i.test(msg)) {
       if (this._permWarned) return;
       this._permWarned = true;
-      return this.say("데이터베이스 권한 설정이 필요합니다 — migrate.sql 을 한 번 실행하세요.", "warn");
+      return this.say("데이터베이스 설정이 아직 안 됐습니다 — migrate.sql 을 한 번 실행하세요.", "warn");
     }
     if (window.DotDB && window.DotDB.anonBlocked) {
       if (this._guestWarned) return;
@@ -4570,13 +4573,17 @@ class Component extends DCLogic {
     if (!nt) return;
     const list = nt.map((n) => ({
       key: String(n.id),
-      ic: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
+      icon: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
       color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E", follow: "#D97706", report: "#C0392B" }[n.kind] || "#2F6F5E",
+      who: (n.actor && n.actor.display_name) || "",
+      body: n.body || n.kind || "새 소식",
+      ago: this.agoText(n.created_at),
       t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
     }));
     const seen = this._notifSeen;
     if (!quiet && seen) {
-      list.filter((n) => !n.read && seen.indexOf(n.key) < 0).slice(0, 3).forEach((n) => this.say(n.t, "notif"));
+      list.filter((n) => !n.read && seen.indexOf(n.key) < 0).slice(0, 3)
+        .forEach((n) => this.say(((n.who ? n.who + " 님이 " : "") + n.body), "notif"));
     }
     this._notifSeen = list.map((n) => n.key);
     this.setState({ liveNotifs: list });
@@ -5925,12 +5932,14 @@ class Component extends DCLogic {
         // 올린 그림이 있으면 그것을, 없으면 이름에 맞는 기본 도트를 이 키에 등록한다
         a.forEach((x) => {
           const key = "srv" + x.id;
-          if (x.image_url) { spriteAdd[key] = x.image_url; return; }
+          // 픽셀(frames)이 있으면 그것이 이 오브젝트의 진짜 그림이다.
+          // image_url 은 예전에 같은 파일이 올라간 행이 있어 서로 겹칠 수 있다.
           const fr = (x.frames || [])[0];
           if (fr && Array.isArray(fr)) {
             const url = this.dotsToSVG(fr);
-            if (url) spriteAdd[key] = url;
+            if (url) { spriteAdd[key] = url; return; }
           }
+          if (x.image_url) spriteAdd[key] = x.image_url;
         });
         if (Object.keys(spriteAdd).length) next.sprites = Object.assign({}, this.state.sprites, spriteAdd);
       }
@@ -5962,8 +5971,11 @@ class Component extends DCLogic {
       if (cnt) next.liveCounts = cnt;
       next.liveNotifs = (nt || []).map((n) => ({
         key: String(n.id),
-        ic: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
+        icon: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
         color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E", follow: "#D97706", report: "#C0392B" }[n.kind] || "#2F6F5E",
+        who: (n.actor && n.actor.display_name) || "",
+        body: n.body || n.kind || "새 소식",
+        ago: this.agoText(n.created_at),
         t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
       }));
       this._notifSeen = next.liveNotifs.map((n) => n.key);
@@ -6271,6 +6283,35 @@ class Component extends DCLogic {
     let h = 0;
     for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 100000;
     return pool[h % pool.length];
+  }
+
+  // 맵 캔버스는 _spriteCanvas 로 그린다. 아직 없으면 그림 주소로 만들어 둔다.
+  // (이게 없으면 오브젝트를 골라 클릭해도 맵에 아무것도 놓이지 않는다)
+  ensureSpriteCanvas(key, url) {
+    if (!key || !url) return;
+    this._spriteCanvas = this._spriteCanvas || {};
+    if (this._spriteCanvas[key]) return;
+    this._spriteMaking = this._spriteMaking || {};
+    if (this._spriteMaking[key]) return;
+    this._spriteMaking[key] = 1;
+    const im = new Image();
+    im.crossOrigin = "anonymous";
+    im.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = 32; c.height = 32;
+      c.getContext("2d").drawImage(im, 0, 0, 32, 32);
+      this._spriteCanvas[key] = c;
+      delete this._spriteMaking[key];
+      this.drawMap();
+    };
+    im.onerror = () => { delete this._spriteMaking[key]; };
+    im.src = url;
+  }
+
+  // 화면에 쓰이는 모든 모양에 대해 맵용 그림을 준비한다
+  ensureAllSpriteCanvas() {
+    const sp = this.state.sprites || {};
+    Object.keys(sp).forEach((k) => this.ensureSpriteCanvas(k, sp[k]));
   }
 
   dotRef = (el) => {
@@ -6622,6 +6663,7 @@ class Component extends DCLogic {
       this.syncFuncs();
       this.syncMyArts();
       this.ensureSeedSprites();
+      this.ensureAllSpriteCanvas();
     }, 120);
   }
 
@@ -6747,7 +6789,7 @@ class Component extends DCLogic {
       id: a.id, name: a.name, handle: a.handle, author: a.author, size: a.size, art: a.art, baseArt: a.baseArt,
       frames: a.frames, frameCells: a.frameCells || [], license: a.license, kind: a.kind, tags: a.tags, isPublic: !!a.isPublic,
       usesK: kfmt(a.uses), likesK: kfmt(a.likes), dislikes: a.dislikes,
-      sprite: a.imageUrl ? cssUrl(a.imageUrl) : ((this.state.sprites || {})[a.art] ? spr(a.art) : spr(a.baseArt || a.art)),
+      sprite: (this.state.sprites || {})[a.art] ? spr(a.art) : (a.imageUrl ? cssUrl(a.imageUrl) : spr(a.baseArt || a.art)),
       preview: (e) => {
         if (e) e.stopPropagation();
         this.setState({ pvId: a.id });
@@ -7299,6 +7341,14 @@ class Component extends DCLogic {
         this.say("스크립트를 위에서부터 정리했습니다.");
       },
       clearWs: () => { this.setStacks(() => []); this.say("이 오브젝트의 블록을 모두 지웠습니다."); },
+      dedupeAssets: async () => {
+        if (!(window.DotDB && window.DotDB.isLive && window.DotDB.dedupeMyAssets)) {
+          return this.say("서버 연결이 없어 정리할 수 없습니다.", "warn");
+        }
+        const n = await window.DotDB.dedupeMyAssets();
+        this.say(n ? n + "개의 중복 오브젝트를 정리했습니다." : "정리할 중복이 없습니다.");
+        if (n) this.loadLive();
+      },
       dbQuickBlocks: [
         { id: "db_create", t: "테이블 만들기" },
         { id: "db_add_col", t: "컬럼 추가하기" },
@@ -7842,7 +7892,7 @@ class Component extends DCLogic {
         return list.map((a) => ({
           name: a.name, handle: a.handle,
           usesK: a.uses ? kfmt(a.uses) : "내가 만든 도트",
-          sprite: a.imageUrl ? cssUrl(a.imageUrl) : ((st.sprites || {})[a.art] ? spr(a.art) : spr(a.baseArt || a.art)),
+          sprite: (st.sprites || {})[a.art] ? spr(a.art) : (a.imageUrl ? cssUrl(a.imageUrl) : spr(a.baseArt || a.art)),
           on: st.placeArt === a.art,
           fav: (st.favArts || []).indexOf(a.art) >= 0,
           favIcon: (st.favArts || []).indexOf(a.art) >= 0 ? "lucide:star" : "lucide:star-off",
@@ -7850,7 +7900,11 @@ class Component extends DCLogic {
           star: (e) => { e.stopPropagation(); this.toggleFav(a.art); },
           bg: st.placeArt === a.art ? "rgba(111,211,199,0.16)" : "rgba(244,241,234,0.05)",
           bd: st.placeArt === a.art ? "#6FD3C7" : "rgba(244,241,234,0.1)",
-          pick: () => this.setState({ placeArt: a.art, mapMode: "object" }, () => this.say("«" + a.name + "» 을 골랐습니다. 맵을 클릭해 놓으세요.")),
+          pick: () => {
+            this.ensureSpriteCanvas(a.art, (this.state.sprites || {})[a.art] || a.imageUrl);
+            this.setState({ placeArt: a.art, mapMode: "object" },
+              () => this.say("«" + a.name + "» 을 골랐습니다. 맵을 클릭해 놓으세요."));
+          },
         }));
       })(),
       panelEmpty: false,
