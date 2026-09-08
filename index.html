@@ -995,7 +995,7 @@
                 <button onClick="{{ stopScript }}" style="width:30px;height:30px;border-radius:8px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#C0392B;color:#C0392B"><iconify-icon icon="lucide:square" width="12"></iconify-icon></button>
               </span>
             </div>
-            <div onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:{{ stageColor }};border:1px solid #EFEADE">
+            <div ref="{{ stageRef }}" onClick="{{ stageClick }}" style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:{{ stageColor }};border:1px solid #EFEADE">
               <sc-if value="{{ flashOn }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;inset:0;z-index:40;pointer-events:none;background:{{ flashColor }};opacity:0.72"></span>
               </sc-if>
@@ -1026,7 +1026,7 @@
             </span>
           </sc-for>
           <sc-for list="{{ stageObjects }}" as="o" hint-placeholder-count="3">
-                  <span onClick="{{ o.click }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:pointer;display:flex;flex-direction:column;align-items:center">
+                  <span onMouseDown="{{ o.grab }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:{{ o.cursor }};display:flex;flex-direction:column;align-items:center;user-select:none">
                     <sc-if value="{{ o.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D;box-shadow:0 3px 0 rgba(22,24,29,0.1)">{{ o.say }}</span>
                     </sc-if>
@@ -1035,6 +1035,9 @@
                     </sc-if>
                     <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
                       <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                    </sc-if>
+                    <sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}">
+                      <span onMouseDown="{{ o.resize }}" title="끌어서 크기 바꾸기" style="position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:99px;background:#FFFFFF;border:2px solid #2F6F5E;cursor:nwse-resize;box-shadow:0 1px 3px rgba(22,24,29,0.3)"></span>
                     </sc-if>
                   </span>
                 </sc-for>
@@ -1094,8 +1097,8 @@
               </sc-if>
 
 
-              <span onClick="{{ stopIt }}" style="position:absolute;right:8px;bottom:8px;width:52%;display:flex;flex-direction:column;gap:5px;z-index:75;background:rgba(22,24,29,0.72);border-radius:10px;padding:7px;backdrop-filter:blur(2px)">
-                <span style="display:flex;flex-direction:column;gap:3px;max-height:96px;overflow-y:auto">
+              <span onClick="{{ stopIt }}" style="position:absolute;right:8px;bottom:8px;width:52%;display:flex;flex-direction:column;gap:5px;z-index:75;background:rgba(22,24,29,0.72);border-radius:10px;padding:7px;backdrop-filter:blur(2px);pointer-events:none">
+                <span style="display:flex;flex-direction:column;gap:3px;max-height:96px;overflow-y:auto;pointer-events:auto">
                   <sc-for list="{{ chatLines }}" as="cl" hint-placeholder-count="0">
                     <span style="font-size:10.5px;line-height:1.45;color:#F4F1EA;word-break:break-all"><span style="color:#6FD3C7;font-weight:700">{{ cl.name }}</span><span> {{ cl.msg }}</span></span>
                   </sc-for>
@@ -1103,7 +1106,7 @@
                     <span style="font-size:10.5px;color:rgba(244,241,234,0.45)">채팅을 입력해 보세요</span>
                   </sc-if>
                 </span>
-                <span style="display:flex;gap:5px">
+                <span style="display:flex;gap:5px;pointer-events:auto">
                   <input value="{{ chatDraft }}" onChange="{{ setChat }}" onKeyDown="{{ chatKey }}" placeholder="메시지 (Enter)" style="flex:1;min-width:0;background:rgba(244,241,234,0.12);border:0;border-radius:7px;padding:5px 8px;font-family:inherit;font-size:10.5px;color:#F4F1EA;outline:none" />
                   <button onClick="{{ chatSend }}" style="border:0;background:#2F6F5E;color:#FFFFFF;border-radius:7px;padding:5px 10px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer">전송</button>
                 </span>
@@ -1448,18 +1451,6 @@
       </div>
 
       <div style="display:flex;flex-direction:column;gap:14px">
-        <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:11px">
-          <span style="font-size:14px;font-weight:700">배경 투명하게</span>
-          <span style="font-size:12.5px;line-height:1.65;color:#5B616C">바깥쪽으로 이어진 같은 색만 지웁니다. 그림 안쪽의 같은 색은 그대로 남습니다.</span>
-          <div style="display:flex;gap:7px;flex-wrap:wrap">
-            <span onClick="{{ clearBgOuter }}" style="display:flex;align-items:center;gap:6px;background:#16181D;color:#FFFFFF;border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:#2F6F5E">
-              <iconify-icon icon="lucide:eraser" width="12"></iconify-icon><span>이 프레임 배경 지우기</span>
-            </span>
-            <span onClick="{{ clearBgAll }}" style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E3DCCC;color:#3A3F49;border-radius:9px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="border-color:#2F6F5E;color:#2F6F5E">
-              <iconify-icon icon="lucide:layers" width="12"></iconify-icon><span>모든 프레임</span>
-            </span>
-          </div>
-        </div>
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:13px">
           <span style="font-size:14px;font-weight:700">공유 설정</span>
           <span style="font-size:12.5px;line-height:1.65;color:#5B616C">공유로 두면 다른 사람이 이 오브젝트를 가져다 쓸 수 있고, 내 이름과 원본 링크가 함께 따라갑니다.</span>
@@ -3044,6 +3035,9 @@ class Component extends DCLogic {
     if (this._hud) this._hud.textContent = "X: " + c.x + "  Y: " + c.y + " · 맵 크기 제한 없음 (손 도구로 이동)";
   };
 
+  // 실행화면 배경 그림 캐시를 버린다 (타일이나 모양이 바뀌었을 때)
+  invalidateStage() { this._stageBgKey = null; this._stageKey = null; this._baseKey = null; }
+
   paintMap = (e) => {
     const c = this.cellFrom(e);
     if (!c) return;
@@ -3062,6 +3056,7 @@ class Component extends DCLogic {
       Object.keys(tiles).forEach((k) => { if (tiles[k] && tiles[k].t === "entry") delete tiles[k]; });
       tiles[key] = { t: "entry", c: "#8FC0A2" };
     }
+    this.invalidateStage();
     this.setState({ tiles: tiles }, () => { this.drawMap(); this.persistMap(); });
   };
 
@@ -3864,6 +3859,64 @@ class Component extends DCLogic {
     this.setState({ uiDialogMsg: "" }, () => { if (r) r(true); });
   };
   fireSignal(s) { if (this._rt) this._rt.start(this.sceneStacks(), "signal", s); }
+  // 실행화면에서 오브젝트를 끌어 옮기고, 모서리를 끌어 크기를 바꾼다.
+  // 실행 중에는 스크립트가 위치를 정하므로 끌 수 없다.
+  grabObject(e, id, isResize) {
+    if (this.state.running) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const box = this._stageEl && this._stageEl.getBoundingClientRect();
+    if (!box || !box.width) return;
+    const o = this.curObjects().find((x) => x.id === id);
+    if (!o) return;
+    this.setState({ objId: id });
+
+    const sx = e.clientX, sy = e.clientY;
+    const x0 = o.x || 0, y0 = o.y || 0, s0 = o.scale || 1;
+    // 화면 100% 는 가로 480 · 세로 360 만큼을 나타낸다
+    const ux = 480 / box.width, uy = 360 / box.height;
+    let moved = false;
+
+    const apply = (patch) => {
+      this.setObjects((list) => list.map((x) => (x.id === id ? Object.assign({}, x, patch) : x)));
+      if (this._live) {
+        const lv = this._live.find((x) => x.id === id);
+        if (lv) Object.assign(lv, patch);
+      }
+      this.tick();
+    };
+
+    const move = (ev) => {
+      const dx = (ev.clientX - sx) * ux;
+      const dy = (ev.clientY - sy) * uy;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 2) return;
+      moved = true;
+      if (isResize) {
+        // 오른쪽·아래로 끌수록 커진다
+        const k = Math.max(0.15, Math.min(6, s0 + (dx + dy) / 240));
+        apply({ scale: Math.round(k * 100) / 100 });
+      } else {
+        apply({ x: Math.round(x0 + dx), y: Math.round(y0 - dy) });
+      }
+    };
+
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+      document.body.style.cursor = "";
+      if (!moved) { this.fireClick(id); return; }
+      const cur = this.curObjects().find((x) => x.id === id) || {};
+      this.say(isResize
+        ? "«" + (o.name || "오브젝트") + "» 크기 " + Math.round((cur.scale || 1) * 100) + "%"
+        : "«" + (o.name || "오브젝트") + "» X " + Math.round(cur.x) + " · Y " + Math.round(cur.y));
+    };
+
+    document.body.style.cursor = isResize ? "nwse-resize" : "grabbing";
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  }
+
   fireClick(id) {
     if (!this.state.running) { this.setState({ objId: id }); return; }
     if (this._rt) this._rt.start(this.sceneStacks(), "click", id);
@@ -3890,6 +3943,8 @@ class Component extends DCLogic {
     this.penRedraw();
     this.stopAnims();
     this._uiClicks = {};
+    // 기다리고 있던 대화상자를 풀어 준다 — 안 그러면 스크립트가 영영 멈춰 있는다
+    if (this._uiDialogResolve) { const r = this._uiDialogResolve; this._uiDialogResolve = null; r(false); }
     this.setState({ running: false, camT: "none", uiText: "", asking: false, uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
   };
 
@@ -4386,12 +4441,36 @@ class Component extends DCLogic {
   uploadBanner = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "banner"); e.target.value = ""; };
   uploadAvatar = (e) => { this.uploadProfileImage(e.target.files && e.target.files[0], "avatar"); e.target.value = ""; };
 
-  isMyWorld() {
+  isMyWorld(id) {
+    const wid = id || this.state.worldId;
+    // 서버에 물어 확인해 둔 값이 있으면 그것이 가장 정확하다
+    const cached = (this._ownCache || {})[wid];
+    if (cached !== undefined) return cached;
     const me = this.state.liveMe;
-    if (!me) return false;
-    const w = (this.state.liveWorlds || []).find((x) => x.id === this.state.worldId);
+    if (!me) { this.checkOwner(wid); return false; }
+    const w = (this.state.liveWorlds || []).find((x) => x.id === wid);
     if (w) return w.handle === me.handle;
-    return (this.state.liveMyWorlds || []).some((x) => x.id === this.state.worldId);
+    if ((this.state.liveMyWorlds || []).some((x) => x.id === wid)) return true;
+    this.checkOwner(wid);
+    return false;
+  }
+
+  // 목록에 없는 작품(비공개·방금 만든 것)은 서버에 한 번 물어 본다
+  async checkOwner(wid) {
+    if (!wid || !(window.DotDB && window.DotDB.isLive)) return;
+    this._ownCache = this._ownCache || {};
+    this._ownAsked = this._ownAsked || {};
+    if (this._ownAsked[wid]) return;
+    this._ownAsked[wid] = 1;
+    try {
+      const me = await window.DotDB.me();
+      if (!me) return;
+      const c = window.DotDB.init();
+      const { data } = await c.from("worlds").select("owner_id").eq("id", wid).maybeSingle();
+      // 행이 없으면 아직 저장 전 — 내가 만들고 있는 것이므로 내 것으로 본다
+      this._ownCache[wid] = data ? data.owner_id === me.id : true;
+      this.forceUpdate();
+    } catch (e) {}
   }
 
   // «만들기» — 빈 작품에서 새로 시작한다. 앞서 만들던 것은 저장본으로 남는다.
@@ -5206,6 +5285,7 @@ class Component extends DCLogic {
         c.width = 32; c.height = 32;
         c.getContext("2d").drawImage(im, 0, 0, 32, 32);
         this._spriteCanvas[a.art] = c;
+        this.invalidateStage();
         this.drawMap();
       };
       im.src = a.url;
@@ -5281,6 +5361,11 @@ class Component extends DCLogic {
   };
 
   drawMap() {
+    // 실행화면 배경은 rAF 밖에서 만든다 (탭이 가려지면 rAF 가 멈춰 사진이 안 나온다).
+    // 다만 같은 틱에 여러 번 부르지 않도록 한 번만 예약한다 — toDataURL 은 비싸다.
+    if (!this._bgT) {
+      this._bgT = setTimeout(() => { this._bgT = null; this.buildStageBg(); }, 0);
+    }
     if (this._raf) cancelAnimationFrame(this._raf);
     this._raf = requestAnimationFrame(() => { this._raf = null; this.paintCanvas(); });
   }
@@ -5404,7 +5489,7 @@ class Component extends DCLogic {
   paintCanvas() {
     const cv = this._map, tiles = this.state.tiles;
     if (!tiles) return;
-    this.buildStageBg();
+    if (!this._bgT) this.buildStageBg();
     if (!cv || !cv.getContext || !cv.width || !this.MW) return;
     const camKey = tiles === this._baseTiles && this._baseOX === (this.state.mapOX || 0) && this._baseOY === (this.state.mapOY || 0);
     if (this._baseKey === tiles && camKey && this._base) {
@@ -5430,13 +5515,22 @@ class Component extends DCLogic {
 
   // 맵 탭을 열지 않아도 실행화면에 쓸 맵 그림을 만든다 (보이는 캔버스와 무관)
   buildStageBg() {
-    const key = JSON.stringify([this.MW, this.MH, Object.keys(this.state.tiles || {}).length, this.state.hideLayers]);
+    // 사진 오브젝트의 그림은 나중에 도착한다 — 준비된 그림 수도 열쇠에 넣어야
+    // 도착할 때마다 실행화면 배경을 다시 그린다 (안 그러면 사진이 영영 안 보인다)
+    const key = JSON.stringify([
+      this.MW, this.MH,
+      Object.keys(this.state.tiles || {}).length,
+      Object.keys(this._spriteCanvas || {}).length,
+      this.state.hideLayers,
+    ]);
     if (this._stageBgKey === key) return;
     this._stageBgKey = key;
     const tiles = this.state.tiles;
     if (!tiles) return;
-    if (this._stageKey === tiles && this._stageBgHad === !!this._bg) return;
+    if (this._stageKey === tiles && this._stageBgHad === !!this._bg
+        && this._stageSpr === Object.keys(this._spriteCanvas || {}).length) return;
     this._stageKey = tiles;
+    this._stageSpr = Object.keys(this._spriteCanvas || {}).length;
     this._stageBgHad = !!this._bg;
     if (!this._stageCv) {
       this._stageCv = document.createElement("canvas");
@@ -5954,7 +6048,7 @@ class Component extends DCLogic {
           }
           if (x.image_url) spriteAdd[key] = x.image_url;
         });
-        if (Object.keys(spriteAdd).length) next.sprites = Object.assign({}, this.state.sprites, spriteAdd);
+        if (Object.keys(spriteAdd).length) next.__spriteAdd = spriteAdd;
       }
       if (t) {
         next.tables = t.map((x) => ({
@@ -6028,7 +6122,12 @@ class Component extends DCLogic {
         status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
         color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
       }));
-      this.setState(next, () => {
+      // 모양은 «지금 상태» 위에 얹는다 — 읽는 동안 새로 만든 도트를 덮어쓰지 않게
+      const spriteAdd2 = next.__spriteAdd;
+      delete next.__spriteAdd;
+      this.setState((p) => (spriteAdd2
+        ? Object.assign({}, next, { sprites: Object.assign({}, spriteAdd2, p.sprites) })
+        : next), () => {
         this.loadPosts();
         this.loadMyWorlds();
         if (this._swapUser) this.reloadUserData();
@@ -6315,6 +6414,7 @@ class Component extends DCLogic {
       c.getContext("2d").drawImage(im, 0, 0, 32, 32);
       this._spriteCanvas[key] = c;
       delete this._spriteMaking[key];
+      this.invalidateStage();   // 늦게 온 그림이 실행화면에도 나오게 한다
       this.drawMap();
     };
     im.onerror = () => { delete this._spriteMaking[key]; };
@@ -6455,67 +6555,6 @@ class Component extends DCLogic {
     });
   }
 
-  // 가장자리에서 시작해 이어진 «같은 색» 만 투명으로 바꾼다.
-  // 그림 안쪽에 같은 색이 있어도 지워지지 않는다 (사진 배경 빼기와 같은 방식).
-  floodClear(grid) {
-    if (!grid || !grid.length) return { grid: grid, n: 0 };
-    const h = grid.length, w = grid[0].length;
-    const g = grid.map((r) => r.slice());
-    // 네 모서리에서 가장 많이 보이는 색을 배경으로 본다
-    const corners = [g[0][0], g[0][w - 1], g[h - 1][0], g[h - 1][w - 1]];
-    const tally = {};
-    corners.forEach((c) => { if (c) tally[c] = (tally[c] || 0) + 1; });
-    const bg = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0];
-    if (!bg) return { grid: g, n: 0 };
-    const seen = new Set();
-    const stack = [];
-    for (let x = 0; x < w; x++) { stack.push([x, 0]); stack.push([x, h - 1]); }
-    for (let y = 0; y < h; y++) { stack.push([0, y]); stack.push([w - 1, y]); }
-    let n = 0;
-    while (stack.length) {
-      const [x, y] = stack.pop();
-      if (x < 0 || y < 0 || x >= w || y >= h) continue;
-      const k = x + "," + y;
-      if (seen.has(k)) continue;
-      seen.add(k);
-      if (g[y][x] !== bg) continue;
-      g[y][x] = null;
-      n++;
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-    }
-    return { grid: g, n: n };
-  }
-
-  clearBackdrop(allFrames) {
-    const i = this.state.shapeIdx;
-    const sh = (this.state.shapes || [])[i];
-    if (!sh) {
-      const r = this.floodClear(this._grid);
-      if (!r.n) return this.say("지울 배경을 찾지 못했습니다 — 가장자리가 이미 비어 있습니다.");
-      this._grid = r.grid;
-      this.drawGridFrom(this._grid);
-      return this.say(r.n + "칸을 투명하게 바꿨습니다.");
-    }
-    let total = 0;
-    const frames = sh.frames.map((f, fi) => {
-      if (!allFrames && fi !== (this.state.frameIdx || 0)) return f;
-      const r = this.floodClear(f);
-      total += r.n;
-      return r.grid;
-    });
-    if (!total) return this.say("지울 배경을 찾지 못했습니다 — 가장자리가 이미 비어 있습니다.");
-    this.setState((p) => ({
-      shapes: (p.shapes || []).map((x, xi) => (xi === i ? Object.assign({}, x, { frames: frames }) : x)),
-    }), () => {
-      this._myKey = null;
-      this._grid = (frames[this.state.frameIdx || 0] || []).map((r) => r.slice());
-      this.drawGridFrom(this._grid);
-      this.syncMyArts();
-      this.persistArts();
-      this.say(total + "칸을 투명하게 바꿨습니다" + (allFrames ? " (모든 프레임)" : "") + ".");
-    });
-  }
-
   drawGridFrom(grid) {
     const cv = this._dot;
     if (!cv || !grid) return;
@@ -6553,6 +6592,7 @@ class Component extends DCLogic {
         g.fillStyle = col; g.fillRect(Math.floor(x * u), Math.floor(y * u), Math.ceil(u), Math.ceil(u));
       }));
       this._spriteCanvas[key] = c;
+      this.invalidateStage();
     };
     shapes.forEach((sh, i) => {
       (sh.frames || []).forEach((grid, f) => {
@@ -6673,6 +6713,8 @@ class Component extends DCLogic {
           c.width = 32; c.height = 32;
           c.getContext("2d").drawImage(im, 0, 0, 32, 32);
           this._spriteCanvas[a.art] = c;
+          this.invalidateStage();
+          this.drawMap();
         };
         im.src = a.url;
       });
@@ -7474,6 +7516,10 @@ class Component extends DCLogic {
           + (o.hue ? "hue-rotate(" + o.hue + "deg)" : "") || "none",
         ring: st.objId === o.id ? "0 0 0 2px rgba(47,111,94,0.55)" : "none",
         click: () => this.fireClick(o.id),
+        grab: (e) => this.grabObject(e, o.id),
+        selected: st.objId === o.id && !st.running,
+        resize: (e) => this.grabObject(e, o.id, true),
+        cursor: st.running ? "pointer" : "grab",
       })),
       peerCount: this.peerList().length + 1,
       rosterList: [{ name: (this._mpName || "나"), art: st.myCostume || "slime", isMe: true }]
@@ -7533,6 +7579,7 @@ class Component extends DCLogic {
       askKey: (e) => { if (e.key === "Enter") this.sendAnswer(); },
       sendAnswer: this.sendAnswer,
       stageClick: () => this.fireMouse(),
+      stageRef: (el) => { if (el) this._stageEl = el; },
       addTextObject: this.addTextObject,
       openBig: this.openBig,
       closeBig: this.closeBig,
@@ -7782,8 +7829,6 @@ class Component extends DCLogic {
       pickClear: () => this.setState({ picked: "erase", dotTool: "pen" },
         () => this.say("투명을 골랐습니다 — 칠하면 그 칸이 비워집니다.")),
       clearBorder: st.picked === "erase" ? "2px solid #16181D" : "1px solid rgba(22,24,29,0.12)",
-      clearBgOuter: () => this.clearBackdrop(false),
-      clearBgAll: () => this.clearBackdrop(true),
       canvasSizes: [
         { t: "16 × 16", on: true }, { t: "32 × 32" }, { t: "48 × 48" }, { t: "커스텀…" },
       ].map((c) => ({ t: c.t, bg: c.on ? "#16181D" : "#FFFFFF", fg: c.on ? "#FFFFFF" : "#3A3F49" })),
