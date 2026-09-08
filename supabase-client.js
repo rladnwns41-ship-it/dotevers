@@ -408,13 +408,20 @@
       if (!c) return null;
       const u = await this.ensureUser();
       if (!u) return null;
-      const { data, error } = await c.from("comments")
-        .insert({
-          post_id: postId || null, world_id: worldId || null,
-          body: body, parent_id: parentId || null, author_id: u.id,
-        })
-        .select("id")
-        .single();
+      const base = {
+        post_id: postId || null, world_id: worldId || null,
+        body: body, parent_id: parentId || null, author_id: u.id,
+      };
+      let { data, error } = await c.from("comments").insert(base).select("id").single();
+      // 예전 구조(target_type/target_id 가 NOT NULL)인 표에서도 저장되게 한 번 더 시도한다
+      if (error && /target_(type|id)/.test(error.message || "")) {
+        const legacy = Object.assign({}, base, {
+          target_type: postId ? "post" : "world",
+          target_id: postId || null,
+        });
+        const r2 = await c.from("comments").insert(legacy).select("id").single();
+        data = r2.data; error = r2.error;
+      }
       if (error) {
         console.warn("[dotverse] 댓글 저장 실패:", error.message);
         this.lastError = error;
@@ -754,14 +761,49 @@
       if (!c) return null;
       const u = await this.ensureUser();
       if (!u) return null;
-      const { data, error } = await c.from("assets").insert({
+      const row = {
         owner_id: u.id, name: name, kind: kind || "object",
         width: width || 16, height: height || 16,
         frames: frames || [], image_url: imageUrl || null,
         license: license || "cc_by", tags: tags || [],
         is_public: isPublic === false ? false : true,
-      }).select("id").single();
-      return error ? null : data;
+      };
+      // 내가 같은 이름으로 이미 올린 것이 있으면 덮어쓴다 — 같은 오브젝트가 여러 개 쌓이지 않게
+      const { data: got } = await c.from("assets")
+        .select("id").eq("owner_id", u.id).eq("name", name).limit(1);
+      if (got && got[0]) {
+        const { error: e2 } = await c.from("assets").update(row).eq("id", got[0].id);
+        return e2 ? null : { id: got[0].id };
+      }
+      const { data, error } = await c.from("assets").insert(row).select("id").single();
+      if (error) { console.warn("[dotverse] 오브젝트 공유 실패:", error.message); return null; }
+      return data;
+    },
+
+    // 내가 올린 오브젝트를 지운다
+    async deleteAsset(id) {
+      const c = init();
+      if (!c) return false;
+      const u = await this.me();
+      if (!u) return false;
+      const { error } = await c.from("assets").delete().eq("id", id).eq("owner_id", u.id);
+      return !error;
+    },
+    // 같은 이름으로 여러 번 올라간 내 오브젝트를 하나만 남기고 정리한다
+    async dedupeMyAssets() {
+      const c = init();
+      if (!c) return 0;
+      const u = await this.me();
+      if (!u) return 0;
+      const { data } = await c.from("assets")
+        .select("id,name,created_at").eq("owner_id", u.id)
+        .order("created_at", { ascending: false });
+      if (!data) return 0;
+      const keep = {}, drop = [];
+      data.forEach((x) => { if (keep[x.name]) drop.push(x.id); else keep[x.name] = x.id; });
+      if (!drop.length) return 0;
+      const { error } = await c.from("assets").delete().in("id", drop);
+      return error ? 0 : drop.length;
     },
 
     // ── 플레이 기록 (누가 언제 몇 번) ────────────────────────
