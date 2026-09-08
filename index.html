@@ -3036,7 +3036,13 @@ class Component extends DCLogic {
   };
 
   // 실행화면 배경 그림 캐시를 버린다 (타일이나 모양이 바뀌었을 때)
-  invalidateStage() { this._stageBgKey = null; this._stageKey = null; this._baseKey = null; }
+  invalidateStage() {
+    // 배경을 만드는 도중에 부르면 되돌이가 된다 (무효화 → 다시 그리기 → 무효화 …)
+    if (this._inBg) return;
+    this._stageBgKey = null;
+    this._stageKey = null;
+    this._baseKey = null;
+  }
 
   paintMap = (e) => {
     const c = this.cellFrom(e);
@@ -4457,25 +4463,32 @@ class Component extends DCLogic {
 
   // 목록에 없는 작품(비공개·방금 만든 것)은 서버에 한 번 물어 본다
   async checkOwner(wid) {
-    if (!wid || !(window.DotDB && window.DotDB.isLive)) return;
+    if (!wid) return;
     this._ownCache = this._ownCache || {};
     this._ownAsked = this._ownAsked || {};
+    // 빗장은 어떤 이른 반환보다도 먼저 건다.
+    // (뒤에 두면 «묻지 못한» 경우마다 다시 들어와 그리기가 무한히 돈다)
     if (this._ownAsked[wid]) return;
     this._ownAsked[wid] = 1;
+    if (!(window.DotDB && window.DotDB.isLive)) { this._ownCache[wid] = false; return; }
+    let owned = false;
     try {
       const me = await window.DotDB.me();
-      if (!me) return;
-      const c = window.DotDB.init();
-      const { data } = await c.from("worlds").select("owner_id").eq("id", wid).maybeSingle();
-      // 행이 없으면 아직 저장 전 — 내가 만들고 있는 것이므로 내 것으로 본다
-      this._ownCache[wid] = data ? data.owner_id === me.id : true;
-      this.forceUpdate();
-    } catch (e) {}
+      if (me) {
+        const c = window.DotDB.init();
+        const { data } = await c.from("worlds").select("owner_id").eq("id", wid).maybeSingle();
+        owned = data ? data.owner_id === me.id : true;
+      }
+    } catch (e) { owned = false; }
+    // 실패해도 반드시 값을 남긴다 — 그래야 다시 묻지 않는다
+    this._ownCache[wid] = owned;
+    if (owned) this.forceUpdate();
   }
 
   // «만들기» — 빈 작품에서 새로 시작한다. 앞서 만들던 것은 저장본으로 남는다.
   newWorld = () => {
     const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    this._ownCache = {}; this._ownAsked = {};
     this._model = {}; this._rows = {}; this._live = null;
     this._stageBgKey = null; this._baseKey = null;
     try { localStorage.setItem(LS("worldId"), id); } catch (e) {}
@@ -5489,7 +5502,6 @@ class Component extends DCLogic {
   paintCanvas() {
     const cv = this._map, tiles = this.state.tiles;
     if (!tiles) return;
-    if (!this._bgT) this.buildStageBg();
     if (!cv || !cv.getContext || !cv.width || !this.MW) return;
     const camKey = tiles === this._baseTiles && this._baseOX === (this.state.mapOX || 0) && this._baseOY === (this.state.mapOY || 0);
     if (this._baseKey === tiles && camKey && this._base) {
@@ -5515,6 +5527,7 @@ class Component extends DCLogic {
 
   // 맵 탭을 열지 않아도 실행화면에 쓸 맵 그림을 만든다 (보이는 캔버스와 무관)
   buildStageBg() {
+    if (this._inBg) return;
     // 사진 오브젝트의 그림은 나중에 도착한다 — 준비된 그림 수도 열쇠에 넣어야
     // 도착할 때마다 실행화면 배경을 다시 그린다 (안 그러면 사진이 영영 안 보인다)
     const key = JSON.stringify([
@@ -5525,6 +5538,11 @@ class Component extends DCLogic {
     ]);
     if (this._stageBgKey === key) return;
     this._stageBgKey = key;
+    this._inBg = true;
+    try { this.buildStageBgInner(); } finally { this._inBg = false; }
+  }
+
+  buildStageBgInner() {
     const tiles = this.state.tiles;
     if (!tiles) return;
     if (this._stageKey === tiles && this._stageBgHad === !!this._bg
@@ -5934,6 +5952,9 @@ class Component extends DCLogic {
     const relink = () => {
       const live = !!(window.DotDB && window.DotDB.isLive);
       if (live && !this.state.live) {
+        // 연결 전에 «내 것이 아님» 으로 적어 둔 값을 지운다 — 이제 서버에 물어볼 수 있다
+        this._ownCache = {};
+        this._ownAsked = {};
         this.setState({ live: true });
         this.loadLive();
         this.loadDbData();
@@ -6424,7 +6445,11 @@ class Component extends DCLogic {
   // 화면에 쓰이는 모든 모양에 대해 맵용 그림을 준비한다
   ensureAllSpriteCanvas() {
     const sp = this.state.sprites || {};
-    Object.keys(sp).forEach((k) => this.ensureSpriteCanvas(k, sp[k]));
+    const keys = Object.keys(sp);
+    // 이미 다 만들었으면 아무것도 하지 않는다 (그리기를 다시 부르면 되돌이가 된다)
+    if (this._sprDone === keys.length) return;
+    this._sprDone = keys.length;
+    keys.forEach((k) => this.ensureSpriteCanvas(k, sp[k]));
   }
 
   dotRef = (el) => {
@@ -6780,7 +6805,7 @@ class Component extends DCLogic {
       this.syncMyArts();
       this.ensureSeedSprites();
       this.ensureAllSpriteCanvas();
-    }, 120);
+    }, 400);
   }
 
   renderVals() {
