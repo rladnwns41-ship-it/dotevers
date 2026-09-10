@@ -296,7 +296,8 @@
     parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "이 있는가?" }] });
 
   // ── 2차 확장 블록 ─────────────────────────────────────────
-  const C3 = { func: "#7C5CD6", str: "#D97706" };
+  const C3 = { func: "#7C5CD6", str: "#D97706",
+    event: C.event, multi: C.multi, db: C.db, logic: C.logic, obj: C.obj, calc: C.calc, data: C.data };
 
   // 이벤트
   def({ id: "when_clone_start", cat: "이벤트", shape: "hat", c: C.event,
@@ -550,6 +551,57 @@
     parts: [{ t: "lbl", v: "마지막으로 받은 메시지" }] });
   def({ id: "mp_room_name", cat: "멀티플레이", shape: "num", c: C.multi,
     parts: [{ t: "lbl", v: "지금 방 이름" }] });
+
+  // ── 새 블록: 멀티플레이 · 실시간 DB · 화면(UI) ──────────────
+  const UIPOS2 = ["왼쪽 위", "가운데 위", "오른쪽 위", "왼쪽 가운데", "화면 가운데", "오른쪽 가운데", "왼쪽 아래", "가운데 아래", "오른쪽 아래"];
+  const UICOL2 = ["초록", "빨강", "파랑", "노랑", "검정", "흰색", "주황", "보라"];
+
+  def({ id: "when_mp_msg", cat: "멀티플레이", shape: "hat", c: C3.event,
+    parts: [{ t: "lbl", v: "메시지를 받았을 때" }] });
+  def({ id: "when_mp_chat", cat: "멀티플레이", shape: "hat", c: C3.event,
+    parts: [{ t: "lbl", v: "채팅을 받았을 때" }] });
+  def({ id: "when_mp_leave", cat: "멀티플레이", shape: "hat", c: C3.event,
+    parts: [{ t: "lbl", v: "다른 플레이어가 나갔을 때" }] });
+  def({ id: "mp_on", cat: "멀티플레이", shape: "bool", c: C3.logic,
+    parts: [{ t: "lbl", v: "멀티플레이 연결됨?" }] });
+  def({ id: "mp_peer_name", cat: "멀티플레이", shape: "num", c: C3.multi,
+    parts: [{ t: "slot", k: "i", accept: "num", def: 1 }, { t: "lbl", v: "번째 플레이어 이름" }] });
+  def({ id: "mp_peer_x", cat: "멀티플레이", shape: "num", c: C3.multi,
+    parts: [{ t: "slot", k: "i", accept: "num", def: 1 }, { t: "lbl", v: "번째 플레이어 x" }] });
+  def({ id: "mp_peer_y", cat: "멀티플레이", shape: "num", c: C3.multi,
+    parts: [{ t: "slot", k: "i", accept: "num", def: 1 }, { t: "lbl", v: "번째 플레이어 y" }] });
+  def({ id: "mp_last_name", cat: "멀티플레이", shape: "num", c: C3.multi,
+    parts: [{ t: "lbl", v: "마지막 메시지를 보낸 사람" }] });
+
+  def({ id: "db_add2", cat: "실시간 DB", shape: "stack", c: C3.db,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "에" }, { t: "txt", k: "c1", def: "이름" }, { t: "lbl", v: "=" }, { t: "slot", k: "v1", accept: "num", def: "나" }, { t: "lbl", v: "," }, { t: "txt", k: "c2", def: "점수" }, { t: "lbl", v: "=" }, { t: "slot", k: "v2", accept: "num", def: 0 }, { t: "lbl", v: "행 추가하기" }] });
+  def({ id: "db_cell_at", cat: "실시간 DB", shape: "num", c: C3.db,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "의" }, { t: "slot", k: "i", accept: "num", def: 1 }, { t: "lbl", v: "번째 행 ·" }, { t: "txt", k: "col", def: "점수" }, { t: "lbl", v: "값" }] });
+  def({ id: "db_avg", cat: "실시간 DB", shape: "num", c: C3.db,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "의 컬럼" }, { t: "txt", k: "col", def: "점수" }, { t: "lbl", v: "평균" }] });
+  def({ id: "db_rank", cat: "실시간 DB", shape: "num", c: C3.db,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "에서" }, { t: "slot", k: "v", accept: "num", def: 0 }, { t: "lbl", v: "점의 순위 (" }, { t: "txt", k: "col", def: "점수" }, { t: "lbl", v: "기준)" }] });
+  def({ id: "db_clear", cat: "실시간 DB", shape: "stack", c: C3.db,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "의 행 모두 비우기" }] });
+  def({ id: "when_db_change", cat: "실시간 DB", shape: "hat", c: C3.event,
+    parts: [{ t: "lbl", v: "테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "이 바뀌었을 때" }] });
+
+  def({ id: "ui_rank_board", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "순위판" }, { t: "txt", k: "name", def: "랭킹판" }, { t: "lbl", v: "에 테이블" }, { t: "txt", k: "tbl", def: "랭킹" }, { t: "lbl", v: "을" }, { t: "txt", k: "col", def: "점수" }, { t: "lbl", v: "순 ·" }, { t: "slot", k: "n", accept: "num", def: 5 }, { t: "lbl", v: "등까지 ·" }, { t: "sel", k: "pos", opts: UIPOS2, def: "오른쪽 위" }, { t: "lbl", v: "에 보이기" }] });
+  def({ id: "ui_players", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "접속자 목록판" }, { t: "txt", k: "name", def: "접속자" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS2, def: "오른쪽 위" }, { t: "lbl", v: "에 보이기" }] });
+  def({ id: "ui_input", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "입력칸" }, { t: "txt", k: "name", def: "이름칸" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS2, def: "가운데 아래" }, { t: "lbl", v: "에 만들기 · 안내" }, { t: "txt", k: "ph", def: "이름을 적으세요" }] });
+  def({ id: "ui_input_get", cat: "카메라·UI", shape: "num", c: C3.obj,
+    parts: [{ t: "lbl", v: "입력칸" }, { t: "txt", k: "name", def: "이름칸" }, { t: "lbl", v: "에 적힌 값" }] });
+  def({ id: "ui_show", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "화면 요소" }, { t: "txt", k: "name", def: "점수판" }, { t: "lbl", v: "을" }, { t: "sel", k: "on", opts: ["보이기", "숨기기"], def: "보이기" }] });
+  def({ id: "ui_color", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "화면 요소" }, { t: "txt", k: "name", def: "체력" }, { t: "lbl", v: "의 색을" }, { t: "sel", k: "color", opts: UICOL2, def: "빨강" }, { t: "lbl", v: "으로 바꾸기" }] });
+  def({ id: "ui_move_to", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "화면 요소" }, { t: "txt", k: "name", def: "점수판" }, { t: "lbl", v: "을" }, { t: "sel", k: "pos", opts: UIPOS2, def: "왼쪽 위" }, { t: "lbl", v: "로 옮기기" }] });
+  def({ id: "ui_countdown", cat: "카메라·UI", shape: "stack", c: C3.obj,
+    parts: [{ t: "lbl", v: "남은시간판" }, { t: "txt", k: "name", def: "타이머" }, { t: "lbl", v: "을" }, { t: "slot", k: "sec", accept: "num", def: 60 }, { t: "lbl", v: "초로 ·" }, { t: "sel", k: "pos", opts: UIPOS2, def: "가운데 위" }, { t: "lbl", v: "에 보이기" }] });
 
   // ── 함수: 이름으로 정의하고 부른다 (미리 만든 함수가 없어도 쓸 수 있다) ──
   def({ id: "fn_def", cat: "함수", shape: "hat", c: C3.func,
@@ -844,6 +896,7 @@
         case "translate": return I.msg;
         case "in_zone": return ctx.inZone(self, I.zone);
         case "db_has_table": return ctx.hasTable(I.tbl);
+        case "ui_clicked": return ctx.uiClicked(I.name);
         case "true_v": return true;
         case "false_v": return false;
         case "gte": return await A() >= await B();
@@ -897,6 +950,15 @@
         case "obj_count": return ctx.objCount();
         case "tile_kind": return ctx.tileKind(await A(), await B());
         case "mp_last": return ctx.mpLast();
+        case "mp_last_name": return ctx.mpLastName();
+        case "mp_on": return ctx.mpIsOn();
+        case "mp_peer_name": return ctx.peerAt(Number(await val(I.i, self)) || 1, "name");
+        case "mp_peer_x": return ctx.peerAt(Number(await val(I.i, self)) || 1, "x");
+        case "mp_peer_y": return ctx.peerAt(Number(await val(I.i, self)) || 1, "y");
+        case "db_cell_at": return await ctx.dbCellAt(I.tbl, Number(await val(I.i, self)) || 1, I.col);
+        case "db_avg": return await ctx.dbAvg(I.tbl, I.col);
+        case "db_rank": return await ctx.dbRank(I.tbl, I.col, Number(await val(I.v, self)) || 0);
+        case "ui_input_get": return ctx.uiInputGet(I.name);
         case "mp_room_name": return ctx.mpRoom();
         case "fn_arg": { const fr = frames[frames.length - 1]; return fr ? fr.args[0] : 0; }
         case "fn_result": return ctx.result();
@@ -1115,6 +1177,15 @@
           case "beep": ctx.beep(await num("hz"), await num("ms")); break;
           case "sound_fade": ctx.soundFade(await num("sec")); break;
           case "mp_send": ctx.mpSend(await val(I.msg, self)); break;
+          case "db_add2": await ctx.dbAdd2(I.tbl, I.c1, await val(I.v1, self), I.c2, await val(I.v2, self)); break;
+          case "db_clear": await ctx.dbClear(I.tbl); break;
+          case "ui_rank_board": await ctx.uiRankBoard(I.name, I.tbl, I.col, await num("n"), I.pos); break;
+          case "ui_players": ctx.uiSet({ kind: "players", name: I.name, pos: I.pos }); break;
+          case "ui_input": ctx.uiSet({ kind: "input", name: I.name, pos: I.pos, ph: I.ph }); break;
+          case "ui_show": ctx.uiShow(I.name, I.on !== "\uc228\uae30\uae30"); break;
+          case "ui_color": ctx.uiPatch(I.name, { color: I.color }); break;
+          case "ui_move_to": ctx.uiPatch(I.name, { pos: I.pos }); break;
+          case "ui_countdown": ctx.uiCountdown(I.name, await num("sec"), I.pos); break;
           case "follow_obj": {
             const o = ctx.objByName(I.name);
             if (o) {
@@ -1221,6 +1292,16 @@
             if (kind === "mouse" && root.def !== "when_mouse") return;
             if (kind === "clone" && !(root.def === "when_clone_start" && objId === extra)) return;
             if (kind === "ui" && !(root.def === "when_ui_click" && String(root.inputs.name || "확인") === String(extra))) return;
+            // 멀티플레이·DB 이벤트 — 예전에는 여기 걸림이 없어서 «들어왔을 때» 가
+            // 모든 모자 블록을 함께 실행시켰다
+            if (kind === "mpjoin" && root.def !== "when_mp_join") return;
+            if (kind === "mpleave" && root.def !== "when_mp_leave") return;
+            if (kind === "mpmsg" && root.def !== "when_mp_msg") return;
+            if (kind === "mpchat" && root.def !== "when_mp_chat") return;
+            if (kind === "dbchange" && !(root.def === "when_db_change" && String(root.inputs.tbl || "") === String(extra))) return;
+            // 위에 없는 종류의 모자 블록은 실행하지 않는다
+            if (["when_mp_join", "when_mp_leave", "when_mp_msg", "when_mp_chat", "when_db_change"].indexOf(root.def) >= 0
+              && ["mpjoin", "mpleave", "mpmsg", "mpchat", "dbchange"].indexOf(kind) < 0) return;
             jobs.push(runChain(root.next, self));
           });
         });
