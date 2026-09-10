@@ -1001,7 +1001,7 @@
               </sc-if>
               <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
                 <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-                  <span role="img" aria-label="" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ stageBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  <canvas ref="{{ bgRefA }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block"></canvas>
                 </sc-if>
                 <sc-if value="{{ noStageBg }}" hint-placeholder-val="{{ true }}">
                   <span style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,24,29,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,29,0.05) 1px,transparent 1px);background-size:12.5% 16.6%"></span>
@@ -1077,6 +1077,35 @@
                   </sc-if>
                   <sc-if value="{{ u.isImage }}" hint-placeholder-val="{{ false }}">
                     <span role="img" aria-label="{{ u.name }}" style="width:36px;height:36px;image-rendering:pixelated;background-image:{{ u.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  </sc-if>
+                  <sc-if value="{{ u.isList }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:3px;background:rgba(11,13,16,0.82);border:1px solid rgba(111,211,199,0.3);border-radius:10px;padding:8px 10px;min-width:132px">
+                      <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7">{{ u.title }}</span>
+                      <sc-for list="{{ u.rows }}" as="r" hint-placeholder-count="3">
+                        <span style="display:flex;align-items:center;gap:7px;font-size:11px;color:#F4F1EA">
+                          <span style="font-family:Galmuri11,monospace;color:#6FD3C7;width:14px;flex-shrink:0">{{ r.n }}</span>
+                          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.k }}</span>
+                          <span style="font-family:Galmuri11,monospace;flex-shrink:0">{{ r.v }}</span>
+                        </span>
+                      </sc-for>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isPlayers }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:4px;background:rgba(11,13,16,0.82);border:1px solid rgba(111,211,199,0.3);border-radius:10px;padding:8px 10px;min-width:132px">
+                      <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7">{{ u.name }}</span>
+                      <sc-for list="{{ u.players }}" as="q" hint-placeholder-count="2">
+                        <span style="display:flex;align-items:center;gap:7px;font-size:11px;color:#F4F1EA">
+                          <span role="img" aria-label="" style="width:18px;height:18px;border-radius:99px;image-rendering:pixelated;background-image:{{ q.sprite }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block;flex-shrink:0"></span>
+                          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ q.name }}</span>
+                          <sc-if value="{{ q.isMe }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-family:Galmuri11,monospace;font-size:9px;color:#6FD3C7;flex-shrink:0">나</span>
+                          </sc-if>
+                        </span>
+                      </sc-for>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isInput }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ u.inputVal }}" onChange="{{ u.onInput }}" placeholder="{{ u.ph }}" style="background:rgba(255,255,255,0.96);border:1px solid #CFC7B6;border-radius:8px;padding:6px 10px;font-family:Galmuri11,monospace;font-size:11px;color:#16181D;width:150px">
                   </sc-if>
                 </span>
               </sc-for>
@@ -2458,7 +2487,7 @@
       <div onClick="{{ stageClick }}" style="position:absolute;inset:0;overflow:hidden;background:#E7EFE9">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-            <span role="img" aria-label="" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ stageBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block"></span>
+            <canvas ref="{{ bgRefB }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block"></canvas>
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
@@ -2484,17 +2513,19 @@
             </span>
           </sc-for>
         </div>
-        <span style="position:absolute;right:16px;top:64px;z-index:72;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.72);border:1px solid rgba(111,211,199,0.35);border-radius:99px;padding:6px 12px;font-family:Galmuri11,monospace;font-size:11px;color:#6FD3C7">
-            <span style="width:7px;height:7px;border-radius:99px;background:#6FD3C7"></span>
+        <span style="position:absolute;right:16px;top:64px;z-index:72;display:flex;flex-direction:column;gap:6px;align-items:stretch;width:150px">
+          <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.72);border:1px solid rgba(111,211,199,0.35);border-radius:10px;padding:7px 11px;font-family:Galmuri11,monospace;font-size:11px;color:#6FD3C7">
+            <span style="width:20px;height:20px;border-radius:99px;background:rgba(111,211,199,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span style="width:7px;height:7px;border-radius:99px;background:#6FD3C7;display:block"></span>
+            </span>
             <span>접속 {{ peerCount }}명</span>
           </span>
           <sc-for list="{{ rosterList }}" as="pr" hint-placeholder-count="0">
-            <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.6);border-radius:8px;padding:4px 9px;font-size:11px;color:#F4F1EA">
-              <span role="img" aria-label="" style="width:14px;height:14px;image-rendering:pixelated;background-image:{{ pr.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;flex-shrink:0"></span>
-              <span>{{ pr.name }}</span>
+            <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:7px 11px;font-size:11px;color:#F4F1EA">
+              <span role="img" aria-label="" style="width:20px;height:20px;border-radius:99px;image-rendering:pixelated;background-image:{{ pr.sprite }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block;flex-shrink:0"></span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pr.name }}</span>
               <sc-if value="{{ pr.isMe }}" hint-placeholder-val="{{ false }}">
-                <span style="font-family:Galmuri11,monospace;font-size:9px;color:#6FD3C7">나</span>
+                <span style="margin-left:auto;font-family:Galmuri11,monospace;font-size:9px;color:#6FD3C7;flex-shrink:0">나</span>
               </sc-if>
             </span>
           </sc-for>
@@ -2534,6 +2565,35 @@
                   </sc-if>
                   <sc-if value="{{ u.isImage }}" hint-placeholder-val="{{ false }}">
                     <span role="img" aria-label="{{ u.name }}" style="width:36px;height:36px;image-rendering:pixelated;background-image:{{ u.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  </sc-if>
+                  <sc-if value="{{ u.isList }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:3px;background:rgba(11,13,16,0.82);border:1px solid rgba(111,211,199,0.3);border-radius:10px;padding:8px 10px;min-width:132px">
+                      <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7">{{ u.title }}</span>
+                      <sc-for list="{{ u.rows }}" as="r" hint-placeholder-count="3">
+                        <span style="display:flex;align-items:center;gap:7px;font-size:11px;color:#F4F1EA">
+                          <span style="font-family:Galmuri11,monospace;color:#6FD3C7;width:14px;flex-shrink:0">{{ r.n }}</span>
+                          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.k }}</span>
+                          <span style="font-family:Galmuri11,monospace;flex-shrink:0">{{ r.v }}</span>
+                        </span>
+                      </sc-for>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isPlayers }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;flex-direction:column;gap:4px;background:rgba(11,13,16,0.82);border:1px solid rgba(111,211,199,0.3);border-radius:10px;padding:8px 10px;min-width:132px">
+                      <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7">{{ u.name }}</span>
+                      <sc-for list="{{ u.players }}" as="q" hint-placeholder-count="2">
+                        <span style="display:flex;align-items:center;gap:7px;font-size:11px;color:#F4F1EA">
+                          <span role="img" aria-label="" style="width:18px;height:18px;border-radius:99px;image-rendering:pixelated;background-image:{{ q.sprite }};background-size:cover;background-position:center;background-repeat:no-repeat;display:block;flex-shrink:0"></span>
+                          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ q.name }}</span>
+                          <sc-if value="{{ q.isMe }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-family:Galmuri11,monospace;font-size:9px;color:#6FD3C7;flex-shrink:0">나</span>
+                          </sc-if>
+                        </span>
+                      </sc-for>
+                    </span>
+                  </sc-if>
+                  <sc-if value="{{ u.isInput }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ u.inputVal }}" onChange="{{ u.onInput }}" placeholder="{{ u.ph }}" style="background:rgba(255,255,255,0.96);border:1px solid #CFC7B6;border-radius:8px;padding:6px 10px;font-family:Galmuri11,monospace;font-size:11px;color:#16181D;width:150px">
                   </sc-if>
                 </span>
               </sc-for>
@@ -3287,7 +3347,55 @@ class Component extends DCLogic {
     this.setState((p) => ({ rowsView: Object.assign({}, p.rowsView, { [tbl]: (this._rows[tbl] || []).slice() }) }));
   }
 
+  // 표가 없으면 만들고, 빠진 컴럼도 채운다.
+  // 이것이 없어서 «닿으면 데이터베이스에 추가» 같은 블록이 조용히 실패했다.
+  async ensureTable(tbl, cols, perPlayer) {
+    const name = String(tbl || "").trim();
+    if (!name) return null;
+    const want = (cols || []).filter(Boolean);
+    let t0 = (this.state.tables || []).find((x) => x.name === name);
+    if (!t0) {
+      let saved = false;
+      if (window.DotDB && window.DotDB.isLive && window.DotDB.upsertTable) {
+        try { saved = await window.DotDB.upsertTable(this.state.worldId, name, want, !!perPlayer); } catch (e) {}
+      }
+      this._rows = this._rows || {};
+      this._rows[name] = this._rows[name] || [];
+      t0 = { name: name, cols: want, perPlayer: !!perPlayer, saved: saved };
+      await new Promise((r) => this.setState((p) => ({
+        tables: (p.tables || []).concat([t0]),
+      }), r));
+      this.say("«" + name + "» 표를 자동으로 만들었습니다.");
+      return t0;
+    }
+    // 빠진 컴럼만 더한다
+    const add = want.filter((c) => !t0.cols.some((x) => x.name === c.name));
+    if (!add.length) return t0;
+    const merged = t0.cols.concat(add);
+    await new Promise((r) => this.setState((p) => ({
+      tables: (p.tables || []).map((x) => (x.name === name ? Object.assign({}, x, { cols: merged }) : x)),
+    }), r));
+    await this.pushTable(name, merged, t0.perPlayer);
+    return Object.assign({}, t0, { cols: merged });
+  }
+
+  // 표의 행을 읽는다 — 서버에 있으면 서버 것, 없으면 이 브라우저 것
+  async tableRows(tbl) {
+    const name = String(tbl || "");
+    if (window.DotDB && window.DotDB.isLive && window.DotDB.rowsByName) {
+      try {
+        const rows = await window.DotDB.rowsByName(this.state.worldId, name);
+        if (rows && rows.length) return rows;
+      } catch (e) {}
+    }
+    return ((this.state.rowsView || {})[name]) || (this._rows && this._rows[name]) || [];
+  }
+
   async rowAdd(tbl, row) {
+    // 표와 컴럼이 없으면 먼저 만든다
+    await this.ensureTable(tbl, Object.keys(row || {}).map((k) => ({
+      name: k, type: typeof row[k] === "number" ? "숫자" : "글자",
+    })));
     this.localRow(tbl, row);
     if (window.DotDB && window.DotDB.isLive && window.DotDB.addRowByName) {
       const t0 = (this.state.tables || []).find((x) => x.name === tbl);
@@ -3304,6 +3412,7 @@ class Component extends DCLogic {
   }
 
   async cellWrite(tbl, col, v) {
+    await this.ensureTable(tbl, [{ name: col, type: typeof v === "number" ? "숫자" : "글자" }]);
     const rows = (this._rows && this._rows[tbl]) || [];
     if (rows.length) rows[rows.length - 1] = Object.assign({}, rows[rows.length - 1], { [col]: v });
     else this.localRow(tbl, { [col]: v });
@@ -3453,6 +3562,8 @@ class Component extends DCLogic {
     this.applyCam();
     this._rows = this._rows || {};
     this._uiClicks = {};
+    this._uiInputs = {};
+    this.clearUiTimers();
     this.setState({ uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
     this._keys = new Set();
     this._onKey = (ev) => {
@@ -3469,10 +3580,11 @@ class Component extends DCLogic {
     (this.state.varsDef || []).forEach((v) => { vars[v.name] = v.value === undefined ? 0 : v.value; });
     const mon = {};
     (this.state.varsDef || []).forEach((v) => { if (v.visible) mon[v.name] = true; });
-    const rt = B.makeRuntime({
+    const ctx = {
       vars: vars,
       keys: this._keys,
-      objById: (id) => this._live.find((o) => o.id === id),
+      // 정지 직후에도 기다리던 스크립트가 잠깐 더 돌 수 있다 — 그때 터지지 않게 감싼다
+      objById: (id) => (this._live || []).find((o) => o.id === id),
       onFrame: () => {
         // 벽·경계로 막힌 칸은 지나갈 수 없다 — 지나간 자리로 되돌린다
         (this._live || []).forEach((o) => {
@@ -3495,17 +3607,19 @@ class Component extends DCLogic {
       },
       onVars: (v) => this.setState({ runVars: Object.assign({}, v) }),
       toFront: (self) => {
+        if (!this._live) return;
         const i = this._live.indexOf(self);
         if (i > 0) { this._live.splice(i, 1); this._live.unshift(self); this.tick(); }
       },
       touching: (self, name) => {
-        const t = this._live.find((o) => o.name === name);
+        const t = (this._live || []).find((o) => o.name === name);
         if (!t || t === self) return false;
         return Math.hypot(t.x - self.x, t.y - self.y) < 28;
       },
       clone: (self) => {
         const c = JSON.parse(JSON.stringify(self));
         c.id = self.id + "_c" + Math.random().toString(36).slice(2, 6);
+        if (!this._live) return;
         this._live.push(c); this.tick();
         if (this._rt) this._rt.start({ [c.id]: this.stacksOf(self.id) }, "clone", c.id);
       },
@@ -3524,14 +3638,16 @@ class Component extends DCLogic {
         return live.find((o) => o !== cur && o.on !== false) || null;
       },
       distTo: (self, n) => {
-        const o = this._live.find((x) => x.name === n);
+        const o = (this._live || []).find((x) => x.name === n);
         return o ? Math.round(Math.hypot(o.x - self.x, o.y - self.y)) : 0;
       },
       toBack: (self) => {
+        if (!this._live) return;
         const i = this._live.indexOf(self);
         if (i >= 0 && i < this._live.length - 1) { this._live.splice(i, 1); this._live.push(self); this.tick(); }
       },
       delClone: (self) => {
+        if (!this._live) return;
         const i = this._live.indexOf(self);
         if (i >= 0 && /_c/.test(self.id)) { this._live.splice(i, 1); this.tick(); }
       },
@@ -3562,6 +3678,46 @@ class Component extends DCLogic {
         });
       },
       uiRemove: (name) => this.setState((p) => ({ uiWidgets: (p.uiWidgets || []).filter((x) => x.name !== String(name)) })),
+      // 이미 만든 화면 요소를 고친다 (색·자리·보이기)
+      uiPatch: (name, patch) => this.setState((p) => ({
+        uiWidgets: (p.uiWidgets || []).map((x) => (x.name === String(name) ? Object.assign({}, x, patch) : x)),
+      })),
+      uiShow: (name, on) => this.setState((p) => ({
+        uiWidgets: (p.uiWidgets || []).map((x) => (x.name === String(name) ? Object.assign({}, x, { off: !on }) : x)),
+      })),
+      uiInputGet: (name) => {
+        const v = (this._uiInputs || {})[String(name)];
+        return v === undefined ? "" : (isNaN(Number(v)) || v === "" ? v : Number(v));
+      },
+      // 순위판 — 표를 읽어 «1. 이름 100» 꼴로 늘어놓는다
+      uiRankBoard: async (name, tbl, col, n, pos) => {
+        const rows = await this.tableRows(tbl);
+        const key = String(col || "점수");
+        const sorted = rows.slice().sort((a, b) => (Number(b[key]) || 0) - (Number(a[key]) || 0))
+          .slice(0, Math.max(1, Math.round(n) || 5));
+        const label = (r) => {
+          const nameCol = Object.keys(r).find((k) => k !== key && typeof r[k] === "string");
+          return nameCol ? String(r[nameCol]) : "—";
+        };
+        this._ctx.uiSet({
+          kind: "list", name: name, pos: pos, title: String(tbl),
+          rows: sorted.map((r, i) => ({ n: i + 1, k: label(r), v: String(r[key] === undefined ? 0 : r[key]) })),
+        });
+      },
+      uiCountdown: (name, sec, pos) => {
+        clearInterval((this._uiTimers || {})[name]);
+        this._uiTimers = this._uiTimers || {};
+        let left = Math.max(0, Math.round(sec) || 0);
+        const paint = () => this._ctx.uiSet({ kind: "label", name: name, pos: pos, text: name + " " + left });
+        paint();
+        this._uiTimers[name] = setInterval(() => {
+          // 정지했으면 스스로 멈춘다 (유령 타이머 방지)
+          if (!this.state.running) { clearInterval(this._uiTimers[name]); delete this._uiTimers[name]; return; }
+          left -= 1;
+          if (left <= 0) { left = 0; clearInterval(this._uiTimers[name]); delete this._uiTimers[name]; }
+          paint();
+        }, 1000);
+      },
       uiClearAll: () => this.setState({ uiWidgets: [], uiPad: false, uiText: "" }),
       uiDialog: (msg) => new Promise((resolve) => {
         this._uiDialogResolve = resolve;
@@ -3600,7 +3756,7 @@ class Component extends DCLogic {
           let moved = false;
           this._live.forEach((o) => {
             if (!o.followName) return;
-            const t = this._live.find((x) => x.name === o.followName && x !== o);
+            const t = (this._live || []).find((x) => x.name === o.followName && x !== o);
             if (!t) return;
             const sp2 = o.followSpeed || 3;
             const dx = t.x - o.x, dy = t.y - o.y, L = Math.hypot(dx, dy);
@@ -3703,7 +3859,12 @@ class Component extends DCLogic {
       },
       mpSend: (m) => {
         this._mpMsg = String(m);
-        if (this._mpCh) { try { this._mpCh.send({ type: "broadcast", event: "msg", payload: { m: String(m) } }); } catch (e) {} }
+        this._mpMsgFrom = this._mpName || "나";
+        // 받는 쪽은 «s» 라는 이름의 신호만 듣는다 — 예전에는 «msg» 로 보내서
+        // 아무에게도 닿지 않았다.
+        const p = { id: this._mpId, room: this._mpRoom, name: this._mpName, msg: String(m), t: Date.now() };
+        if (this._mpBc) { try { this._mpBc.postMessage(p); } catch (e) {} }
+        if (this._mpCh && this._mpReady) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (e) {} }
       },
       mpLast: () => this._mpMsg || "",
       mpRoom: () => this._mpRoom || "",
@@ -3749,6 +3910,48 @@ class Component extends DCLogic {
       },
       dbRows: async (tbl) => (((this.state.rowsView || {})[tbl]) || (this._rows && this._rows[tbl]) || []).length,
       dbAddRow: async (tbl, v) => await this.rowAdd(tbl, { 점수: v, 이름: (this.state.liveMe && this.state.liveMe.name) || "손님" }),
+      dbAdd2: async (tbl, c1, v1, c2, v2) => {
+        const row = {};
+        row[String(c1 || "컬럼1")] = v1;
+        row[String(c2 || "컬럼2")] = v2;
+        await this.rowAdd(tbl, row);
+        if (this._rt) this._rt.start(this.sceneStacks(), "dbchange", String(tbl));
+      },
+      dbCellAt: async (tbl, i, col) => {
+        const rows = await this.tableRows(tbl);
+        const r = rows[Math.max(1, Math.round(i) || 1) - 1];
+        if (!r) return 0;
+        const v = r[String(col)];
+        return v === undefined ? 0 : (isNaN(Number(v)) ? v : Number(v));
+      },
+      dbAvg: async (tbl, col) => {
+        const rows = await this.tableRows(tbl);
+        if (!rows.length) return 0;
+        const s = rows.reduce((a, r) => a + (Number(r[String(col)]) || 0), 0);
+        return Math.round((s / rows.length) * 100) / 100;
+      },
+      dbRank: async (tbl, col, v) => {
+        const rows = await this.tableRows(tbl);
+        const key = String(col);
+        const better = rows.filter((r) => (Number(r[key]) || 0) > (Number(v) || 0)).length;
+        return better + 1;
+      },
+      dbClear: async (tbl) => {
+        this._rows = this._rows || {};
+        this._rows[String(tbl)] = [];
+        this.setState((p) => ({ rowsView: Object.assign({}, p.rowsView, { [String(tbl)]: [] }) }));
+        if (window.DotDB && window.DotDB.isLive && window.DotDB.clearRows) {
+          try { await window.DotDB.clearRows(this.state.worldId, String(tbl)); } catch (e) {}
+        }
+        if (this._rt) this._rt.start(this.sceneStacks(), "dbchange", String(tbl));
+      },
+      mpIsOn: () => !!this._mpOn,
+      mpLastName: () => this._mpMsgFrom || "",
+      peerAt: (i, k) => {
+        const p = this.peerList()[Math.max(1, Math.round(i) || 1) - 1];
+        if (!p) return k === "name" ? "" : 0;
+        return k === "name" ? (p.name || "손님") : (Number(p[k]) || 0);
+      },
       // 블록으로 테이블·컬럼을 정의한다
       hasTable: (n) => (this.state.tables || []).some((t) => t.name === n),
       tableCreate: async (n, perPlayer) => {
@@ -3796,7 +3999,9 @@ class Component extends DCLogic {
       },
       rtGet: async (key) => await this.dbRead(key),
       rtSet: async (key, v) => await this.dbWrite(key, v, false),
-    });
+    };
+    this._ctx = ctx;
+    const rt = B.makeRuntime(ctx);
     this._rt = rt;
     this.setState({ running: true, runVars: vars, monitors: mon, uiText: "" });
     this.say("실행했습니다. 방향키·스페이스로 조작할 수 있습니다.");
@@ -3949,10 +4154,22 @@ class Component extends DCLogic {
     this.penRedraw();
     this.stopAnims();
     this._uiClicks = {};
+    // «남은시간판» 이 만든 드리미를 모두 끓다 — 안 그러면 멈춘 화면에
+    // 유령 타이머가 남아 위젯을 다시 집어넣는다.
+    this.clearUiTimers();
+    // 입력칸에 적힌 값도 함께 치운다 (다음 실행으로 새지 않게)
+    this._uiInputs = {};
     // 기다리고 있던 대화상자를 풀어 준다 — 안 그러면 스크립트가 영영 멈춰 있는다
     if (this._uiDialogResolve) { const r = this._uiDialogResolve; this._uiDialogResolve = null; r(false); }
     this.setState({ running: false, camT: "none", uiText: "", asking: false, uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
   };
+
+  // 화면 요소가 돌리는 드리미(타이머)를 모두 멈춘다
+  clearUiTimers() {
+    const t = this._uiTimers || {};
+    Object.keys(t).forEach((k) => clearInterval(t[k]));
+    this._uiTimers = {};
+  }
 
   // ── 블록 모델: 하나의 실제 트리를 직접 고친다 (사본 없음) ──
   // 사본을 오갈 때 블록의 정체가 바뀌어서 «다시 못 움직이는» 문제가 났다.
@@ -4173,23 +4390,42 @@ class Component extends DCLogic {
     }
     this._mpSelf = self;
     this._peers = this._peers || {};
-    // 기기(브라우저)마다 고정된 id — 탭을 여러 개 열어도 한 사람으로 센다
-    if (!this._mpId) {
+    // 신원은 기기마다 하나 (사람 수를 셀 때 씀), 전송 id 는 창마다 다르다.
+    // 두 창이 같은 전송 id 를 쓰면 서로의 신호를 자기 것으로 여겨 부딪힌다.
+    if (!this._devId) {
       let dev = null;
       try { dev = localStorage.getItem("dotverse.dev"); } catch (e) {}
       if (!dev) {
         dev = "u" + Math.random().toString(36).slice(2, 8);
         try { localStorage.setItem("dotverse.dev", dev); } catch (e) {}
       }
-      this._mpId = dev;
+      this._devId = dev;
+    }
+    if (!this._mpId) {
+      this._mpId = this._devId + "." + ((window.DotDB && window.DotDB.tabId) || "t0");
     }
     this._mpName = this._mpName || (S().me && S().me.name) || "플레이어";
+    // 진짜 프로필이 있으면 그 이름과 사진을 쓴다
+    const meP = this.state.liveMe;
+    if (meP && meP.name && !this._mpNickSet) this._mpName = meP.name;
+    this._mpPic = this.state.avatarUrl || (meP && meP.avatarUrl) || "";
     if (this._mpOn) return;
     this._mpOn = true;
 
     const onMsg = (p) => {
       if (!p || p.id === this._mpId || p.room !== this._mpRoom) return;
-      if (p.chat) { this.pushChat(p.name || "손님", p.chat); return; }
+      if (p.chat) {
+        this.pushChat(p.name || "손님", p.chat);
+        if (this._rt) this._rt.start(this.sceneStacks(), "mpchat");
+        return;
+      }
+      // 「모두에게 보내기」 로 온 메시지
+      if (p.msg !== undefined) {
+        this._mpMsg = String(p.msg);
+        this._mpMsgFrom = p.name || "손님";
+        if (this._rt) this._rt.start(this.sceneStacks(), "mpmsg");
+        return;
+      }
       // 월드 상태(오브젝트 위치·모양·말풍선)를 받은 경우
       if (p.world) return this.applyWorld(p.world);
       const known = !!this._peers[p.id];
@@ -4216,13 +4452,16 @@ class Component extends DCLogic {
           this._mpCh.subscribe((status) => {
             this._mpReady = status === "SUBSCRIBED";
             if (status === "SUBSCRIBED") {
+              this._mpTries = 0;
               this.setState({ mpLive: true });
             } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
               this.setState({ mpLive: false });
               // 끊기면 되살린다 — 방에 있는 동안은 계속 이어져야 한다
-              if (this._mpOn) {
+              // 다시 붙되 점점 뜸하게, 그리고 6번까지만 (두 창이 서로를 끊는 폭주 방지)
+              this._mpTries = (this._mpTries || 0) + 1;
+              if (this._mpOn && this._mpTries <= 6) {
                 clearTimeout(this._mpRetry);
-                this._mpRetry = setTimeout(openCh, 2000);
+                this._mpRetry = setTimeout(openCh, Math.min(30000, 2000 * this._mpTries));
               }
             }
           });
@@ -4243,6 +4482,7 @@ class Component extends DCLogic {
       const p = {
         id: this._mpId, room: this._mpRoom, name: this._mpName,
         x: Math.round(o.x), y: Math.round(o.y), art: o.art,
+        pic: this._mpPic || "",
         scale: o.scale || 1, say: o.say || "", t: Date.now(),
       };
       // 스크립트를 돌리는 쪽이 오브젝트 전체 상태를 같이 보낸다 (남들 화면도 똑같이 움직인다)
@@ -4264,10 +4504,21 @@ class Component extends DCLogic {
       Object.keys(this._peers).forEach((k) => {
         if (Date.now() - this._peers[k].t > 6000) { delete this._peers[k]; gone = true; }
       });
-      if (gone) this.tick();
+      if (gone) {
+        if (this._rt) this._rt.start(this.sceneStacks(), "mpleave");
+        this.tick();
+      }
     };
-    // 지난 대화를 읽고, 새 대화를 실시간으로 받는다
-    if (window.DotDB && window.DotDB.isLive) {
+    // 먼저 «보내기» 를 켠다. 아래 대화 기록 읽기가 늦어지거나 실패해도
+    // 멀티플레이 자체는 반드시 시작되어야 한다 (예전에는 여기서 멈췄다).
+    send();
+    clearInterval(this._mpTimer);
+    this._mpTimer = setInterval(send, 120);
+    this.setState({ mpOn: true });
+    this.say("멀티플레이를 시작했습니다 — 같은 방(" + this._mpRoom + ")에 들어온 사람이 화면에 보입니다.");
+
+    // 지난 대화를 읽고, 새 대화를 실시간으로 받는다 (실패해도 위 연결은 유지된다)
+    if (window.DotDB && window.DotDB.isLive) try {
       const rows = await window.DotDB.listChats(this.state.worldId, this._mpRoom, 30);
       if (rows && rows.length) {
         this.setState({
@@ -4287,10 +4538,9 @@ class Component extends DCLogic {
           chatLog: (p.chatLog || []).concat([{ id: key, name: row.author_name || "손님", msg: row.body }]).slice(-40),
         }));
       });
+    } catch (e) {
+      this.say("지난 대화를 불러오지 못했습니다 — 새 대화는 정상으로 오갑니다.", "warn");
     }
-    send();
-    this._mpTimer = setInterval(send, 120);
-    this.say("멀티플레이를 시작했습니다 — 같은 방(" + this._mpRoom + ")에 들어온 사람이 화면에 보입니다.");
   };
 
   // 남이 보낸 오브젝트 상태를 내 화면에 그대로 반영한다
@@ -4313,6 +4563,7 @@ class Component extends DCLogic {
   }
 
   mpStop = () => {
+    this._mpTries = 0;
     clearTimeout(this._mpRetry);
     this._mpRetry = null;
     this._mpReady = false;
@@ -4321,6 +4572,7 @@ class Component extends DCLogic {
     clearInterval(this._mpTimer);
     this._mpTimer = null;
     this._mpOn = false;
+    this.setState({ mpOn: false });
     if (this._mpBc) { try { this._mpBc.close(); } catch (e) {} this._mpBc = null; }
     if (this._mpCh) { try { this._mpCh.unsubscribe(); } catch (e) {} this._mpCh = null; }
     if (this._chatCh) { try { this._chatCh.unsubscribe(); } catch (e) {} this._chatCh = null; }
@@ -4544,7 +4796,7 @@ class Component extends DCLogic {
     this.say("글상자를 추가했습니다. 생김새 꾸러미의 «글상자» 블록으로 내용을 바꿉니다.");
   };
 
-  mpNick = (n) => { this._mpName = String(n || "플레이어").slice(0, 12); };
+  mpNick = (n) => { this._mpNickSet = true; this._mpName = String(n || "플레이어").slice(0, 12); this.tick(); };
 
   // 월드 안 채팅 — 알림이 아니라 실행화면 오른쪽 아래 작은 창에 쌓인다
   // 익명 로그인이 꺼진 프로젝트에서는 손님이 아무것도 남길 수 없다 — 한 번만 알려 준다
@@ -4583,8 +4835,19 @@ class Component extends DCLogic {
       });
     }
     const p = { chat: text, name: name, id: this._mpId || "me", room: this._mpRoom || "1번방", t: Date.now() };
+    // 멀티플레이를 아직 켜지 않았어도 채팅은 오가야 한다 — 방송 통로를 그때 연다
+    if (!this._mpBc) {
+      try {
+        this._mpBc = new BroadcastChannel("dotverse:" + (this._mpRoom || "1번방"));
+        this._mpBc.onmessage = (ev) => {
+          const d = ev.data;
+          if (!d || d.id === this._mpId || !d.chat) return;
+          this.pushChat(d.name || "손님", d.chat);
+        };
+      } catch (e) { this._mpBc = null; }
+    }
     if (this._mpBc) { try { this._mpBc.postMessage(p); } catch (e) {} }
-    if (this._mpCh) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (e) {} }
+    if (this._mpCh && this._mpReady) { try { this._mpCh.send({ type: "broadcast", event: "s", payload: p }); } catch (e) {} }
     this.setState({ chatDraft: "" });
   };
 
@@ -4708,7 +4971,14 @@ class Component extends DCLogic {
 
   peerList() {
     const p = this._peers || {};
-    return Object.keys(p).map((k) => p[k]);
+    // 같은 기기에서 온 것은 한 사람으로 묶는다 (한 사람이 창을 두 개 열어도 1명)
+    const seen = {};
+    return Object.keys(p).map((k) => p[k]).filter((x) => {
+      const dev = String(x.id || "").split(".")[0];
+      if (seen[dev]) return false;
+      seen[dev] = 1;
+      return true;
+    });
   }
 
   // ── 올린 소리 ──────────────────────────────────────────────
@@ -5556,10 +5826,23 @@ class Component extends DCLogic {
     }
     const cv = this._stageCv;
     this.paintTilesInto(cv.getContext("2d"), cv.width / this.MW, cv.width, cv.height, tiles);
-    try {
-      const url = cv.toDataURL();
-      if (url !== this.state.stageBg) this.setState({ stageBg: url });
-    } catch (e) {}
+    // toDataURL 을 쓰지 않는다. 거대한 base64 문자열이 스타일에 들어가면
+    // 화면을 그리거나 갈무리할 때 멈춘다. 진짜 캔버스에 옮겨 그린다.
+    this.blitStage();
+    if (!this.state.stageBg) this.setState({ stageBg: 1 });
+  }
+
+  // 만들어 둔 배경을 실행화면 캔버스에 옮겨 그린다
+  blitStage() {
+    const src = this._stageCv;
+    if (!src) return;
+    [this._bgA, this._bgB].forEach((cv) => {
+      if (!cv || !cv.getContext) return;
+      const g = cv.getContext("2d");
+      g.imageSmoothingEnabled = false;
+      g.clearRect(0, 0, cv.width, cv.height);
+      g.drawImage(src, 0, 0, cv.width, cv.height);
+    });
   }
 
   paintCursor(g, u) {
@@ -5949,28 +6232,37 @@ class Component extends DCLogic {
 
     // «새 톭에서 허러이» — #play 로 열리면 바로 큰 화면 실행
     // supabase-js 는 비동기로 붙는다 — 도착하면 연결 상태를 다시 읽는다
+    // 연결은 «딱 한 번» 만 이어붙인다. 빗장은 setState 가 아니라 보통 값으로 둔다
+    // (setState 는 늦게 반영되어 그 사이에 여러 번 실행된다).
     const relink = () => {
-      const live = !!(window.DotDB && window.DotDB.isLive);
-      if (live && !this.state.live) {
-        // 연결 전에 «내 것이 아님» 으로 적어 둔 값을 지운다 — 이제 서버에 물어볼 수 있다
-        this._ownCache = {};
-        this._ownAsked = {};
-        this.setState({ live: true });
-        this.loadLive();
-        this.loadDbData();
-        this.watchDb();
-      }
+      if (this._relinked) return;
+      if (!(window.DotDB && window.DotDB.isLive)) return;
+      this._relinked = true;
+      if (this._linkT) { clearInterval(this._linkT); this._linkT = null; }
+      // 연결 전에 «내 것이 아님» 으로 적어 둔 값만 비운다 (주기적으로는 절대 비우지 않는다)
+      this._ownCache = {};
+      this._ownAsked = {};
+      this.setState({ live: true });
+      this.loadLive();
+      this.loadDbData();
+      this.watchDb();
     };
     document.addEventListener("dv-supabase", () => setTimeout(relink, 60));
-    this._linkT = setInterval(() => { if (this.state.live) { clearInterval(this._linkT); this._linkT = null; return; } relink(); }, 1500);
+    this._linkT = setInterval(relink, 1500);
     setTimeout(() => { if (this._linkT) { clearInterval(this._linkT); this._linkT = null; } }, 30000);
+    // 세션 자동 갱신을 껐으므로 5분마다 앱이 직접 살핀다 (작업 중 로그아웃 방지)
+    this._sessT = setInterval(() => {
+      if (document.hidden) return;
+      if (window.DotDB && window.DotDB.touch) window.DotDB.touch();
+    }, 5 * 60 * 1000);
     if ((location.hash || "") === "#play") {
       setTimeout(() => this.setState({ route: "play", bigPlay: true }, () => this.runAll()), 400);
     }
   }
 
   componentWillUnmount() {
-    clearTimeout(this._vendorAbort); clearInterval(this._linkT); clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
+    this.clearUiTimers();
+    clearInterval(this._sessT); clearTimeout(this._vendorAbort); clearInterval(this._linkT); clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
     this.stopAnims();
     clearTimeout(this._toast); clearTimeout(this._menuT);
     if (this._onMouse) {
@@ -6281,15 +6573,30 @@ class Component extends DCLogic {
   }
 
   // 어떤 그림 주소든 blob: 주소로 바꾼다 (스타일 문자열에서 잘리지 않게)
+  // 데이터 주소(base64)를 blob: 주소로 바꾼다.
+  // 캐시 열쇠로 «주소 전체» 를 쓰면 그릴 때마다 수백 KB 짜리 문자열을 해싱하게 되어
+  // 화면이 점점 느려지고 결국 멈춘다. 그래서 짧은 지문으로 열쇠를 만든다.
+  blobKey(u) {
+    let h = 5381;
+    // 앞·뒤 일부와 길이만 보고 지문을 만든다 (전체를 훑지 않는다)
+    const head = u.slice(0, 256), tail = u.slice(-256);
+    for (let i = 0; i < head.length; i++) h = ((h * 33) ^ head.charCodeAt(i)) >>> 0;
+    for (let i = 0; i < tail.length; i++) h = ((h * 33) ^ tail.charCodeAt(i)) >>> 0;
+    return u.length + ":" + h;
+  }
+
   blobURL(u) {
     if (!u || typeof u !== "string") return "";
     if (u.indexOf("blob:") === 0 || u.indexOf("http") === 0) return u;
-    this._blobs = this._blobs || {};
-    if (this._blobs[u]) return this._blobs[u];
     if (u.indexOf("data:") !== 0) return u;
+    this._blobs = this._blobs || {};
+    this._blobOrder = this._blobOrder || [];
+    const k = this.blobKey(u);
+    if (this._blobs[k]) return this._blobs[k];
     try {
-      const head = u.slice(5, u.indexOf(","));
-      const body = u.slice(u.indexOf(",") + 1);
+      const comma = u.indexOf(",");
+      const head = u.slice(5, comma);
+      const body = u.slice(comma + 1);
       const type = head.split(";")[0] || "application/octet-stream";
       let blob;
       if (head.indexOf("base64") >= 0) {
@@ -6301,7 +6608,15 @@ class Component extends DCLogic {
         blob = new Blob([decodeURIComponent(body)], { type: type });
       }
       const out = URL.createObjectURL(blob);
-      this._blobs[u] = out;
+      this._blobs[k] = out;
+      this._blobOrder.push(k);
+      // 오래된 것은 버린다 — 실행화면 배경은 그릴 때마다 새로 생겨 쌓인다
+      while (this._blobOrder.length > 60) {
+        const old = this._blobOrder.shift();
+        const url = this._blobs[old];
+        delete this._blobs[old];
+        try { URL.revokeObjectURL(url); } catch (e) {}
+      }
       return out;
     } catch (e) { return u; }
   }
@@ -6818,6 +7133,7 @@ class Component extends DCLogic {
     };
     const spr = (k) => cssUrl(this.spriteOf(k));
     // 글쓴이·제작자 아바타는 실제 프로필(avatar_art)에서 가져온다
+    const mine = this.isMyWorld();
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
     const faceUrl = {}, faceArt = {};
@@ -7290,11 +7606,11 @@ class Component extends DCLogic {
       dislikeFg: st.reacts["w:" + st.worldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
-      remakeLabel: this.isMyWorld() ? "수정하기" : "리메이크",
-      remakeIcon: this.isMyWorld() ? "lucide:pencil-line" : "lucide:git-fork",
-      remakeBg: this.isMyWorld() ? "#16181D" : "#FFFFFF",
-      remakeFg: this.isMyWorld() ? "#FFFFFF" : "#2A2D36",
-      remakeBd: this.isMyWorld() ? "#16181D" : "#E3DCCC",
+      remakeLabel: mine ? "수정하기" : "리메이크",
+      remakeIcon: mine ? "lucide:pencil-line" : "lucide:git-fork",
+      remakeBg: mine ? "#16181D" : "#FFFFFF",
+      remakeFg: mine ? "#FFFFFF" : "#2A2D36",
+      remakeBd: mine ? "#16181D" : "#E3DCCC",
       remakeWorld: async () => {
         if (this.isMyWorld()) {
           this.setState({ route: "studio", tab: "blocks", worldId: st.worldId }, () => this.loadStudio());
@@ -7448,7 +7764,8 @@ class Component extends DCLogic {
       trashBg: st.trashHot ? "#FDECEA" : "rgba(255,255,255,0.86)",
       trashFg: st.trashHot ? "#C0392B" : "#A8AEB8",
       trashLabel: st.trashHot ? "놓으면 삭제" : "휴지통",
-      stageBg: cssUrl(st.stageBg),
+      bgRefA: (el) => { if (el && this._bgA !== el) { this._bgA = el; this.blitStage(); } },
+      bgRefB: (el) => { if (el && this._bgB !== el) { this._bgB = el; this.blitStage(); } },
       stageColor: st.stageColor || "#E7EFE9",
       flashOn: !!st.flash,
       flashColor: st.flash || "transparent",
@@ -7547,10 +7864,10 @@ class Component extends DCLogic {
         cursor: st.running ? "pointer" : "grab",
       })),
       peerCount: this.peerList().length + 1,
-      rosterList: [{ name: (this._mpName || "나"), art: st.myCostume || "slime", isMe: true }]
-        .concat(this.peerList().map((p) => ({ name: p.name || "손님", art: p.art, isMe: false })))
+      rosterList: [{ name: (this._mpName || "나"), art: st.myCostume || "slime", pic: this._mpPic || st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl) || "", isMe: true }]
+        .concat(this.peerList().map((p) => ({ name: p.name || "손님", art: p.art, pic: p.pic || "", isMe: false })))
         .slice(0, 8)
-        .map((p) => ({ name: p.name, isMe: p.isMe, sprite: spr(p.art) })),
+        .map((p) => ({ name: p.name, isMe: p.isMe, sprite: p.pic ? cssUrl(p.pic) : spr(p.art) })),
       peers: this.peerList().map((p, i) => ({
         name: p.name,
         sprite: spr(p.art),
@@ -7572,13 +7889,27 @@ class Component extends DCLogic {
         .map((v) => ({ k: v.name, v: String(st.running ? (st.runVars || {})[v.name] : v.value) })),
       uiTextV: st.uiText || "",
       hasUiText: !!st.uiText,
-      uiWidgets: (st.uiWidgets || []).map((w) => {
+      uiWidgets: (st.uiWidgets || []).filter((w) => !w.off).map((w) => {
         const p = this.uiSpot(w.pos);
         return {
           name: w.name, text: w.text === undefined ? "" : String(w.text),
           left: p.left, top: p.top, right: p.right, bottom: p.bottom, tf: p.tf, align: p.align,
           isLabel: w.kind === "label", isButton: w.kind === "button", isBar: w.kind === "bar",
           isPanel: w.kind === "panel", isImage: w.kind === "image",
+          isList: w.kind === "list", isInput: w.kind === "input", isPlayers: w.kind === "players",
+          title: w.title || w.name,
+          rows: (w.rows || []).map((r) => ({ n: String(r.n), k: String(r.k), v: String(r.v) })),
+          ph: w.ph || "",
+          inputVal: ((this._uiInputs || {})[w.name]) || "",
+          onInput: (e) => {
+            this._uiInputs = this._uiInputs || {};
+            this._uiInputs[w.name] = e.target.value;
+            this.tick();
+          },
+          players: [{ name: this._mpName || "나", pic: this._mpPic || "", art: st.myCostume || "slime", isMe: true }]
+            .concat(this.peerList().map((q) => ({ name: q.name || "손님", pic: q.pic || "", art: q.art, isMe: false })))
+            .slice(0, 8)
+            .map((q) => ({ name: q.name, isMe: q.isMe, sprite: q.pic ? cssUrl(q.pic) : spr(q.art) })),
           color: this.namedColor(w.color || "초록"),
           pct: Math.max(0, Math.min(100, Number(w.value) || 0)) + "%",
           sprite: spr(w.art),
@@ -7732,6 +8063,15 @@ class Component extends DCLogic {
         this.setObjects((list) => list.map((x) => (
           x.id === o.id ? Object.assign({}, x, { player: on }) : Object.assign({}, x, { player: false })
         )));
+        // 실행 중이거나 멀티플레이 중이면 곧바로 이 오브젝트로 갈아탄다
+        if (this._live) {
+          this._live.forEach((x) => { x.player = x.id === o.id ? on : false; });
+          const lv = this._live.find((x) => x.id === o.id);
+          if (on && lv) this._mpSelf = lv;
+        }
+        if (on && this._mpOn) this._mpSelf = (this._live && this._live.find((x) => x.id === o.id)) || o;
+        if (on) { this._cam = this._cam || {}; this._cam.follow = o.name || o.id; this.camTrack(); }
+        this.tick();
         this.say(on ? "«" + o.name + "» 을 플레이어로 지정했습니다." : "플레이어 지정을 해제했습니다.");
       },
       palAttr: st.palMode === "attr",
