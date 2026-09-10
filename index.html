@@ -3297,6 +3297,7 @@ class Component extends DCLogic {
     }
 
     let savedCount = 0;
+    if (window.DotDB && window.DotDB.isLive) await this.ensureWorldRow();
     for (const t of parsed.tables) {
       if (window.DotDB && window.DotDB.isLive) {
         try { if (await window.DotDB.createTable(this.state.worldId, t.name, t.cols, t.perPlayer)) savedCount++; } catch (e) {}
@@ -3326,6 +3327,7 @@ class Component extends DCLogic {
 
     let saved = false;
     if (window.DotDB && window.DotDB.isLive) {
+      await this.ensureWorldRow();
       try { saved = await window.DotDB.createTable(this.state.worldId, name, cols, this.state.newPerPlayer); } catch (e) {}
     }
     this._rows = this._rows || {};
@@ -3347,7 +3349,20 @@ class Component extends DCLogic {
     this.setState((p) => ({ rowsView: Object.assign({}, p.rowsView, { [tbl]: (this._rows[tbl] || []).slice() }) }));
   }
 
-  // 표가 없으면 만들고, 빠진 컴럼도 채운다.
+  // 작품 행이 서버에 있는지 확인한다 — 표·행·블록은 모두 이 행에 매달린다.
+  // 이것이 없으면 표를 만들어도 서버에 붙지 않아 데이터베이스 탭에 안 보인다.
+  async ensureWorldRow() {
+    if (!(window.DotDB && window.DotDB.isLive)) return false;
+    if (this._worldRowFor === this.state.worldId) return true;
+    try {
+      const r = await window.DotDB.ensureWorld(this.state.worldId, (this.state.scenes[0] || {}).name);
+      const ok = !r || r.ok !== false;
+      if (ok) this._worldRowFor = this.state.worldId;
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  // 표가 없으면 만들고, 빠진 컬럼도 채운다.
   // 이것이 없어서 «닿으면 데이터베이스에 추가» 같은 블록이 조용히 실패했다.
   async ensureTable(tbl, cols, perPlayer) {
     const name = String(tbl || "").trim();
@@ -3357,6 +3372,8 @@ class Component extends DCLogic {
     if (!t0) {
       let saved = false;
       if (window.DotDB && window.DotDB.isLive && window.DotDB.upsertTable) {
+        // 작품 행이 먼저 있어야 표가 그 아래에 붙는다
+        await this.ensureWorldRow();
         try { saved = await window.DotDB.upsertTable(this.state.worldId, name, want, !!perPlayer); } catch (e) {}
       }
       this._rows = this._rows || {};
@@ -3399,6 +3416,7 @@ class Component extends DCLogic {
     this.localRow(tbl, row);
     if (window.DotDB && window.DotDB.isLive && window.DotDB.addRowByName) {
       const t0 = (this.state.tables || []).find((x) => x.name === tbl);
+      await this.ensureWorldRow();
       try {
         const ok = await window.DotDB.addRowByName(this.state.worldId, tbl, row, !!(t0 && t0.perPlayer));
         if (ok) { await this.loadDbData(); return true; }
@@ -4944,6 +4962,7 @@ class Component extends DCLogic {
       icon: { comment: "lucide:message-circle", like: "lucide:heart", remake: "lucide:git-fork", use: "lucide:box", follow: "lucide:user-plus", report: "lucide:flag" }[n.kind] || "lucide:bell",
       color: { comment: "#4A5FD1", like: "#B8496F", remake: "#7C5CD6", use: "#2F6F5E", follow: "#D97706", report: "#C0392B" }[n.kind] || "#2F6F5E",
       who: (n.actor && n.actor.display_name) || "",
+      avatarUrl: (n.actor && n.actor.avatar_url) || "",
       body: n.body || n.kind || "새 소식",
       ago: this.agoText(n.created_at),
       t: n.body || n.kind, d: this.agoText(n.created_at), read: !!n.read_at,
@@ -4961,6 +4980,7 @@ class Component extends DCLogic {
   async pushTable(name, cols, perPlayer) {
     if (!(window.DotDB && window.DotDB.isLive && window.DotDB.upsertTable)) return false;
     let ok = false;
+    await this.ensureWorldRow();
     try { ok = await window.DotDB.upsertTable(this.state.worldId, name, cols, !!perPlayer); } catch (e) { ok = false; }
     this.setState((p) => ({
       tables: (p.tables || []).map((t) => (t.name === name ? Object.assign({}, t, { saved: ok }) : t)),
@@ -6502,6 +6522,8 @@ class Component extends DCLogic {
         id: r.id,
         author: (r.profiles && r.profiles.display_name) || "손님",
         handle: (r.profiles && r.profiles.handle) || "unknown",
+        // 글쓴이의 진짜 프로필 사진 (없으면 화면에서 첫 글자 동그라미로 대신한다)
+        avatarUrl: (r.profiles && r.profiles.avatar_url) || "",
         body: r.body, ago: this.agoText(r.created_at),
         likes: 0, dislikes: 0, depth: r.parent_id ? 1 : 0,
       })),
@@ -6518,6 +6540,7 @@ class Component extends DCLogic {
         [postId]: rows.map((r) => ({
           id: r.id,
           author: (r.profiles && r.profiles.display_name) || "손님",
+          avatarUrl: (r.profiles && r.profiles.avatar_url) || "",
           body: r.body, ago: this.agoText(r.created_at),
         })),
       }),
@@ -7641,7 +7664,7 @@ class Component extends DCLogic {
         return {
           author: c.author, handle: c.handle, body: c.body, ago: c.ago,
           indent: (c.depth || 0) * 46 + "px", isOwner: !!c.owner,
-          sprite: spr(authorArt[c.author] || "slime"),
+          sprite: c.avatarUrl ? cssUrl(c.avatarUrl) : spr(authorArt[c.author] || "slime"),
           likes: (c.likes || 0) + (r === "like" ? 1 : 0),
           dislikes: (c.dislikes || 0) + (r === "dislike" ? 1 : 0),
           likeColor: r === "like" ? "#B8496F" : "#8A9099",
