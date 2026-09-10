@@ -3,6 +3,42 @@
 (function () {
   const env = window.__ENV || {};
   let client = null;
+  let revivePublic = async () => {};
+
+  // ── 창 하나만 세션을 갱신한다 (리더) ──────────────────────
+  // 창을 두 개 열면 서로의 갱신 토큰을 무효로 만들며 끝없이 재로그인해
+  // 화면이 멈춘다. 그래서 «쓰기» 는 리더 한 곳만 한다.
+  const TAB = "t" + Math.random().toString(36).slice(2, 10);
+  const LEAD = "dotverse.leader";
+  const LEASE = 7000;   // 이 시간 안에 도장을 못 찍으면 리더 자리를 넘긴다
+
+  function readLease() {
+    try { return JSON.parse(localStorage.getItem(LEAD) || "null"); } catch (e) { return null; }
+  }
+  function isLeader() {
+    const l = readLease();
+    if (!l || Date.now() - l.t > LEASE) return claimLeader();
+    return l.id === TAB;
+  }
+  function claimLeader() {
+    try {
+      localStorage.setItem(LEAD, JSON.stringify({ id: TAB, t: Date.now() }));
+      // 같은 순간에 두 창이 적었을 수 있다 — 다시 읽어 확인한다
+      const l = readLease();
+      return !!l && l.id === TAB;
+    } catch (e) { return true; }
+  }
+  function holdLease() {
+    const l = readLease();
+    if (l && l.id === TAB) {
+      try { localStorage.setItem(LEAD, JSON.stringify({ id: TAB, t: Date.now() })); } catch (e) {}
+    }
+  }
+  setInterval(holdLease, 3000);
+  window.addEventListener("beforeunload", () => {
+    const l = readLease();
+    if (l && l.id === TAB) { try { localStorage.removeItem(LEAD); } catch (e) {} }
+  });
   let cachedUser = null;      // 지금 로그인한 사람 (세션에서 읽어 둔다)
   let userPromise = null;     // 동시에 여러 곳에서 불러도 한 번만 처리한다
   let anonBlocked = false;    // 익명 로그인이 꺼져 있는 프로젝트
@@ -14,7 +50,10 @@
     client = window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         persistSession: true,
-        autoRefreshToken: true,
+        // 라이브러리 자동 갱신을 끈다. 창을 여러 개 열면 서로의 갱신 토큰을
+        // 무효로 만들며 끝없이 재발급(=화면 멈춤)이 일어난다. 아래 revive() 가
+        // 창 하나만 갱신하도록 조절한다.
+        autoRefreshToken: false,
         detectSessionInUrl: true,
         flowType: "pkce",
         storageKey: "dotverse.auth",
@@ -33,20 +72,32 @@
 
     // 탭으로 돌아오거나 다시 온라인이 되면 세션을 되살린다.
     // 작업 중에는 끊기지 않아야 하므로, 만료가 가까우면 미리 갱신한다.
+    let reviving = false;
+    let lastRefresh = 0;
     const revive = async () => {
-      if (!client) return;
+      if (!client || reviving) return;
+      reviving = true;
       try {
         const { data } = await client.auth.getSession();
         const s = data && data.session;
         if (!s) { cachedUser = null; return; }
         cachedUser = s.user || null;
-        const left = (s.expires_at || 0) * 1000 - Date.now();
-        if (left < 10 * 60 * 1000) await client.auth.refreshSession();
-      } catch (e) {}
+        // expires_at 이 없으면 만료 시각을 알 수 없다 — 그때는 건드리지 않는다.
+        // (예전에는 값이 없으면 left 가 큰 음수가 되어 부를 때마다 갱신했다)
+        const exp = Number(s.expires_at);
+        if (!isFinite(exp) || exp <= 0) return;
+        const left = exp * 1000 - Date.now();
+        // 만료 10분 전부터, 그리고 최소 2분 간격으로만 갱신한다
+        if (left >= 10 * 60 * 1000) return;
+        if (Date.now() - lastRefresh < 2 * 60 * 1000) return;
+        if (!isLeader()) return;   // 리더가 아니면 갱신하지 않는다
+        lastRefresh = Date.now();
+        await client.auth.refreshSession();
+      } catch (e) {} finally { reviving = false; }
     };
+    revivePublic = revive;
     document.addEventListener("visibilitychange", () => { if (!document.hidden) revive(); });
     window.addEventListener("online", revive);
-    window.addEventListener("focus", revive);
     setInterval(revive, 5 * 60 * 1000);
     revive();
 
@@ -290,6 +341,8 @@
       return error ? null : data;
     },
     // ── 로그인 (익명 포함) ────────────────────────────────────
+    // 자동 갱신을 껐으므로, 만료가 가까우면 여기서 한 번 되살린다
+    async touch() { try { await revivePublic(); } catch (e) {} },
     // 로컬 세션에서 읽는다 — 네트워크 왕복이 없어 빠르고, 잠깐 끊겨도 로그아웃되지 않는다
     async me() {
       const c = init();
@@ -300,6 +353,9 @@
       return cachedUser;
     },
     get anonBlocked() { return anonBlocked; },
+    // 창마다 다른 전송용 id (신원은 기기 id, 전송은 창 id 로 나눈다)
+    get tabId() { return TAB; },
+    get isLeader() { return isLeader(); },
     // 글·댓글·신고는 로그인이 필요하다. 없으면 익명 세션을 만든다.
     async ensureUser() {
       const c = init();
@@ -307,11 +363,20 @@
       const u0 = await this.me();
       if (u0) return u0;
       if (anonBlocked) return null;
+      // 손님 계정은 리더 창만 만든다. 팔로워가 함께 만들면 서로의 세션을
+      // 무효로 만들며 끝없이 재발급되어 화면이 멈춘다.
+      if (!isLeader()) {
+        // 리더가 만들어 둔 세션이 저장소에 나타나면 그것을 쓴다
+        const { data } = await c.auth.getSession();
+        cachedUser = (data && data.session && data.session.user) || null;
+        return cachedUser;
+      }
       // 여러 곳에서 동시에 불러도 익명 계정을 한 번만 만든다 (계정이 우수수 생기던 원인)
       if (userPromise) return await userPromise;
       userPromise = (async () => {
         let u = null;
         try {
+          try { sessionStorage.setItem("dotverse.anonAt", String(Date.now())); } catch (e) {}
           const { data, error } = await c.auth.signInAnonymously();
           if (error) {
             anonBlocked = true;
@@ -1032,6 +1097,28 @@
       const id = await this.tableIdByName(worldId, name, perPlayer);
       if (!id) return false;
       return await this.addRow(worldId, id, row, perPlayer);
+    },
+    // 이름으로 표의 행을 모두 읽는다 (순위판·평균·순위 블록이 쓴다)
+    async rowsByName(worldId, name, limit = 200) {
+      const c = init();
+      if (!c) return null;
+      const id = await this.tableIdByName(worldId, name, false);
+      if (!id) return null;
+      const { data: u } = await c.auth.getUser();
+      let q = c.from("game_rows").select("id,data,player_id,created_at").eq("table_id", id);
+      if (u && u.user) q = q.or("player_id.is.null,player_id.eq." + u.user.id);
+      const { data, error } = await q.order("created_at", { ascending: false }).limit(limit);
+      if (error || !data) return null;
+      return data.map((r) => r.data || {});
+    },
+    // 표의 행을 모두 지운다 (표 자체는 남는다)
+    async clearRows(worldId, name) {
+      const c = init();
+      if (!c) return false;
+      const id = await this.tableIdByName(worldId, name, false);
+      if (!id) return false;
+      const { error } = await c.from("game_rows").delete().eq("table_id", id);
+      return !error;
     },
     // 표의 마지막 행에서 컬럼 하나를 읽고 쓴다
     async readCell(worldId, name, col) {
