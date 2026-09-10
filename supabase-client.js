@@ -15,11 +15,23 @@
   function readLease() {
     try { return JSON.parse(localStorage.getItem(LEAD) || "null"); } catch (e) { return null; }
   }
+  // 읽기만 한다 — 예전에는 여기서 저장소에 적어서, 두 창이 서로에게
+  // storage 사건을 쏘아대며 부딪혔다.
   function isLeader() {
     const l = readLease();
-    if (!l || Date.now() - l.t > LEASE) return claimLeader();
-    return l.id === TAB;
+    return !!l && l.id === TAB;
   }
+  let lastClaim = 0;
+  function claimIfVacant() {
+    const l = readLease();
+    if (l && l.id === TAB) return true;
+    if (l && Date.now() - l.t <= LEASE) return false;   // 살아 있는 리더가 있다
+    if (Date.now() - lastClaim < 2000) return false;    // 너무 자주 잡지 않는다
+    lastClaim = Date.now();
+    return claimLeader();
+  }
+  setInterval(claimIfVacant, 4000);
+  claimIfVacant();
   function claimLeader() {
     try {
       localStorage.setItem(LEAD, JSON.stringify({ id: TAB, t: Date.now() }));
@@ -39,6 +51,33 @@
     const l = readLease();
     if (l && l.id === TAB) { try { localStorage.removeItem(LEAD); } catch (e) {} }
   });
+  // ── 세션 저장 칸을 창마다 따로 둔다 ──────────────────────────
+  // 두 창이 «같은 칸» 을 쓰면 각자의 인증 클라이언트가 한 세션을 동시에
+  // 읽고 쓰면서 서로의 토큰을 갈아 치우고, 결국 화면이 멈춘다.
+  // 그래서 실제 칸은 창마다 다르게 하고(sessionStorage), 세션 «사본» 하나만
+  // localStorage 에 남겨 새 창이 같은 로그인을 물려받게 한다.
+  const MIRROR = "dotverse.session";
+  const tabStorage = {
+    getItem(k) {
+      try {
+        const mine = sessionStorage.getItem(k + "." + TAB);
+        if (mine !== null) return mine;
+        // 이 창에 아직 세션이 없다 — 다른 창이 남긴 사본을 물려받는다
+        return localStorage.getItem(MIRROR);
+      } catch (e) { return null; }
+    },
+    setItem(k, v) {
+      try { sessionStorage.setItem(k + "." + TAB, v); } catch (e) {}
+      // 사본은 토큰이 실제로 바뀔 때만 적는다 (같은 값을 되쓰지 않는다)
+      try { if (localStorage.getItem(MIRROR) !== v) localStorage.setItem(MIRROR, v); } catch (e) {}
+    },
+    removeItem(k) {
+      try { sessionStorage.removeItem(k + "." + TAB); } catch (e) {}
+      // 로그아웃은 이 브라우저 전체에 적용된다
+      try { localStorage.removeItem(MIRROR); } catch (e) {}
+    },
+  };
+
   let cachedUser = null;      // 지금 로그인한 사람 (세션에서 읽어 둔다)
   let userPromise = null;     // 동시에 여러 곳에서 불러도 한 번만 처리한다
   let anonBlocked = false;    // 익명 로그인이 꺼져 있는 프로젝트
@@ -56,8 +95,9 @@
         autoRefreshToken: false,
         detectSessionInUrl: true,
         flowType: "pkce",
+        // 칸 이름은 그대로 두고, 저장 방식이 창마다 나눠 준다 (위 tabStorage)
         storageKey: "dotverse.auth",
-        storage: window.localStorage,
+        storage: tabStorage,
       },
       realtime: { params: { eventsPerSecond: 20 } },
       global: { headers: { "x-client-info": "dotverse/1" } },
@@ -461,7 +501,7 @@
       const c = init();
       if (!c) return null;
       let q = c.from("comments")
-        .select("id,body,parent_id,created_at,profiles!comments_author_id_fkey(display_name,handle)")
+        .select("id,body,parent_id,created_at,profiles!comments_author_id_fkey(display_name,handle,avatar_url)")
         .order("created_at", { ascending: true })
         .limit(200);
       q = postId ? q.eq("post_id", postId) : q.eq("world_id", worldId);
@@ -1035,7 +1075,7 @@
       let data = null;
       const r1 = await c
         .from("notifications")
-        .select("*, actor:actor_id(display_name,handle)")
+        .select("*, actor:actor_id(display_name,handle,avatar_url)")
         .eq("user_id", u.id)
         .order("created_at", { ascending: false })
         .limit(40);
