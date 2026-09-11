@@ -3356,9 +3356,26 @@ class Component extends DCLogic {
     if (this._worldRowFor === this.state.worldId) return true;
     try {
       const r = await window.DotDB.ensureWorld(this.state.worldId, (this.state.scenes[0] || {}).name);
-      const ok = !r || r.ok !== false;
-      if (ok) this._worldRowFor = this.state.worldId;
-      return ok;
+      if (!r || r.ok !== false) { this._worldRowFor = this.state.worldId; return true; }
+      // 이 작품 번호를 이미 다른 사람이 쓰고 있다 (예: 예전 손님 계정).
+      // 그러면 표·행·블록을 그 아래에 붙일 권한이 없어 조용히 다 실패한다.
+      // 새 번호를 받아 이 초안을 옮긴다.
+      if (r.reason === "taken") {
+        const fresh = "w" + Math.random().toString(36).slice(2, 11);
+        const r2 = await window.DotDB.ensureWorld(fresh, (this.state.scenes[0] || {}).name);
+        if (r2 && r2.ok === false) return false;
+        const old = this.state.worldId;
+        await new Promise((res) => this.setState({ worldId: fresh }, res));
+        this._worldRowFor = fresh;
+        this.say("이 작품 번호가 이미 쓰이고 있어 새 번호로 옮겼습니다.");
+        // 이미 만들어 둔 표를 새 번호 아래에 다시 붙인다
+        for (const t of (this.state.tables || [])) {
+          try { await window.DotDB.upsertTable(fresh, t.name, t.cols, t.perPlayer); } catch (e) {}
+        }
+        if (old !== fresh) this.persistMap();
+        return true;
+      }
+      return false;
     } catch (e) { return false; }
   }
 
