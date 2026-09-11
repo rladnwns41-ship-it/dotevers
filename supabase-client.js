@@ -30,7 +30,12 @@
     lastClaim = Date.now();
     return claimLeader();
   }
-  setInterval(claimIfVacant, 4000);
+  // 창마다 조금씩 다른 때에 자리를 잡으러 온다 — 같은 순간에 둘이 덤비면
+  // 서로의 이름을 덮어써서 아무도 리더가 되지 못한다.
+  setTimeout(() => {
+    claimIfVacant();
+    setInterval(claimIfVacant, 4000 + Math.floor(Math.random() * 1500));
+  }, Math.floor(Math.random() * 1200));
   claimIfVacant();
   function claimLeader() {
     try {
@@ -95,8 +100,10 @@
         autoRefreshToken: false,
         detectSessionInUrl: true,
         flowType: "pkce",
-        // 칸 이름은 그대로 두고, 저장 방식이 창마다 나눠 준다 (위 tabStorage)
-        storageKey: "dotverse.auth",
+        // 칸 이름도 창마다 다르게 둔다 — 이름이 같으면 인증 라이브러리가
+        // 「같은 칸을 여러 곳에서 쓴다」 고 경고하고, 실제로 서로의 토큰을
+        // 갈아 치울 수 있다. 로그인 물려받기는 tabStorage 의 사본이 맡는다.
+        storageKey: "dotverse.auth." + TAB,
         storage: tabStorage,
       },
       realtime: { params: { eventsPerSecond: 20 } },
@@ -130,7 +137,7 @@
         // 만료 10분 전부터, 그리고 최소 2분 간격으로만 갱신한다
         if (left >= 10 * 60 * 1000) return;
         if (Date.now() - lastRefresh < 2 * 60 * 1000) return;
-        if (!isLeader()) return;   // 리더가 아니면 갱신하지 않는다
+        if (!claimIfVacant()) return;   // 리더 창만 갱신한다
         lastRefresh = Date.now();
         await client.auth.refreshSession();
       } catch (e) {} finally { reviving = false; }
@@ -405,11 +412,18 @@
       if (anonBlocked) return null;
       // 손님 계정은 리더 창만 만든다. 팔로워가 함께 만들면 서로의 세션을
       // 무효로 만들며 끝없이 재발급되어 화면이 멈춘다.
-      if (!isLeader()) {
-        // 리더가 만들어 둔 세션이 저장소에 나타나면 그것을 쓴다
-        const { data } = await c.auth.getSession();
-        cachedUser = (data && data.session && data.session.user) || null;
-        return cachedUser;
+      if (!claimIfVacant()) {
+        // 리더가 만들어 둘 때까지 잠깐 기다린 뒤, 그 세션을 물려받는다.
+        // (예전에는 곧바로 null 을 돌려주어 팔로워 창에서는 저장·채팅이 안 됐다)
+        for (let i = 0; i < 20; i++) {
+          const { data } = await c.auth.getSession();
+          const u = data && data.session && data.session.user;
+          if (u) { cachedUser = u; return u; }
+          // 그 사이에 리더가 사라졌다면 내가 맡는다
+          if (claimIfVacant()) break;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+        if (!isLeader()) return null;
       }
       // 여러 곳에서 동시에 불러도 익명 계정을 한 번만 만든다 (계정이 우수수 생기던 원인)
       if (userPromise) return await userPromise;
