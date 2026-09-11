@@ -37,6 +37,7 @@
     width: 0.42em; height: 0.42em; min-width: 0.42em; min-height: 0.42em;
     align-self: center;
   }
+  @keyframes dv-spin { to { transform: rotate(360deg); } }
   @keyframes dv-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
   @keyframes dv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @keyframes dv-sheen { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
@@ -2466,6 +2467,16 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ isLinking }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:120;background:rgba(11,13,16,0.72);display:flex;align-items:center;justify-content:center">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;background:#16181D;border:1px solid rgba(111,211,199,0.3);border-radius:14px;padding:26px 34px">
+        <span style="width:26px;height:26px;border-radius:99px;border:3px solid rgba(111,211,199,0.25);border-top-color:#6FD3C7;animation:dv-spin 0.8s linear infinite;display:block"></span>
+        <span style="font-family:Galmuri11,monospace;font-size:12.5px;color:#6FD3C7">{{ linking }}</span>
+        <span style="font-size:11.5px;color:rgba(244,241,234,0.55);text-align:center;max-width:230px;text-wrap:pretty">멀티플레이·실시간 DB 블록이 있어 서버에 먼저 붙습니다.</span>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ bigPlay }}" hint-placeholder-val="{{ false }}">
     <div ref="{{ fullRef }}" style="position:fixed;inset:0;z-index:95;background:#0B0D10;overflow:hidden">
       <div style="position:absolute;left:0;right:0;top:0;z-index:80;display:flex;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(rgba(11,13,16,0.85),rgba(11,13,16,0))">
@@ -2941,6 +2952,7 @@ class Component extends DCLogic {
     askMsg: "",
     askInput: "",
     bigPlay: false,
+    linking: "",
     camT: "none",
     mapW: 40,
     mapH: 25,
@@ -3581,10 +3593,68 @@ class Component extends DCLogic {
     return src.filter((o) => o.on !== false).slice().reverse();
   }
 
+  // 이 장면의 스크립트가 서버를 쓰는지 봤다 (멀티플레이·실시간 DB 블록)
+  needsServer() {
+    const B = window.DotBlocks;
+    if (!B || !B.DEFS) return false;
+    const stacks = this.sceneStacks();
+    let found = false;
+    const walk = (n) => {
+      while (n && !found) {
+        const d = B.DEFS[n.def];
+        if (d && (d.cat === "\uba40\ud2f0\ud50c\ub808\uc774" || d.cat === "\uc2e4\uc2dc\uac04 DB")) { found = true; return; }
+        Object.keys(n.inputs || {}).forEach((k) => {
+          const v = n.inputs[k];
+          if (v && typeof v === "object" && v.def) walk(v);
+        });
+        (n.body || []).forEach(walk);
+        (n.body2 || []).forEach(walk);
+        n = n.next;
+      }
+    };
+    Object.keys(stacks).forEach((k) => (stacks[k] || []).forEach((s) => walk(s.root)));
+    return found;
+  }
+
+  // 서버를 쓰는 블록이 있으면 연결이 끝나길 기다린다.
+  // 돌리는 것을 말리지는 않는다 — 연결이 안 되면 알리고 그대로 진행한다.
+  async awaitLiveIfNeeded() {
+    if (!this.needsServer()) return true;
+    const D = window.DotDB;
+    const ready = () => !!(window.DotDB && window.DotDB.isLive);
+    // 서버 주소가 아예 없으면 기다릴 이유가 없다 — 곧바로 브라우저 안에서 돌린다.
+    // (이것이 없으면 연결 없는 곳에서 가림막이 12초 동안 화면을 덮었다)
+    const configured = !!(window.__ENV && window.__ENV.SUPABASE_URL) || ready();
+    if (!configured) {
+      this.say("서버 연결이 없어 이 작품은 브라우저 안에서만 돌아갑니다 — 멀티플레이·실시간 DB 블록은 저장되지 않습니다.", "warn");
+      return true;
+    }
+    // 어떤 호출이 멈춰도 실행 버튼이 영영 잠기지 않게 시간 제한을 둔다
+    const cap = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+    this.setState({ linking: "서버에 연결하고 있습니다…" });
+    try {
+      for (let i = 0; i < 60 && !ready(); i++) await new Promise((r) => setTimeout(r, 200));
+      if (!ready()) {
+        this.say("서버에 연결하지 못했습니다 — 이 작품은 브라우저 안에서만 돌아갑니다.", "warn");
+        return true;
+      }
+      if (D && D.ensureUser) await cap(D.ensureUser(), 8000);
+      await cap(this.ensureWorldRow(), 8000);
+      this.say("서버에 연결되었습니다 — 멀티플레이·실시간 DB 블록을 쓸 수 있습니다.");
+    } catch (err) {
+      this.say("서버 연결 중 문제가 있었습니다 — 그대로 실행합니다.", "warn");
+    } finally {
+      this.setState({ linking: "" });
+    }
+    return true;
+  }
   runAll = async () => {
     const B = window.DotBlocks;
     if (!B) return;
     if (this.state.running) return this.stopAll();
+    // 이 장면에 멀티플레이·실시간 DB 블록이 있으다면 서버에 붙을 리를 주고 시작한다.
+    // 이것이 없으면 연결 전에 스크립트가 지나가 버려 조용히 아무 일도 에 어나지 않는다.
+    if (!(await this.awaitLiveIfNeeded())) return;
     // 실행용 사본 — 정지하면 원래 상태로 되돌아간다
     this._live = JSON.parse(JSON.stringify(this.curObjects()));
     this._lists = {};
@@ -7983,6 +8053,8 @@ class Component extends DCLogic {
       fullRef: this.fullRef,
       closeBigLabel: st.route === "play" ? "닫기" : "작업화면으로",
       bigPlay: !!st.bigPlay,
+      linking: st.linking || "",
+      isLinking: !!st.linking,
       playTitle: (st.worldTitle || "제목 없는 작품") + " · " + ((st.scenes.find((x) => x.id === st.sceneId) || {}).name || ""),
       playIcon: st.running ? "lucide:rotate-ccw" : "lucide:play",
       playLabel: st.running ? "다시 시작" : "시작",
