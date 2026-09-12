@@ -2988,6 +2988,7 @@ class Component extends DCLogic {
         return v;
       } catch (e) { return "w" + Math.random().toString(36).slice(2, 10); }
     })(),
+    viewWorldId: null,  // 작품 페이지에서 보고 있는 남의 작품 id (내 worldId와 분리)
     board: "tips",
     assetKind: "전체",
     picked: "#4f9e7f",
@@ -4840,7 +4841,12 @@ class Component extends DCLogic {
     } catch (err) { this._mpBc = null; }
 
     const send = () => {
-      const o = this._mpSelf;
+      let o = this._mpSelf;
+      // 플레이어 오브젝트가 지정 안 됐으면 첫 오브젝트를 자동으로 쓴다
+      if (!o && this._live && this._live.length) {
+        o = this._live.find((x) => x.player) || this._live[0];
+        this._mpSelf = o;
+      }
       if (!o) return;
       const p = {
         id: this._mpId, room: this._mpRoom, name: this._mpName,
@@ -4868,7 +4874,7 @@ class Component extends DCLogic {
       // 오래 소식이 없는 사람은 화면에서 지운다
       let gone = false;
       Object.keys(this._peers).forEach((k) => {
-        if (Date.now() - this._peers[k].t > 6000) { delete this._peers[k]; gone = true; }
+        if (Date.now() - this._peers[k].t > 20000) { delete this._peers[k]; gone = true; }
       });
       if (gone) {
         if (this._rt) this._rt.start(this.sceneStacks(), "mpleave");
@@ -5520,12 +5526,13 @@ class Component extends DCLogic {
 
   // 작품 추천 · 비추천을 데이터베이스에 남긴다
   reactWorld(dir) {
-    const key = "w:" + this.state.worldId;
+    const wid = this.state.viewWorldId || this.state.worldId;
+    const key = "w:" + wid;
     const prev = this.state.reacts[key];
     const next = prev === dir ? null : dir;
     this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: next }) }));
     if (!(window.DotDB && window.DotDB.isLive)) return;
-    window.DotDB.vote("world", this.state.worldId, next === null ? null : (next === "like" ? 1 : -1))
+    window.DotDB.vote("world", wid, next === null ? null : (next === "like" ? 1 : -1))
       .then((ok) => {
         if (ok === false || ok === null) {
           // 서버가 받지 않았으면 눌린 채로 두지 않는다
@@ -6488,7 +6495,8 @@ class Component extends DCLogic {
   };
 
   playNewTab = () => {
-    const url = location.href.split("#")[0] + "#play";
+    const wid = this.state.viewWorldId || this.state.worldId;
+    const url = location.href.split("#")[0] + "#play&w=" + wid;
     const w = window.open(url, "_blank");
     if (!w) this.say("팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.");
   };
@@ -6681,7 +6689,25 @@ class Component extends DCLogic {
       if (document.hidden) return;
       if (window.DotDB && window.DotDB.touch) window.DotDB.touch();
     }, 5 * 60 * 1000);
-    if ((location.hash || "") === "#play") {
+    if ((location.hash || "").startsWith("#play")) {
+      // w= 파라미터가 있으면 그 작품을 로드한다 (남의 작품 플레이)
+      const m = (location.hash || "").match(/[&#]w=([^&]+)/);
+      if (m && m[1] && m[1] !== this.state.worldId) {
+        // 내 작업 worldId는 건드리지 않고, 플레이할 작품만 따로 로드
+        this._playWorldId = m[1];
+        if (window.DotDB && window.DotDB.isLive) {
+          window.DotDB.loadStudio(m[1]).then((ver) => {
+            if (ver && ver.scene) {
+              const sc = ver.scene;
+              this.setState({
+                scenes: sc.scenes || this.state.scenes,
+                objectsBy: sc.objectsBy || this.state.objectsBy,
+                wsBy: (ver.blocks) || {},
+              });
+            }
+          });
+        }
+      }
       // 400ms 고정 대기로는 장면·오브젝트·도트가 아직 안 올라와 있어
       // 작업화면에서 «테스트» 한 것과 다른 화면이 뜬다. 준비될 때까지 기다린다.
       const ready = () => this._seeded
@@ -6692,6 +6718,9 @@ class Component extends DCLogic {
         waited += 100;
         if (!ready() && waited < 8000) return;
         clearInterval(wait);
+        // 남의 작품이면 그 worldId를 멀티플레이·DB에 쓴다
+        const pid = this._playWorldId;
+        if (pid) this.setState({ worldId: pid });
         this.setState({ route: "play", bigPlay: true }, () => this.runAll());
       }, 100);
     }
@@ -7717,7 +7746,7 @@ class Component extends DCLogic {
     };
     const spr = (k) => cssUrl(this.spriteOf(k));
     // 글쓴이·제작자 아바타는 실제 프로필(avatar_art)에서 가져온다
-    const mine = this.isMyWorld();
+    const mine = this.isMyWorld(st.viewWorldId || st.worldId);
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
     const faceUrl = {}, faceArt = {};
@@ -7789,7 +7818,7 @@ class Component extends DCLogic {
       dislikes: kfmt(w.dislikes), comments: kfmt(w.comments), playsK: kfmt(w.plays),
       sprite: spr(w.art), authorSprite: face(w.author, w.handle),
       go: () => {
-        this.go("world", { worldId: w.id })();
+        this.go("world", { viewWorldId: w.id })();
         this.loadWorldThread(w.id);
         if (window.DotDB && window.DotDB.isLive) window.DotDB.countPlay(w.id);
       },
@@ -7904,7 +7933,7 @@ class Component extends DCLogic {
           }
           if (n.link && n.link.indexOf("/world/") === 0) {
             const id = n.link.replace("/world/", "");
-            this.go("world", { worldId: id })();
+            this.go("world", { viewWorldId: id })();
             this.loadWorldThread(id);
           } else if (n.link && n.link.indexOf("/post/") === 0) {
             this.go("community", { postOpen: n.link.replace("/post/", "") })();
@@ -7980,7 +8009,7 @@ class Component extends DCLogic {
       },
       mapHelp: () => this.say("빈 곳을 끌면 화면 이동 · Alt+드래그도 이동 · 휠은 확대/축소입니다."),
       shareWorld: async () => {
-        const url = (typeof location !== "undefined" ? location.href.split("#")[0] : "") + "#w=" + st.worldId;
+        const url = (typeof location !== "undefined" ? location.href.split("#")[0] : "") + "#w=" + (st.viewWorldId || st.worldId);
         try {
           if (navigator.share) { await navigator.share({ title: "Dotverse", url: url }); return; }
           await navigator.clipboard.writeText(url);
@@ -8155,7 +8184,7 @@ class Component extends DCLogic {
           all: this.go("search", { catFilter: k }),
           items: groups[k].map((w) => ({
             title: w.title, author: w.author, likes: kfmt(w.likes), playsK: kfmt(w.plays),
-            sprite: spr(w.art), go: this.go("world", { worldId: w.id }),
+            sprite: spr(w.art), go: this.go("world", { viewWorldId: w.id }),
           })),
         }));
       })()),
@@ -8163,8 +8192,8 @@ class Component extends DCLogic {
       // ───────── 월드 상세
       world: (() => {
         const src = (st.liveWorlds && st.liveWorlds.length) ? st.liveWorlds : [];
-        const w = src.find((x) => x.id === st.worldId) || src[0] || {
-          id: st.worldId, title: "아직 게시된 작품이 없습니다", summary: "스튜디오에서 만들고 «게시하기» 를 누르면 여기에 나타납니다.",
+        const w = src.find((x) => x.id === st.viewWorldId) || src[0] || {
+          id: st.viewWorldId, title: "아직 게시된 작품이 없습니다", summary: "스튜디오에서 만들고 «게시하기» 를 누르면 여기에 나타납니다.",
           author: "—", handle: "—", catName: "—", online: 0, likes: 0, dislikes: 0, comments: 0, plays: 0, art: "portal", tags: [],
         };
         const r = st.reacts["w:" + w.id];
@@ -8190,10 +8219,10 @@ class Component extends DCLogic {
           ],
         };
       })(),
-      likeBg: st.reacts["w:" + st.worldId] === "like" ? "#B8496F" : "#FFFFFF",
-      likeFg: st.reacts["w:" + st.worldId] === "like" ? "#FFFFFF" : "#B8496F",
-      dislikeBg: st.reacts["w:" + st.worldId] === "dislike" ? "#16181D" : "#FFFFFF",
-      dislikeFg: st.reacts["w:" + st.worldId] === "dislike" ? "#FFFFFF" : "#6E7480",
+      likeBg: st.reacts["w:" + st.viewWorldId] === "like" ? "#B8496F" : "#FFFFFF",
+      likeFg: st.reacts["w:" + st.viewWorldId] === "like" ? "#FFFFFF" : "#B8496F",
+      dislikeBg: st.reacts["w:" + st.viewWorldId] === "dislike" ? "#16181D" : "#FFFFFF",
+      dislikeFg: st.reacts["w:" + st.viewWorldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
       remakeLabel: mine ? "수정하기" : "리메이크",
@@ -8204,7 +8233,7 @@ class Component extends DCLogic {
       remakeWorld: async () => {
         // isMyWorld()는 비동기 캐시 전에 false를 반환할 수 있다.
         // 클릭 시점에 서버에서 다시 확인한 뒤 처리한다.
-        const wid = st.worldId;
+        const wid = st.viewWorldId || st.worldId;
         let isMine = this.isMyWorld(wid);
         if (!isMine && window.DotDB && window.DotDB.isLive) {
           try {
@@ -8234,7 +8263,7 @@ class Component extends DCLogic {
         window.scrollTo(0, 0);
         this.say("사본을 만들었습니다.");
       },
-      reportWorld: () => this.openReport("world", st.worldId, "이 월드"),
+      reportWorld: () => this.openReport("world", st.viewWorldId, "이 월드"),
       playWorld: this.playNewTab,
       controls: [
         { k: "W A S D", d: "이동" }, { k: "Space", d: "상호작용 / 표현" },
@@ -8295,7 +8324,7 @@ class Component extends DCLogic {
         this.say(f.hit ? "필터에 걸린 표현을 가려서 등록했습니다." : "댓글을 등록했습니다.");
         if (window.DotDB && window.DotDB.isLive) {
           window.DotDB.addComment({ worldId: st.worldId, body: f.out })
-            .then(() => this.loadWorldThread(st.worldId));
+            .then(() => this.loadWorldThread(st.viewWorldId || st.worldId));
         }
       },
       usedAssets: assets.slice(0, 4),
@@ -9569,7 +9598,7 @@ class Component extends DCLogic {
         },
         go: () => {
           if (w.status === "published") {
-            this.go("world", { worldId: w.id })();
+            this.go("world", { viewWorldId: w.id })();
             this.loadWorldThread(w.id);
           } else {
             this.setState({ route: "studio", tab: "blocks", worldId: w.id }, () => this.loadStudio());
