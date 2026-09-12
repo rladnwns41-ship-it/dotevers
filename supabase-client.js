@@ -824,6 +824,35 @@
       }
       return (data || []).reverse();
     },
+    // 로비 — 어느 방에 몇 명 있는지 실시간으로 센다.
+    // presence 를 쓰므로 사람이 들어오고 나가는 것이 바로 반영된다.
+    lobbyChannel(worldId, room, onCounts) {
+      const cl = init();
+      if (!cl) return null;
+      const key = "k" + Math.random().toString(36).slice(2, 10);
+      const ch = cl.channel("lobby:" + worldId, { config: { presence: { key: key } } });
+      const push = () => {
+        let st = {};
+        try { st = ch.presenceState() || {}; } catch (e) { return; }
+        const counts = {};
+        Object.keys(st).forEach((k) => (st[k] || []).forEach((m) => {
+          const r = m && m.room;
+          if (!r) return;
+          counts[r] = (counts[r] || 0) + 1;
+        }));
+        onCounts(counts);
+      };
+      ch.on("presence", { event: "sync" }, push);
+      ch.subscribe(async (s) => {
+        if (s !== "SUBSCRIBED") return;
+        try { await ch.track({ room: room || "" }); } catch (e) {}
+        push();
+      });
+      return {
+        setRoom: (r) => { try { ch.track({ room: r || "" }); } catch (e) {} },
+        close: () => { try { cl.removeChannel(ch); } catch (e) {} },
+      };
+    },
     // 새 채팅이 들어오면 알려준다
     chatChannel(worldId, room, onRow) {
       const c = init();
