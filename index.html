@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOTVERSE</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -3813,8 +3814,10 @@ class Component extends DCLogic {
       // 5. 멀티플레이 — 통로를 실제로 열고 붙을 때까지 기다린다
       if (need.mp) {
         this.linkStep("mp", "멀티플레이 연결", "run");
+        this._mpTries = 0;  // 재시작 시 이전 카운트 초기화
         if (!this._mpOn) await this.mpStart(this.state.mpRoom || "기본방", null);
-        for (let i = 0; i < 40 && !this._mpReady; i++) await new Promise((r) => setTimeout(r, 200));
+        // mpStart 내부의 openCh()가 비동기이므로 채널이 열릴 때까지 충분히 대기 (최대 12초)
+        for (let i = 0; i < 60 && !this._mpReady; i++) await new Promise((r) => setTimeout(r, 200));
         this.linkStep("mp", "멀티플레이 연결", this._mpReady ? "ok" : "fail",
           this._mpReady ? (this._mpRoom || "") : "통로 안 열림");
         if (!this._mpReady) failed = true;
@@ -4818,9 +4821,9 @@ class Component extends DCLogic {
               // 끊기면 되살린다 — 방에 있는 동안은 계속 이어져야 한다
               // 다시 붙되 점점 뜸하게, 그리고 6번까지만 (두 창이 서로를 끊는 폭주 방지)
               this._mpTries = (this._mpTries || 0) + 1;
-              if (this._mpOn && this._mpTries <= 6) {
+              if (this._mpOn && this._mpTries <= 12) {
                 clearTimeout(this._mpRetry);
-                this._mpRetry = setTimeout(openCh, Math.min(30000, 2000 * this._mpTries));
+                this._mpRetry = setTimeout(openCh, Math.min(15000, 1000 * this._mpTries));
               }
             }
           });
@@ -4927,6 +4930,7 @@ class Component extends DCLogic {
 
   mpStop = () => {
     this._mpTries = 0;
+    this._mpOn = false;
     clearTimeout(this._mpRetry);
     this._mpRetry = null;
     this._mpReady = false;
@@ -7988,18 +7992,24 @@ class Component extends DCLogic {
         if (!hist.length) return this.say("되돌릴 작업이 없습니다.");
         const prev = hist.pop();
         this._wsRedo = (this._wsRedo || []).concat([JSON.stringify(this.allBlocks())]);
-        this._model = JSON.parse(prev);
-        this.setState({ wsBy: JSON.parse(prev), wsRev: (st.wsRev || 0) + 1 });
-        this.say("되돌렸습니다.");
+        try {
+          const parsed = JSON.parse(prev);
+          this._model = parsed;
+          this.setState({ wsBy: parsed, wsRev: (st.wsRev || 0) + 1 });
+          this.say("되돌렸습니다.");
+        } catch (e) { this.say("되돌리기 데이터가 손상됐습니다."); }
       },
       redoAll: () => {
         const r = this._wsRedo || [];
         if (!r.length) return this.say("다시 할 작업이 없습니다.");
         const next = r.pop();
         this._wsHist = (this._wsHist || []).concat([JSON.stringify(this.allBlocks())]);
-        this._model = JSON.parse(next);
-        this.setState({ wsBy: JSON.parse(next), wsRev: (st.wsRev || 0) + 1 });
-        this.say("다시 했습니다.");
+        try {
+          const parsed = JSON.parse(next);
+          this._model = parsed;
+          this.setState({ wsBy: parsed, wsRev: (st.wsRev || 0) + 1 });
+          this.say("다시 했습니다.");
+        } catch (e) { this.say("다시하기 데이터가 손상됐습니다."); }
       },
       footerCols: [
         { title: "만들기", links: [
@@ -8192,13 +8202,28 @@ class Component extends DCLogic {
       remakeFg: mine ? "#FFFFFF" : "#2A2D36",
       remakeBd: mine ? "#16181D" : "#E3DCCC",
       remakeWorld: async () => {
-        if (this.isMyWorld()) {
-          this.setState({ route: "studio", tab: "blocks", worldId: st.worldId }, () => this.loadStudio());
+        // isMyWorld()는 비동기 캐시 전에 false를 반환할 수 있다.
+        // 클릭 시점에 서버에서 다시 확인한 뒤 처리한다.
+        const wid = st.worldId;
+        let isMine = this.isMyWorld(wid);
+        if (!isMine && window.DotDB && window.DotDB.isLive) {
+          try {
+            const me = await window.DotDB.me();
+            if (me) {
+              const c = window.DotDB.init();
+              const { data } = await c.from("worlds").select("owner_id").eq("id", wid).maybeSingle();
+              isMine = data ? data.owner_id === me.id : false;
+              if (this._ownCache) this._ownCache[wid] = isMine;
+            }
+          } catch (e) {}
+        }
+        if (isMine) {
+          this.setState({ route: "studio", tab: "blocks", worldId: wid }, () => this.loadStudio());
           window.scrollTo(0, 0);
           return this.say("내 작품입니다 — 스튜디오에서 그대로 고칠 수 있습니다.");
         }
         if (window.DotDB && window.DotDB.isLive) {
-          const r = await window.DotDB.remakeWorld(st.worldId);
+          const r = await window.DotDB.remakeWorld(wid);
           if (r && r.id) {
             this.setState({ route: "studio", tab: "blocks", worldId: r.id }, () => this.loadStudio());
             window.scrollTo(0, 0);
