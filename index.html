@@ -39,6 +39,8 @@
     align-self: center;
   }
   @keyframes dv-spin { to { transform: rotate(360deg); } }
+  /* dv-spin 은 로딩 표시기다 — 동작 줄이기 설정에서도 속도만 늦추고 멈추지 않는다 */
+  .dv-spin-safe { animation-duration: 1.4s !important; }
   @keyframes dv-step { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
   /* 위·아래로 걸을 때는 옆걸음과 다르게 읽히도록 눌리는 느낌을 준다 */
   @keyframes dv-step-up { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-7%) scaleY(1.05); } }
@@ -75,7 +77,9 @@
   .dv-page { animation: dv-page 320ms cubic-bezier(0.16,1,0.3,1) both; }
   /* 움직임을 싫어하는 사용자에게는 모두 끈다 */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    /* 로딩 스피너는 멈추면 안 되므로 별도로 속도를 지정한다 */
+    [style*="dv-spin"] { animation-duration: 1.4s !important; }
   }
   @keyframes dv-blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
   @keyframes dv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
@@ -123,9 +127,7 @@
   main [style*="grid"] > *:nth-child(n+8) { animation-delay: 280ms; }
   @media (max-width: 1180px) { .dv-kbd { display: none; } }
   @media (max-width: 1080px) { .dv-search { display: none !important; } }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  }
+  /* prefers-reduced-motion 은 위에서 한 번만 선언한다 */
 </style>
 </helmet>
 
@@ -7678,7 +7680,7 @@ class Component extends DCLogic {
             : face === "down" ? "dv-step-down 300ms ease-in-out infinite"
             : "dv-step 260ms ease-in-out infinite"),
           left: 50 + o.x / 4.8 + "%", top: 50 - o.y / 3.6 + "%",
-          size: o.kind === "text" ? "auto" : 9 * (o.scale || 1) + "%", z: i + 1,
+          size: o.kind === "text" ? "auto" : (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (o.scale || 1) * base / 100) + "px" : 9 * (o.scale || 1) + "%"; })(), z: i + 1,
           say: o.say || "", hasSay: !!o.say,
           isText: o.kind === "text",
           isSprite: o.kind !== "text",
@@ -7705,7 +7707,7 @@ class Component extends DCLogic {
         tag: this.nearMe(p) ? "rgba(242,178,62,0.95)" : "rgba(74,95,209,0.92)",
         tagBd: this.nearMe(p) ? "#FFFFFF" : "rgba(255,255,255,0.35)",
         left: 50 + p.x / 4.8 + "%", top: 50 - p.y / 3.6 + "%",
-        size: 9 * (p.scale || 1) + "%",
+        size: (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (p.scale || 1) * base / 100) + "px" : 9 * (p.scale || 1) + "%"; })(),
         say: p.say || "", hasSay: !!p.say,
         emote: p.emote || "", hasEmote: !!p.emote,
         sprTf: p.face === "left" ? "scaleX(-1)" : "none",
@@ -8516,7 +8518,7 @@ class Component extends DCLogic {
           : face === "down" ? "dv-step-down 300ms ease-in-out infinite"
           : "dv-step 260ms ease-in-out infinite"),
         left: 50 + o.x / 4.8 + "%", top: 50 - o.y / 3.6 + "%",
-        size: o.kind === "text" ? "auto" : 9 * (o.scale || 1) + "%", z: i + 1,
+        size: o.kind === "text" ? "auto" : (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (o.scale || 1) * base / 100) + "px" : 9 * (o.scale || 1) + "%"; })(), z: i + 1,
         say: o.say || "", hasSay: !!o.say,
         isText: o.kind === "text",
         isSprite: o.kind !== "text",
@@ -8575,7 +8577,7 @@ class Component extends DCLogic {
         tag: this.nearMe(p) ? "rgba(242,178,62,0.95)" : "rgba(74,95,209,0.92)",
         tagBd: this.nearMe(p) ? "#FFFFFF" : "rgba(255,255,255,0.35)",
         left: 50 + p.x / 4.8 + "%", top: 50 - p.y / 3.6 + "%",
-        size: 9 * (p.scale || 1) + "%",
+        size: (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (p.scale || 1) * base / 100) + "px" : 9 * (p.scale || 1) + "%"; })(),
         say: p.say || "", hasSay: !!p.say,
         // 상대가 보낸 이모션·걸음도 그대로 보여 준다
         emote: p.emote || "", hasEmote: !!p.emote,
