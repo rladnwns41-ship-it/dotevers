@@ -6696,26 +6696,21 @@ class Component extends DCLogic {
       if (pid) this._playWorldId = pid;
 
       // DB에서 작품을 로드한다. DotDB가 아직 준비 안 됐으면 준비될 때까지 기다렸다가 로드.
+      // loadStudio() 는 tiles·mapBound·shapes·arts·sounds 등 모든 데이터를 복원한다.
       let _playLoaded = false;
       const doPlayLoad = () => {
         if (_playLoaded) return;
         if (!(window.DotDB && window.DotDB.isLive)) return;
         _playLoaded = true;
-        const loadId = pid || this.state.worldId;
-        window.DotDB.loadStudio(loadId).then((ver) => {
-          if (ver) {
-            const sc = ver.scene || {};
-            const blocks = ver.blocks || sc.wsBy || {};
-            this._model = JSON.parse(JSON.stringify(blocks));
-            this.setState({
-              scenes: sc.scenes || this.state.scenes,
-              objectsBy: sc.objectsBy || this.state.objectsBy,
-              wsBy: blocks,
-              wsRev: (this.state.wsRev || 0) + 1,
-            });
-          }
-          this._studioLoaded = true;
-        }).catch(() => { this._studioLoaded = true; });
+        // worldId를 먼저 pid로 교체해야 loadStudio() 가 올바른 작품을 읽는다
+        const doLoad = () => {
+          this.loadStudio(true).finally(() => { this._studioLoaded = true; });
+        };
+        if (pid && this.state.worldId !== pid) {
+          this.setState({ worldId: pid }, doLoad);
+        } else {
+          doLoad();
+        }
       };
       // DotDB가 이미 살아있으면 바로, 아니면 relink 이벤트 때 로드
       doPlayLoad();
