@@ -1050,7 +1050,7 @@
                 </sc-if>
                 <canvas ref="{{ penRefA }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
                 <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
-                  <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
+                  <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};height:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
                     <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
                     </sc-if>
@@ -1059,7 +1059,7 @@
                   </span>
                 </sc-for>
                 <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
-            <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};height:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
@@ -1068,7 +1068,7 @@
             </span>
           </sc-for>
           <sc-for list="{{ stageObjects }}" as="o" hint-placeholder-count="3">
-                  <span onMouseDown="{{ o.grab }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:{{ o.cursor }};display:flex;flex-direction:column;align-items:center;user-select:none">
+                  <span onMouseDown="{{ o.grab }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};height:{{ o.isText ? 'auto' : o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:{{ o.cursor }};display:flex;flex-direction:column;align-items:center;user-select:none">
                     <sc-if value="{{ o.hasSay }}" hint-placeholder-val="{{ false }}">
                       <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D;box-shadow:0 3px 0 rgba(22,24,29,0.1)">{{ o.say }}</span>
                     </sc-if>
@@ -2587,19 +2587,19 @@
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
-            <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="position:absolute;left:{{ pp.left }};top:{{ pp.top }};width:{{ pp.size }};height:{{ pp.size }};z-index:{{ pp.z }};transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
               <sc-if value="{{ pp.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:6px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:9px;padding:5px 9px;font-size:11px;white-space:nowrap;color:#16181D">{{ pp.say }}</span>
               </sc-if>
               <sc-if value="{{ pp.hasEmote }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:4px;width:22px;height:22px;border-radius:99px;background:#F2B23E;color:#16181D;display:flex;align-items:center;justify-content:center;font-family:Galmuri11,monospace;font-size:12px;font-weight:700;animation:dv-emote 1.6s ease-out forwards">{{ pp.emote }}</span>
               </sc-if>
-              <span role="img" aria-label="" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;flex-shrink:0;background-image:{{ pp.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;transform:{{ pp.sprTf }};animation:{{ pp.stepAnim }}"></span>
+              <span role="img" aria-label="" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;flex-shrink:0;background-image:{{ pp.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;transform:{{ pp.sprTf }};animation:{{ pp.stepAnim }};animation-play-state:{{ pp.stepPlay }}"></span>
               <span style="font-family:Galmuri11,monospace;font-size:9px;background:{{ pp.tag }};color:#FFFFFF;border-radius:5px;padding:1px 5px;white-space:nowrap;border:1px solid {{ pp.tagBd }}">{{ pp.name }}</span>
             </span>
           </sc-for>
           <sc-for list="{{ stageObjects }}" as="o" hint-placeholder-count="3">
-            <span onClick="{{ o.click }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:pointer;display:flex;flex-direction:column;align-items:center">
+            <span onClick="{{ o.click }}" style="position:absolute;left:{{ o.left }};top:{{ o.top }};width:{{ o.size }};height:{{ o.isText ? 'auto' : o.size }};z-index:{{ o.z }};transform:{{ o.tf }};cursor:pointer;display:flex;flex-direction:column;align-items:center">
               <sc-if value="{{ o.hasSay }}" hint-placeholder-val="{{ false }}">
                 <span style="position:absolute;bottom:100%;margin-bottom:8px;background:#FFFFFF;border:1px solid #CFC7B6;border-radius:11px;padding:7px 12px;font-size:14px;white-space:nowrap;color:#16181D;box-shadow:0 3px 0 rgba(22,24,29,0.1)">{{ o.say }}</span>
               </sc-if>
@@ -2607,7 +2607,7 @@
                 <span style="font-weight:700;white-space:pre-wrap;text-align:center;color:{{ o.color }};font-size:{{ o.fontSizeBig }};line-height:1.3">{{ o.text }}</span>
               </sc-if>
               <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
-                <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;transform:{{ o.sprTf }};animation:{{ o.stepAnim }}"></span>
+                <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block;transform:{{ o.sprTf }};animation:{{ o.stepAnim }};animation-play-state:{{ o.stepPlay }}"></span>
               </sc-if>
               <sc-if value="{{ o.isPlayer }}" hint-placeholder-val="{{ false }}">
                 <sc-if value="{{ hasMyEmote }}" hint-placeholder-val="{{ false }}">
@@ -4336,7 +4336,11 @@ class Component extends DCLogic {
       if (Math.abs(dx) > 0.4 || Math.abs(dy) > 0.4) {
         dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy > 0 ? "up" : "down");
         now.moved = now.t;
-      } else if (prev.moved && now.t - prev.moved < 260) {
+        // 걷기 애니메이션을 켠다 (이미 켜져 있으면 건드리지 않아 재시작 방지)
+        if (!(prev.walking)) this._walkBump = this._walkBump || {};
+        this._walkBump = this._walkBump || {};
+        this._walkBump[o.id] = now.t;
+      } else if (prev.moved && now.t - prev.moved < 320) {
         now.moved = prev.moved;
       }
     }
@@ -4347,13 +4351,16 @@ class Component extends DCLogic {
 
   walkingOf(o) {
     const f = (this._face || {})[o.id];
-    return !!(f && f.moved && Date.now() - f.moved < 260);
+    if (!f || !f.moved) return false;
+    // 320ms 이내에 실제 위치가 변한 적 있으면 walking
+    return Date.now() - f.moved < 320;
   }
 
   // 걸을 때 쓸 움직임을 바라보는 쪽에 따라 고른다.
   // 왼쪽을 볼 때는 뒤집힌 채로 움직여야 하므로 전용 움직임을 쓴다.
+  // animation 자체는 항상 반환하고, animation-play-state 로 멈춤/재생을 제어한다.
+  // (animation을 "none"으로 바꾸면 DOM이 animation을 재시작해 흔들림이 생긴다)
   stepAnimOf(o) {
-    if (!this.walkingOf(o)) return "none";
     const d = this.faceOf(o);
     if (d === "left") return "dv-step-flip 260ms ease-in-out infinite";
     if (d === "up") return "dv-step-up 300ms ease-in-out infinite";
@@ -7674,11 +7681,11 @@ class Component extends DCLogic {
           isPlayer: !!o.player,
           face: face, walking: walking,
           sprTf: face === "left" ? "scaleX(-1)" : "none",
-          stepAnim: !walking ? "none"
-            : (face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
+          stepAnim: (face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
             : face === "up" ? "dv-step-up 300ms ease-in-out infinite"
             : face === "down" ? "dv-step-down 300ms ease-in-out infinite"
             : "dv-step 260ms ease-in-out infinite"),
+          stepPlay: walking ? "running" : "paused",
           left: 50 + o.x / 4.8 + "%", top: 50 - o.y / 3.6 + "%",
           size: o.kind === "text" ? "auto" : (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (o.scale || 1) * base / 100) + "px" : 9 * (o.scale || 1) + "%"; })(), z: i + 1,
           say: o.say || "", hasSay: !!o.say,
@@ -7711,12 +7718,13 @@ class Component extends DCLogic {
         say: p.say || "", hasSay: !!p.say,
         emote: p.emote || "", hasEmote: !!p.emote,
         sprTf: p.face === "left" ? "scaleX(-1)" : "none",
-        stepAnim: !p.walking
-          ? (p.face === "left" ? "dv-bob-flip 1.9s ease-in-out infinite" : "dv-bob 1.9s ease-in-out infinite")
-          : (p.face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
+        stepAnim: p.walking
+          ? (p.face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
           : p.face === "up" ? "dv-step-up 300ms ease-in-out infinite"
           : p.face === "down" ? "dv-step-down 300ms ease-in-out infinite"
-          : "dv-step 260ms ease-in-out infinite"),
+          : "dv-step 260ms ease-in-out infinite")
+          : (p.face === "left" ? "dv-bob-flip 1.9s ease-in-out infinite" : "dv-bob 1.9s ease-in-out infinite"),
+        stepPlay: "running",
         z: 40 + i,
       })),
       rosterList: [{ name: (this._mpName || "나"), art: st.myCostume || "slime", pic: this._mpPic || st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl) || "", isMe: true }]
@@ -8512,11 +8520,11 @@ class Component extends DCLogic {
         // 바라보는 쪽에 맞춰 그림을 뒤집고, 걸을 때는 방향마다 다르게 움직인다.
         // 도트 그림이 한 장이라 뒤집기와 눌림으로 네 방향을 구분해 보여 준다.
         sprTf: face === "left" ? "scaleX(-1)" : "none",
-        stepAnim: !walking ? "none"
-          : (face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
+        stepAnim: (face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
           : face === "up" ? "dv-step-up 300ms ease-in-out infinite"
           : face === "down" ? "dv-step-down 300ms ease-in-out infinite"
           : "dv-step 260ms ease-in-out infinite"),
+        stepPlay: walking ? "running" : "paused",
         left: 50 + o.x / 4.8 + "%", top: 50 - o.y / 3.6 + "%",
         size: o.kind === "text" ? "auto" : (() => { const el = this._stageEl; const base = el ? Math.min(el.clientWidth, el.clientHeight * 4 / 3) : 0; return base > 0 ? Math.round(9 * (o.scale || 1) * base / 100) + "px" : 9 * (o.scale || 1) + "%"; })(), z: i + 1,
         say: o.say || "", hasSay: !!o.say,
@@ -8582,12 +8590,13 @@ class Component extends DCLogic {
         // 상대가 보낸 이모션·걸음도 그대로 보여 준다
         emote: p.emote || "", hasEmote: !!p.emote,
         sprTf: p.face === "left" ? "scaleX(-1)" : "none",
-        stepAnim: !p.walking
-          ? (p.face === "left" ? "dv-bob-flip 1.9s ease-in-out infinite" : "dv-bob 1.9s ease-in-out infinite")
-          : (p.face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
+        stepAnim: p.walking
+          ? (p.face === "left" ? "dv-step-flip 260ms ease-in-out infinite"
           : p.face === "up" ? "dv-step-up 300ms ease-in-out infinite"
           : p.face === "down" ? "dv-step-down 300ms ease-in-out infinite"
-          : "dv-step 260ms ease-in-out infinite"),
+          : "dv-step 260ms ease-in-out infinite")
+          : (p.face === "left" ? "dv-bob-flip 1.9s ease-in-out infinite" : "dv-bob 1.9s ease-in-out infinite"),
+        stepPlay: "running",
         z: 40 + i,
       })),
       chatLines: (st.chatLog || []).slice(-8),
