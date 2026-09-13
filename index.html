@@ -111,8 +111,12 @@
   /* 화면 전환: 라우트 최상위 블록이 아래에서 올라온다 */
   main > div, main > section { animation: dv-fade-up 420ms cubic-bezier(0.16,1,0.3,1) forwards; }
   main section { animation: dv-fade-up 460ms cubic-bezier(0.16,1,0.3,1) forwards; }
-  /* 스튜디오 탭 전환 */
-  .dv-pane { animation: dv-fade-up 340ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  /* 스튜디오 탭 전환 — 방향성 있는 슬라이드 */
+  @keyframes dv-tab-in-right  { from { opacity:0; transform:translateX( 22px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes dv-tab-in-left   { from { opacity:0; transform:translateX(-22px); } to { opacity:1; transform:translateX(0); } }
+  .dv-pane           { animation: dv-fade-up      340ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  .dv-pane-fwd       { animation: dv-tab-in-right 290ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  .dv-pane-back      { animation: dv-tab-in-left  290ms cubic-bezier(0.16,1,0.3,1) forwards; }
   /* 팝업·서랍·모달 전환 */
   .dv-pop { animation: dv-pop 260ms cubic-bezier(0.16,1,0.3,1) forwards; }
   .dv-slide { animation: dv-slide-right 300ms cubic-bezier(0.16,1,0.3,1) forwards; }
@@ -1006,7 +1010,7 @@
 
     <!-- 블록 탭 (엔트리형: 장면 · 실행화면 · 오브젝트 목록 · 블록 꾸러미 · 블록 조립소) -->
     <sc-if value="{{ t_blocks }}" hint-placeholder-val="{{ true }}">
-    <div class="dv-pane" style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0">
+    <div class="{{ tabPaneCls }}" style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0">
       <!-- 장면 탭 -->
       <div style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:12px;padding:6px 9px;flex-shrink:0">
         <span style="font-size:12px;font-weight:700;color:#8A9099;padding-right:4px">장면</span>
@@ -1436,7 +1440,7 @@
 
     <!-- 도트 오브젝트 탭 -->
     <sc-if value="{{ t_dot }}" hint-placeholder-val="{{ false }}">
-    <div class="dv-pane" style="display:grid;grid-template-columns:212px minmax(0,1fr) 316px;gap:16px;align-items:start">
+    <div class="{{ tabPaneCls }}" style="display:grid;grid-template-columns:212px minmax(0,1fr) 316px;gap:16px;align-items:start">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:14px;display:flex;flex-direction:column;gap:14px">
         <span style="font-size:12px;font-weight:700;color:#8A9099">도구</span>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
@@ -1558,7 +1562,7 @@
 
     <!-- 맵 에디터 탭 -->
     <sc-if value="{{ t_map }}" hint-placeholder-val="{{ false }}">
-    <div class="dv-pane" style="position:relative;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;background:#FFFFFF">
+    <div class="{{ tabPaneCls }}" style="position:relative;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden;background:#FFFFFF">
       <!-- 에디터 본체 -->
       <div style="position:relative;display:flex;background:#EFEADE">
         <!-- 캔버스 위 컨트롤 -->
@@ -1711,7 +1715,7 @@
 
     <!-- 데이터베이스 탭 -->
     <sc-if value="{{ t_db }}" hint-placeholder-val="{{ false }}">
-    <div class="dv-pane" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
+    <div class="{{ tabPaneCls }}" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:16px">
         <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:18px;display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;align-items:center;gap:10px">
@@ -1823,7 +1827,7 @@
 
     <!-- 게시 탭 -->
     <sc-if value="{{ t_publish }}" hint-placeholder-val="{{ false }}">
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start">
+    <div class="{{ tabPaneCls }}" style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start">
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:15px;padding:22px;display:flex;flex-direction:column;gap:18px">
         <h2 style="margin:0;font-size:20px;font-weight:700">작품 게시</h2>
         <label style="display:flex;flex-direction:column;gap:7px">
@@ -6130,6 +6134,13 @@ class Component extends DCLogic {
     for (let i = 0; i <= this.MW; i++) { g.beginPath(); g.moveTo(i * u, 0); g.lineTo(i * u, H); g.stroke(); }
     for (let j = 0; j <= this.MH; j++) { g.beginPath(); g.moveTo(0, j * u); g.lineTo(W, j * u); g.stroke(); }
 
+    // 맵 영역 밖으로 오브젝트 스프라이트가 삐져나가지 않도록 클리핑
+    const mapPixW = this.MW * u;
+    const mapPixH = this.MH * u;
+    g.save();
+    g.beginPath();
+    g.rect(0, 0, mapPixW, mapPixH);
+    g.clip();
     Object.keys(tiles).forEach((k) => {
       const [x, y] = k.split(",").map(Number);
       const c = tiles[k];
@@ -6154,6 +6165,7 @@ class Component extends DCLogic {
         px(7, 9, 2, 1, "#16181D"); px(7, 10, 2, 1, "#16181D");
       }
     });
+    g.restore(); // 맵 경계 클리핑 해제
   }
 
   // 타일이 바뀔 때만 전체를 다시 그리고, 마우스 이동은 캐시된 그림 위에 커서만 얹는다
@@ -8356,21 +8368,31 @@ class Component extends DCLogic {
 
       // ───────── 스튜디오
       blockTotal: window.DotBlocks ? window.DotBlocks.count() : 0,
-      studioTabs: [
-        { t: "블록코딩", ic: "lucide:blocks", k: "blocks" },
-        { t: "도트 오브젝트", ic: "lucide:grid-2x2", k: "dot" },
-        { t: "맵 & 경계", ic: "lucide:map", k: "map" },
-        { t: "데이터베이스", ic: "lucide:server", k: "db" },
-        { t: "게시", ic: "lucide:upload", k: "publish" },
-      ].map((t) => ({
-        t: t.t, ic: t.ic,
-        bg: st.tab === t.k ? "#FFFFFF" : "transparent",
-        fg: st.tab === t.k ? "#16181D" : "#6E7480",
-        go: () => this.setState({ tab: t.k }),
-      })),
+      studioTabs: (() => {
+        const TAB_ORDER = ["blocks", "dot", "map", "db", "publish"];
+        const curIdx = TAB_ORDER.indexOf(st.tab);
+        return [
+          { t: "블록코딩", ic: "lucide:blocks", k: "blocks" },
+          { t: "도트 오브젝트", ic: "lucide:grid-2x2", k: "dot" },
+          { t: "맵 & 경계", ic: "lucide:map", k: "map" },
+          { t: "데이터베이스", ic: "lucide:server", k: "db" },
+          { t: "게시", ic: "lucide:upload", k: "publish" },
+        ].map((t) => ({
+          t: t.t, ic: t.ic,
+          bg: st.tab === t.k ? "#FFFFFF" : "transparent",
+          fg: st.tab === t.k ? "#16181D" : "#6E7480",
+          go: () => {
+            const nextIdx = TAB_ORDER.indexOf(t.k);
+            if (nextIdx === curIdx) return;
+            const dir = nextIdx > curIdx ? "fwd" : "back";
+            this.setState({ tab: t.k, _tabDir: dir });
+          },
+        }));
+      })(),
+      tabPaneCls: st._tabDir === "fwd" ? "dv-pane-fwd" : st._tabDir === "back" ? "dv-pane-back" : "dv-pane",
       t_blocks: st.tab === "blocks", t_dot: st.tab === "dot", t_map: st.tab === "map",
       t_db: st.tab === "db", t_publish: st.tab === "publish",
-      goPublish: () => this.setState({ tab: "publish" }),
+      goPublish: () => this.setState({ tab: "publish", _tabDir: "fwd" }),
       studioTitle: st.worldTitle || (st.scenes[0] && st.scenes[0].name) || "이름 없는 월드",
       pubTitle: st.worldTitle || "",
       pubSummary: st.worldSummary || "",
@@ -8434,7 +8456,7 @@ class Component extends DCLogic {
       flashColor: st.flash || "transparent",
       hasStageBg: !!st.stageBg,
       noStageBg: !st.stageBg,
-      goMapTab: () => this.setState({ tab: "map" }),
+      goMapTab: () => { const TAB_ORDER=["blocks","dot","map","db","publish"]; const cur=TAB_ORDER.indexOf(this.state.tab); this.setState({ tab: "map", _tabDir: TAB_ORDER.indexOf("map")>cur?"fwd":"back" }); },
       paneStageW: st.paneStage + "px",
       panePalW: st.panePal + "px",
       paneObjW: st.paneObj + "px",
@@ -8707,7 +8729,7 @@ class Component extends DCLogic {
       uploadArt: this.uploadArt,
       sceneEmpty: this.curObjects().length === 0,
       buildTag: "빌드 svg-3 · 모양 " + Object.keys(st.sprites || {}).length + "장",
-      goDotTab: () => this.setState({ route: "studio", tab: "dot" }, () => this.say("도트를 찍고 «이 모양을 오브젝트로 추가» 를 누르세요.")),
+      goDotTab: () => { const TAB_ORDER=["blocks","dot","map","db","publish"]; const cur=TAB_ORDER.indexOf(this.state.tab); this.setState({ route: "studio", tab: "dot", _tabDir: TAB_ORDER.indexOf("dot")>cur?"fwd":"back" }, () => this.say("도트를 찍고 «이 모양을 오브젝트로 추가» 를 누르세요.")); },
       addShapeObject: () => {
         const i = st.shapeIdx || 0;
         const sh = (st.shapes || [])[i];
@@ -9226,7 +9248,7 @@ class Component extends DCLogic {
         code: "여러 테이블을 한 번에 정의하고 그대로 실행합니다",
         form: "칸을 채워 하나씩 만듭니다",
       }[st.defMode || "block"],
-      goBlocksTab: () => this.setState({ tab: "blocks", selBlockCat: "실시간 DB" }),
+      goBlocksTab: () => { const TAB_ORDER=["blocks","dot","map","db","publish"]; const cur=TAB_ORDER.indexOf(this.state.tab); this.setState({ tab: "blocks", selBlockCat: "실시간 DB", _tabDir: 0>cur?"fwd":"back" }); },
       dbDefBlocks: (window.DotBlocks ? ["db_create", "db_add_col", "db_drop_col", "db_drop", "db_has_table"] : [])
         .map((id) => window.DotBlocks.DEFS[id])
         .filter(Boolean)
@@ -9339,7 +9361,7 @@ class Component extends DCLogic {
         // 게시 전에 저장본을 먼저 올려 다른 사람이 그대로 플레이할 수 있게 한다
         await this.saveStudio();
         const title = filterText(st.worldTitle || "").out.trim();
-        if (!title) { this.setState({ tab: "publish" }); return this.say("작품 이름을 적어주세요."); }
+        if (!title) { this.setState({ tab: "publish", _tabDir: "fwd" }); return this.say("작품 이름을 적어주세요."); }
         const r = await window.DotDB.publishWorld(st.worldId, {
           title: title,
           summary: filterText(st.worldSummary || "").out.trim(),
@@ -9618,7 +9640,7 @@ class Component extends DCLogic {
         },
         publish: (e) => {
           if (e) e.stopPropagation();
-          this.setState({ route: "studio", tab: "publish", worldId: w.id, worldTitle: w.title }, () => this.loadStudio());
+          this.setState({ route: "studio", tab: "publish", worldId: w.id, worldTitle: w.title, _tabDir: "fwd" }, () => this.loadStudio());
           window.scrollTo(0, 0);
           this.say("«" + w.title + "» 의 공개 설정입니다. 내용을 확인하고 게시하세요.");
         },
