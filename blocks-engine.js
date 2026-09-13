@@ -435,14 +435,6 @@
 
   // ── 4차 확장 ──────────────────────────────────────────────
   const DIRS = ["위쪽", "아래쪽", "왼쪽", "오른쪽"];
-
-  // 움직임
-  def({ id: "move_dir", cat: "움직임", shape: "stack", c: C.move,
-    parts: [{ t: "sel", k: "d", opts: DIRS, def: "오른쪽" }, { t: "lbl", v: "으로" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "만큼 움직이기" }] });
-  def({ id: "bounce_edge", cat: "움직임", shape: "stack", c: C.move,
-    parts: [{ t: "lbl", v: "벽에 닿으면 튕기기" }] });
-  def({ id: "glide_xy", cat: "움직임", shape: "stack", c: C.move,
-    parts: [{ t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안 x" }, { t: "slot", k: "x", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "y", accept: "num", def: 0 }, { t: "lbl", v: "로 이동하기" }] });
   def({ id: "glide_obj", cat: "움직임", shape: "stack", c: C.move,
     parts: [{ t: "slot", k: "sec", accept: "num", def: 1 }, { t: "lbl", v: "초 동안" }, { t: "sel", k: "name", opts: ["__OBJ__"], def: "" }, { t: "lbl", v: "위치로 이동하기" }] });
   def({ id: "point_obj", cat: "움직임", shape: "stack", c: C.move,
@@ -450,19 +442,9 @@
   def({ id: "point_mouse", cat: "움직임", shape: "stack", c: C.move,
     parts: [{ t: "lbl", v: "마우스 쪽 보기" }] });
 
-  // 생김새
+  // 생김새 (4차 추가)
   def({ id: "prev_shape", cat: "생김새", shape: "stack", c: C.look,
     parts: [{ t: "lbl", v: "이전 모양으로 바꾸기" }] });
-  def({ id: "change_size", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "크기를" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "만큼 바꾸기" }] });
-  def({ id: "set_alpha", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "투명도를" }, { t: "slot", k: "n", accept: "num", def: 50 }, { t: "lbl", v: "% 로 정하기" }] });
-  def({ id: "change_alpha", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "투명도를" }, { t: "slot", k: "n", accept: "num", def: 10 }, { t: "lbl", v: "% 만큼 바꾸기" }] });
-  def({ id: "clear_fx", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "모든 효과 지우기" }] });
-  def({ id: "say_clear", cat: "생김새", shape: "stack", c: C.look,
-    parts: [{ t: "lbl", v: "말풍선 지우기" }] });
 
   // 흐름
   def({ id: "loop_index", cat: "흐름", shape: "num", c: C.flow,
@@ -521,8 +503,6 @@
   // 카메라·UI
   def({ id: "cam_move", cat: "카메라·UI", shape: "stack", c: C.obj,
     parts: [{ t: "lbl", v: "카메라를 x" }, { t: "slot", k: "x", accept: "num", def: 0 }, { t: "lbl", v: "y" }, { t: "slot", k: "y", accept: "num", def: 0 }, { t: "lbl", v: "로 옮기기" }] });
-  def({ id: "ui_toast", cat: "카메라·UI", shape: "stack", c: C.obj,
-    parts: [{ t: "lbl", v: "알림으로" }, { t: "slot", k: "msg", accept: "num", def: "성공!" }, { t: "lbl", v: "띄우기" }] });
   def({ id: "screen_flash", cat: "카메라·UI", shape: "stack", c: C.obj,
     parts: [{ t: "lbl", v: "화면을" }, { t: "sel", k: "col", opts: ["흰색", "빨강", "노랑", "검정"], def: "흰색" }, { t: "lbl", v: "으로 번쩍이기" }] });
   def({ id: "set_stage_color", cat: "카메라·UI", shape: "stack", c: C.obj,
@@ -1016,33 +996,24 @@
           case "stop_this": return;
           case "move_dir": {
             const n = await num("n");
-            if (I.dir === "오른쪽") self.x += n; else if (I.dir === "왼쪽") self.x -= n;
-            else if (I.dir === "위쪽") self.y += n; else self.y -= n;
+            const d = I.dir || I.d || "오른쪽";
+            if (d === "오른쪽") self.x += n;
+            else if (d === "왼쪽") self.x -= n;
+            else if (d === "위쪽") self.y += n;
+            else self.y -= n;
             ctx.onFrame(); break;
           }
-          case "glide_xy": {
-            const sec = Math.max(0.05, await num("sec")), tx = await num("x"), ty = await num("y");
-            const sx = self.x, sy = self.y, steps = Math.max(1, Math.round(sec * 30));
-            for (let i = 1; i <= steps && !stop; i++) {
-              self.x = sx + (tx - sx) * (i / steps);
-              self.y = sy + (ty - sy) * (i / steps);
-              ctx.onFrame(); await sleep(sec * 1000 / steps);
-            }
-            break;
-          }
+          case "glide_xy": await glide(self, await num("x"), await num("y"), Math.max(0.05, await num("sec"))); break;
           case "set_x": self.x = await num("n"); ctx.onFrame(); break;
           case "set_y": self.y = await num("n"); ctx.onFrame(); break;
+          case "point_to": { const o = ctx.objByName(I.name); if (o) self.rot = Math.atan2(o.y - self.y, o.x - self.x) * 180 / Math.PI; ctx.onFrame(); break; }
           case "bounce_edge": {
             const bb = (ctx.bounds && ctx.bounds()) || { x: 220, y: 160 };
             if (self.x > bb.x || self.x < -bb.x) { self.x = Math.max(-bb.x, Math.min(bb.x, self.x)); self.rot = 180 - (self.rot || 0); }
             if (self.y > bb.y || self.y < -bb.y) { self.y = Math.max(-bb.y, Math.min(bb.y, self.y)); self.rot = -(self.rot || 0); }
             ctx.onFrame(); break;
           }
-          case "point_to": { const o = ctx.objByName(I.name); if (o) self.rot = Math.atan2(o.y - self.y, o.x - self.x) * 180 / Math.PI; ctx.onFrame(); break; }
-          case "change_size": self.scale = (self.scale || 1) + (await num("n")) / 100; ctx.onFrame(); break;
-          case "set_alpha": self.alpha = 1 - (await num("n")) / 100; ctx.onFrame(); break;
           case "to_back": ctx.toBack(self); break;
-          case "clear_say": self.say = null; ctx.onFrame(); break;
           case "text_set": self.text = String(await val(I.msg, self)); ctx.onFrame(); break;
           case "text_add": self.text = String(self.text === undefined ? "" : self.text) + String(await val(I.v, self)); ctx.onFrame(); break;
           case "text_size": self.fontSize = Math.max(8, await num("n")); ctx.onFrame(); break;
@@ -1066,7 +1037,6 @@
           case "ui_remove": ctx.uiRemove(I.name); break;
           case "ui_all_clear": ctx.uiClearAll(); break;
           case "ui_dialog": await ctx.uiDialog(String(await val(I.msg, self))); break;
-          case "ui_toast": ctx.toast(String(await val(I.msg, self))); break;
           case "ui_screen_color": ctx.screenColor(I.color); break;
           case "ui_pad": ctx.uiPad(I.on !== "숨기기"); break;
           case "cam_zoom": ctx.camZoom(await num("n")); break;
@@ -1111,22 +1081,7 @@
           case "list_insert": ctx.listInsert(I.name, await num("i"), await val(I.v, self)); break;
           case "list_replace": ctx.listReplace(I.name, await num("i"), await val(I.v, self)); break;
           case "ui_clear": ctx.uiText(""); break;
-          case "move_dir": {
-            const n = await num("n");
-            if (I.d === "위쪽") self.y += n;
-            else if (I.d === "아래쪽") self.y -= n;
-            else if (I.d === "왼쪽") self.x -= n;
-            else self.x += n;
-            ctx.onFrame();
-            break;
-          }
-          case "bounce_edge": {
-            if (Math.abs(self.x) > 230) { self.x = (self.x > 0 ? 1 : -1) * 230; self.rot = 180 - (self.rot || 0); }
-            if (Math.abs(self.y) > 170) { self.y = (self.y > 0 ? 1 : -1) * 170; self.rot = -(self.rot || 0); }
-            ctx.onFrame();
-            break;
-          }
-          case "glide_xy": await glide(self, await num("x"), await num("y"), Math.max(0.05, await num("sec"))); break;
+
           case "glide_obj": {
             const o = ctx.objByName(I.name);
             if (o) await glide(self, o.x, o.y, Math.max(0.05, await num("sec")));
@@ -1148,7 +1103,7 @@
           case "set_alpha": self.alpha = Math.max(0, Math.min(1, 1 - (await num("n")) / 100)); ctx.onFrame(); break;
           case "change_alpha": self.alpha = Math.max(0, Math.min(1, (self.alpha === undefined ? 1 : self.alpha) - (await num("n")) / 100)); ctx.onFrame(); break;
           case "clear_fx": self.alpha = 1; self.hue = 0; self.flipH = false; self.flipV = false; ctx.onFrame(); break;
-          case "say_clear": self.say = null; ctx.onFrame(); break;
+          case "say_clear": case "clear_say": self.say = null; ctx.onFrame(); break;
           case "wait_ms": await sleep(Math.max(0, await num("ms"))); break;
           case "stop_other": ctx.stopOther(self); break;
           case "list_sort": {
