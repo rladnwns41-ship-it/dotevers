@@ -3139,7 +3139,7 @@ class Component extends DCLogic {
   worldBounds() {
     // 무한: 벽이 없다. 카메라가 따라가고 바닥은 맵 칸 크기 그대로 이어진다.
     if (this.state.mapBound === "infinite") return null;
-    return { x: (this.MW * this.TILE) / 2, y: (this.MH * this.TILE * 1.2) / 2 };
+    return { x: (this.MW * this.TILE) / 2, y: (this.MH * this.TILE) / 2 };
   }
 
   seedMap() {
@@ -5616,8 +5616,8 @@ class Component extends DCLogic {
   // 벽 · 경계 타일은 지나갈 수 없다
   blocked(x, y) {
     const tiles = this.state.tiles || {};
-    const tx = Math.floor(((x + 240) / 480) * this.MW);
-    const ty = Math.floor(((180 - y) / 360) * this.MH);
+    const tx = Math.max(0, Math.min(this.MW - 1, Math.floor(((x + 240) / 480) * this.MW)));
+    const ty = Math.max(0, Math.min(this.MH - 1, Math.floor(((180 - y) / 360) * this.MH)));
     const t = tiles[tx + "," + ty];
     return !!(t && (t.t === "wall" || t.t === "block"));
   }
