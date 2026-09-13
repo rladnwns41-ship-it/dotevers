@@ -6714,19 +6714,23 @@ class Component extends DCLogic {
               wsRev: (this.state.wsRev || 0) + 1,
             });
           }
-        }).catch(() => {});
+          this._studioLoaded = true;
+        }).catch(() => { this._studioLoaded = true; });
       };
       // DotDB가 이미 살아있으면 바로, 아니면 relink 이벤트 때 로드
       doPlayLoad();
       document.addEventListener("dv-supabase", () => setTimeout(doPlayLoad, 80), { once: true });
 
-      // 준비 조건: seed 완료 + 스프라이트 로드됨 (오브젝트 수는 조건에서 제외 — DB 로드 전엔 0일 수 있음)
+      // 준비 조건: seed 완료 + 스프라이트 로드됨 + DB 로드 완료 (또는 타임아웃)
+      // _playLoaded 가 true 가 된 뒤에도 loadStudio 가 비동기이므로
+      // _studioLoaded 플래그로 실제 데이터 도착까지 기다린다
       const ready = () => this._seeded
-        && Object.keys(this.state.sprites || {}).length > 0;
+        && Object.keys(this.state.sprites || {}).length > 0
+        && (this._studioLoaded || !pid);
       let waited = 0;
       const wait = setInterval(() => {
         waited += 100;
-        if (!ready() && waited < 8000) return;
+        if (!ready() && waited < 12000) return;
         clearInterval(wait);
         // 로드한 작품의 worldId로 멀티플레이·DB를 연결한다
         const applyPid = pid || null;
