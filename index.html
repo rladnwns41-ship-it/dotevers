@@ -1660,6 +1660,16 @@
             <span style="font-size:13.5px;font-weight:700;color:#16181D;flex:1">오브젝트</span>
             <iconify-icon onClick="{{ toggleObjPanel }}" icon="lucide:minus" width="16" style="color:#8A9099;cursor:pointer"></iconify-icon>
           </div>
+          <!-- 오브젝트 모드 크기 조절 슬라이더 -->
+          <sc-if value="{{ isObjMode }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #EFEADE;background:#FAFAF8">
+              <iconify-icon icon="lucide:scaling" width="13" style="color:#2F6F5E;flex-shrink:0"></iconify-icon>
+              <span style="font-size:11.5px;font-weight:600;color:#5B616C;flex-shrink:0">크기</span>
+              <input type="range" min="25" max="300" step="5" value="{{ placeScalePct }}" onChange="{{ setPlaceScale }}" style="flex:1;height:4px;accent-color:#2F6F5E;cursor:pointer" />
+              <span style="font-family:Galmuri11,monospace;font-size:11px;color:#2F6F5E;min-width:36px;text-align:right">{{ placeScalePct }}%</span>
+              <span onClick="{{ resetPlaceScale }}" title="1배로 초기화" style="font-size:10.5px;color:#8A9099;cursor:pointer;border:1px solid #E3DCCC;border-radius:5px;padding:2px 6px;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">초기화</span>
+            </div>
+          </sc-if>
           <div style="display:flex;gap:2px;padding:10px 12px 0">
             <sc-for list="{{ objTabs }}" as="t" hint-placeholder-count="3">
               <span onClick="{{ t.go }}" style="flex:1;text-align:center;font-size:12px;font-weight:600;padding:8px 6px;border-radius:8px 8px 0 0;cursor:pointer;color:{{ t.fg }};background:{{ t.bg }}">{{ t.t }}</span>
@@ -2544,26 +2554,62 @@
             <div style="display:flex;flex-direction:column;gap:5px">
               <span style="font-family:Galmuri11,monospace;font-size:11px;color:#6FD3C7;letter-spacing:0.08em">ENTER WORLD</span>
               <span style="font-size:22px;font-weight:700;color:#F4F1EA">{{ playTitle }}</span>
-              <span style="font-size:12.5px;color:rgba(244,241,234,0.55);text-wrap:pretty">들어갈 방을 고르세요. 같은 방에 있는 사람끼리 서로 보이고 이야기할 수 있습니다.</span>
+              <span style="font-size:12.5px;color:rgba(244,241,234,0.55);text-wrap:pretty">접속할 서버를 고르세요. 같은 서버에 있는 사람끼리 서로 보이고 이야기할 수 있습니다.</span>
             </div>
             <div class="dv-stagger" style="display:flex;flex-direction:column;gap:8px">
               <sc-for list="{{ roomList }}" as="rm" hint-placeholder-count="4">
                 <span onClick="{{ rm.go }}" style="display:flex;align-items:center;gap:12px;background:rgba(244,241,234,0.06);border:1px solid {{ rm.bd }};border-radius:12px;padding:14px 16px;cursor:pointer">
                   <span style="width:32px;height:32px;border-radius:9px;background:rgba(111,211,199,0.14);display:flex;align-items:center;justify-content:center;color:#6FD3C7;flex-shrink:0">
-                    <iconify-icon icon="lucide:door-open" width="16"></iconify-icon>
+                    <iconify-icon icon="lucide:server" width="16"></iconify-icon>
                   </span>
-                  <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+                  <span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
                     <span style="font-size:14px;font-weight:700;color:#F4F1EA">{{ rm.name }}</span>
-                    <span style="font-family:Galmuri11,monospace;font-size:10.5px;color:rgba(244,241,234,0.5)">{{ rm.countLabel }} 있음</span>
+                    <span style="display:flex;align-items:center;gap:8px">
+                      <span style="flex:1;height:4px;border-radius:99px;background:rgba(255,255,255,0.12);overflow:hidden">
+                        <span style="display:block;height:100%;border-radius:99px;width:{{ rm.fillPct }};background:{{ rm.fillColor }};transition:width 400ms ease"></span>
+                      </span>
+                      <span style="font-family:Galmuri11,monospace;font-size:10.5px;color:{{ rm.fillColor }};flex-shrink:0">{{ rm.countLabel }} / {{ rm.capLabel }}</span>
+                    </span>
                   </span>
                   <sc-if value="{{ rm.isHere }}" hint-placeholder-val="{{ false }}">
-                    <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7;flex-shrink:0">지금 여기</span>
+                    <span style="font-family:Galmuri11,monospace;font-size:10px;color:#6FD3C7;flex-shrink:0">접속 중</span>
+                  </sc-if>
+                  <sc-if value="{{ rm.isFull }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:Galmuri11,monospace;font-size:10px;color:#E0653A;flex-shrink:0">가득 참</span>
                   </sc-if>
                   <iconify-icon icon="lucide:chevron-right" width="16" style="color:rgba(244,241,234,0.4);flex-shrink:0"></iconify-icon>
                 </span>
               </sc-for>
             </div>
             <span onClick="{{ closeBig }}" style="align-self:flex-start;font-size:12.5px;color:rgba(244,241,234,0.55);cursor:pointer">나가기</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 서버 정원 초과 모달 -->
+      <sc-if value="{{ serverFullModal }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(11,13,16,0.82);backdrop-filter:blur(6px);animation:dv-fade 220ms ease forwards">
+          <div style="background:#16181D;border:1px solid rgba(224,101,58,0.5);border-radius:20px;padding:32px 28px;max-width:400px;width:100%;display:flex;flex-direction:column;gap:20px;animation:dv-pop 280ms cubic-bezier(0.16,1,0.3,1) forwards">
+            <!-- 아이콘 -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+              <div style="width:56px;height:56px;border-radius:16px;background:rgba(224,101,58,0.15);border:1px solid rgba(224,101,58,0.4);display:flex;align-items:center;justify-content:center">
+                <iconify-icon icon="lucide:server-crash" width="26" style="color:#E0653A"></iconify-icon>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-family:Galmuri11,monospace;font-size:10.5px;color:#E0653A;letter-spacing:0.1em">SERVER FULL</span>
+                <span style="font-size:20px;font-weight:700;color:#F4F1EA;line-height:1.3">what the hell broo!</span>
+              </div>
+            </div>
+            <!-- 본문 -->
+            <div style="background:rgba(224,101,58,0.08);border:1px solid rgba(224,101,58,0.2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:14px;font-weight:600;color:#F4F1EA">이 게임의 {{ serverFullName }}는 현재 정원이 다 찼어요.</span>
+              <span style="font-size:12.5px;color:rgba(244,241,234,0.6);line-height:1.65">그래도 실퍼하지 마세요.<br>곧 서버가 터지고 초기화 될 거에요.</span>
+            </div>
+            <!-- 버튼 -->
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button onClick="{{ closeFullModal }}" style="width:100%;padding:13px;border-radius:11px;border:0;background:#E0653A;color:#FFFFFF;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background-color 160ms ease,transform 160ms ease" style-hover="background:#C0502C">다른 서버 고르기</button>
+              <button onClick="{{ closeBig }}" style="width:100%;padding:11px;border-radius:11px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(244,241,234,0.5);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background-color 160ms ease,color 160ms ease" style-hover="color:#F4F1EA">나가기</button>
+            </div>
           </div>
         </div>
       </sc-if>
@@ -2640,8 +2686,8 @@
             <span style="margin-left:auto;color:#F2B23E;flex-shrink:0">근처 {{ nearCount }}</span>
           </span>
           <span style="display:flex;align-items:center;gap:6px;background:rgba(11,13,16,0.72);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px 11px;font-family:Galmuri11,monospace;font-size:10.5px;color:rgba(244,241,234,0.72)">
-            <iconify-icon icon="lucide:door-open" width="12"></iconify-icon><span>{{ mpRoomName }}</span>
-            <span onClick="{{ backToLobby }}" style="margin-left:auto;color:#6FD3C7;cursor:pointer;flex-shrink:0">방 바꾸기</span>
+            <iconify-icon icon="lucide:server" width="12"></iconify-icon><span>{{ mpRoomName }}</span>
+            <span onClick="{{ backToLobby }}" style="margin-left:auto;color:#6FD3C7;cursor:pointer;flex-shrink:0">서버 변경</span>
           </span>
           <sc-for list="{{ rosterList }}" as="pr" hint-placeholder-count="0">
             <span style="display:flex;align-items:center;gap:7px;background:rgba(11,13,16,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:7px 11px;font-size:11px;color:#F4F1EA">
@@ -3062,6 +3108,9 @@ class Component extends DCLogic {
     curY: 0,
     tiles: {},
     placeArt: "tree",
+    placeScale: 1,
+    serverFullModal: false,
+    serverFullName: "",
     hideLayers: {},
     toasts: [],
     myCostume: "slime",
@@ -3267,7 +3316,7 @@ class Component extends DCLogic {
     else if (this.state.mapMode === "wall") tiles[key] = { t: "wall" };
     else if (this.state.mapMode === "object") {
       const prev = tiles[key];
-      tiles[key] = { t: "obj", art: this.state.placeArt, c: (prev && prev.c) || null };
+      tiles[key] = { t: "obj", art: this.state.placeArt, scale: this.state.placeScale || 1, c: (prev && prev.c) || null };
     }
     else if (this.state.mapMode === "effect") tiles[key] = { t: "block" };
     else if (this.state.mapMode === "spawn") {
@@ -6151,7 +6200,13 @@ class Component extends DCLogic {
       if (!shown(c.t)) return;
       if (c.t === "obj") {
         const spc = (this._spriteCanvas || {})[c.art];
-        if (spc) g.drawImage(spc, x * u, y * u - u * 0.15, u, u);
+        if (spc) {
+          const s = c.scale || 1;
+          const sw = u * s, sh = u * s;
+          const ox2 = (u - sw) / 2;
+          const oy2 = (u - sh) * 0.85; // 위쪽 기준 정렬 (발끝 고정)
+          g.drawImage(spc, x * u + ox2, y * u - u * 0.15 + oy2, sw, sh);
+        }
       } else if (c.t === "entry") {
         // 스폰 지점 — 바닥 표식 + 그 위에 뜬 도트 핀 (16칸 격자에 맞춰 각지게)
         const p = u / 16;
@@ -6258,7 +6313,16 @@ class Component extends DCLogic {
     g.strokeRect(h.x * u + 1.5, h.y * u + 1.5, u - 3, u - 3);
     if (this.state.mapMode === "object" && this.state.mapTool !== "erase") {
       const spc = (this._spriteCanvas || {})[this.state.placeArt];
-      if (spc) { g.imageSmoothingEnabled = false; g.globalAlpha = 0.55; g.drawImage(spc, h.x * u, h.y * u - u * 0.15, u, u); g.globalAlpha = 1; }
+      if (spc) {
+        const s = this.state.placeScale || 1;
+        const sw = u * s, sh = u * s;
+        const ox2 = (u - sw) / 2;
+        const oy2 = (u - sh) * 0.85;
+        g.imageSmoothingEnabled = false;
+        g.globalAlpha = 0.55;
+        g.drawImage(spc, h.x * u + ox2, h.y * u - u * 0.15 + oy2, sw, sh);
+        g.globalAlpha = 1;
+      }
     }
   }
 
@@ -6449,7 +6513,20 @@ class Component extends DCLogic {
     });
   }
 
-  ROOMS = ["광장", "모임방", "조용한 방", "놀이방"];
+  ROOMS = ["서버 1", "서버 2", "서버 3", "서버 4"];
+
+  // 평균 동시 접속자 수에 비례한 서버 정원 계산
+  // 기준: avgOnline 이 0~4 이면 정원 8, 5~14 이면 16, 15~49 이면 32, 50+ 이면 64
+  serverCapacity() {
+    const w = (this.state.liveWorlds || []).find(
+      (x) => x.id === (this.state.viewWorldId || this.state.worldId)
+    );
+    const avg = (w && w.online) || 0;
+    if (avg >= 50) return 64;
+    if (avg >= 15) return 32;
+    if (avg >= 5)  return 16;
+    return 8;
+  }
 
   // 방을 골라 들어간다
   enterRoom = (name) => {
@@ -6458,7 +6535,7 @@ class Component extends DCLogic {
       if (this._lobby) this._lobby.setRoom(room);
       if (!this.state.running) this.runAll();
       this.enterWorld();
-      this.say("«" + room + "» 에 들어왔습니다.");
+      this.say("«" + room + "» 에 접속했습니다.");
     });
   };
 
@@ -8612,15 +8689,32 @@ class Component extends DCLogic {
       lobbyOpen: !!st.lobbyOpen,
       myNameTag: this._mpName || "나",
       mpRoomName: st.mpRoom || "광장",
-      roomList: this.ROOMS.map((r) => ({
-        name: r,
-        count: (st.roomCounts || {})[r] || 0,
-        countLabel: ((st.roomCounts || {})[r] || 0) + "명",
-        isHere: (st.mpRoom || "") === r,
-        bd: (st.mpRoom || "") === r ? "#6FD3C7" : "rgba(255,255,255,0.12)",
-        go: () => this.enterRoom(r),
-      })),
+      roomList: (() => {
+        const cap = this.serverCapacity();
+        return this.ROOMS.map((r) => {
+          const count = (st.roomCounts || {})[r] || 0;
+          const pct = Math.min(1, count / cap);
+          const fillColor = pct >= 1 ? "#E0653A" : pct >= 0.7 ? "#F2B23E" : "#6FD3C7";
+          return {
+            name: r,
+            count,
+            countLabel: count + "명",
+            capLabel: cap + "명",
+            fillPct: Math.round(pct * 100) + "%",
+            fillColor,
+            isFull: count >= cap,
+            isHere: (st.mpRoom || "") === r,
+            bd: (st.mpRoom || "") === r ? "#6FD3C7" : count >= cap ? "rgba(224,101,58,0.3)" : "rgba(255,255,255,0.12)",
+            go: () => count < cap || (st.mpRoom || "") === r
+              ? this.enterRoom(r)
+              : this.setState({ serverFullModal: true, serverFullName: r }),
+          };
+        });
+      })(),
       backToLobby: this.backToLobby,
+      serverFullModal: !!st.serverFullModal,
+      serverFullName: st.serverFullName || "서버",
+      closeFullModal: () => this.setState({ serverFullModal: false }),
       dockOpen: !!st.dockOpen,
       toggleDock: () => this.setState((p) => ({ dockOpen: !p.dockOpen })),
       costumes: (() => {
@@ -9149,6 +9243,10 @@ class Component extends DCLogic {
       toggleObjPanel: () => this.setState((p) => ({ objPanelOpen: p.objPanelOpen === false })),
       objPanelBg: st.objPanelOpen === false ? "transparent" : "#E4EFE9",
       objPanelFg: st.objPanelOpen === false ? "#3A3F49" : "#2F6F5E",
+      isObjMode: st.mapMode === "object",
+      placeScalePct: Math.round((st.placeScale || 1) * 100),
+      setPlaceScale: (e) => this.setState({ placeScale: Math.round(Number(e.target.value)) / 100 }, () => this.drawMap()),
+      resetPlaceScale: () => this.setState({ placeScale: 1 }, () => this.drawMap()),
       objTabs: ["기본", "내 오브젝트", "즐겨찾기"].map((t, i) => ({
         t: t,
         bg: st.objTab === i ? "#F0ECE1" : "transparent",
