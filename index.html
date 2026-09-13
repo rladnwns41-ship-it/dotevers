@@ -3139,7 +3139,7 @@ class Component extends DCLogic {
   worldBounds() {
     // 무한: 벽이 없다. 카메라가 따라가고 바닥은 맵 칸 크기 그대로 이어진다.
     if (this.state.mapBound === "infinite") return null;
-    return { x: (this.MW * this.TILE) / 2, y: (this.MH * this.TILE) / 2 };
+    return { x: (this.MW * this.TILE) / 2, y: (this.MH * this.TILE * 1.2) / 2 };
   }
 
   seedMap() {
@@ -5616,8 +5616,8 @@ class Component extends DCLogic {
   // 벽 · 경계 타일은 지나갈 수 없다
   blocked(x, y) {
     const tiles = this.state.tiles || {};
-    const tx = Math.max(0, Math.min(this.MW - 1, Math.floor(((x + 240) / 480) * this.MW)));
-    const ty = Math.max(0, Math.min(this.MH - 1, Math.floor(((180 - y) / 360) * this.MH)));
+    const tx = Math.floor(((x + 240) / 480) * this.MW);
+    const ty = Math.floor(((180 - y) / 360) * this.MH);
     const t = tiles[tx + "," + ty];
     return !!(t && (t.t === "wall" || t.t === "block"));
   }
@@ -6690,37 +6690,47 @@ class Component extends DCLogic {
       if (window.DotDB && window.DotDB.touch) window.DotDB.touch();
     }, 5 * 60 * 1000);
     if ((location.hash || "").startsWith("#play")) {
-      // w= 파라미터가 있으면 그 작품을 로드한다 (남의 작품 플레이)
+      // w= 파라미터로 플레이할 작품 id를 받는다 (내 작품이든 남의 작품이든 항상 DB에서 로드)
       const m = (location.hash || "").match(/[&#]w=([^&]+)/);
-      if (m && m[1] && m[1] !== this.state.worldId) {
-        // 내 작업 worldId는 건드리지 않고, 플레이할 작품만 따로 로드
-        this._playWorldId = m[1];
-        if (window.DotDB && window.DotDB.isLive) {
-          window.DotDB.loadStudio(m[1]).then((ver) => {
-            if (ver && ver.scene) {
-              const sc = ver.scene;
-              this.setState({
-                scenes: sc.scenes || this.state.scenes,
-                objectsBy: sc.objectsBy || this.state.objectsBy,
-                wsBy: (ver.blocks) || {},
-              });
-            }
-          });
-        }
-      }
-      // 400ms 고정 대기로는 장면·오브젝트·도트가 아직 안 올라와 있어
-      // 작업화면에서 «테스트» 한 것과 다른 화면이 뜬다. 준비될 때까지 기다린다.
+      const pid = m && m[1] ? m[1] : null;
+      if (pid) this._playWorldId = pid;
+
+      // DB에서 작품을 로드한다. DotDB가 아직 준비 안 됐으면 준비될 때까지 기다렸다가 로드.
+      let _playLoaded = false;
+      const doPlayLoad = () => {
+        if (_playLoaded) return;
+        if (!(window.DotDB && window.DotDB.isLive)) return;
+        _playLoaded = true;
+        const loadId = pid || this.state.worldId;
+        window.DotDB.loadStudio(loadId).then((ver) => {
+          if (ver) {
+            const sc = ver.scene || {};
+            const blocks = ver.blocks || sc.wsBy || {};
+            this._model = JSON.parse(JSON.stringify(blocks));
+            this.setState({
+              scenes: sc.scenes || this.state.scenes,
+              objectsBy: sc.objectsBy || this.state.objectsBy,
+              wsBy: blocks,
+              wsRev: (this.state.wsRev || 0) + 1,
+            });
+          }
+        }).catch(() => {});
+      };
+      // DotDB가 이미 살아있으면 바로, 아니면 relink 이벤트 때 로드
+      doPlayLoad();
+      document.addEventListener("dv-supabase", () => setTimeout(doPlayLoad, 80), { once: true });
+
+      // 준비 조건: seed 완료 + 스프라이트 로드됨 (오브젝트 수는 조건에서 제외 — DB 로드 전엔 0일 수 있음)
       const ready = () => this._seeded
-        && (this.curObjects() || []).length > 0
         && Object.keys(this.state.sprites || {}).length > 0;
       let waited = 0;
       const wait = setInterval(() => {
         waited += 100;
         if (!ready() && waited < 8000) return;
         clearInterval(wait);
-        // 남의 작품이면 그 worldId를 멀티플레이·DB에 쓴다
-        const pid = this._playWorldId;
-        if (pid) this.setState({ worldId: pid });
+        // 로드한 작품의 worldId로 멀티플레이·DB를 연결한다
+        const applyPid = pid || null;
+        if (applyPid) this.setState({ worldId: applyPid });
         this.setState({ route: "play", bigPlay: true }, () => this.runAll());
       }, 100);
     }
