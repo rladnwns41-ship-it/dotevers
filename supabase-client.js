@@ -1025,6 +1025,34 @@
       return { id: newId };
     },
 
+    // ── 월드 삭제 (내 작품만) ────────────────────────────────
+    async deleteWorld(worldId) {
+      const c = init();
+      if (!c) return { ok: false, reason: "env" };
+      const u = await this.me();
+      if (!u) return { ok: false, reason: "auth" };
+      // 소유권 확인 — 남의 작품은 지울 수 없다
+      const { data: w } = await c.from("worlds").select("id,owner_id").eq("id", worldId).maybeSingle();
+      if (!w) return { ok: false, reason: "not_found" };
+      if (w.owner_id !== u.id) return { ok: false, reason: "forbidden" };
+      // 연관 데이터 정리 (FK cascade 가 없는 경우를 대비해 직접 지운다)
+      await Promise.all([
+        c.from("world_versions").delete().eq("world_id", worldId),
+        c.from("world_blocks").delete().eq("world_id", worldId),
+        c.from("game_tables").select("id").eq("world_id", worldId).then(async ({ data: tbls }) => {
+          const ids = (tbls || []).map((t) => t.id);
+          if (ids.length) await c.from("game_rows").delete().in("table_id", ids);
+          if (ids.length) await c.from("game_tables").delete().in("id", ids);
+        }),
+        c.from("game_vars").delete().eq("world_id", worldId),
+        c.from("chats").delete().eq("world_id", worldId),
+        c.from("comments").delete().eq("world_id", worldId),
+        c.from("plays").delete().eq("world_id", worldId),
+      ]);
+      const { error } = await c.from("worlds").delete().eq("id", worldId).eq("owner_id", u.id);
+      return error ? { ok: false, reason: error.message } : { ok: true };
+    },
+
     // ── 대시보드 수치 ────────────────────────────────────────
     async dashboard() {
       const c = init();
