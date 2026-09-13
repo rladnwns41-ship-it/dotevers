@@ -2882,7 +2882,20 @@
   <div style="position:fixed;right:22px;bottom:22px;z-index:120;display:flex;flex-direction:column-reverse;gap:9px;align-items:flex-end;pointer-events:none">
     <sc-for list="{{ toasts }}" as="tt" hint-placeholder-count="1">
       <div onClick="{{ tt.close }}" style="pointer-events:auto;display:flex;align-items:flex-start;gap:10px;max-width:340px;background:{{ tt.bg }};color:#F4F1EA;border-radius:12px;padding:13px 16px;box-shadow:0 18px 38px -14px rgba(22,24,29,0.55);cursor:pointer;animation:dv-fade-up 220ms cubic-bezier(0.16,1,0.3,1) forwards">
-        <iconify-icon icon="{{ tt.ic }}" width="17" style="color:{{ tt.fg }};flex-shrink:0;margin-top:1px"></iconify-icon>
+        <sc-if cond="{{ tt.isWifi }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7DD3FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+            <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+            <line x1="12" y1="20" x2="12.01" y2="20"></line>
+          </svg>
+        </sc-if>
+        <sc-if cond="{{ !tt.isWifi }}">
+          <iconify-icon icon="{{ tt.ic }}" width="17" style="color:{{ tt.fg }};flex-shrink:0;margin-top:1px"></iconify-icon>
+        </sc-if>
         <span style="font-size:13.5px;line-height:1.55">{{ tt.msg }}</span>
       </div>
     </sc-for>
@@ -6601,6 +6614,47 @@ class Component extends DCLogic {
 
   playNewTab = () => {
     const wid = this.state.viewWorldId || this.state.worldId;
+    // 새 탭이 열리기 전에 현재 전체 상태를 임시 키에 저장한다.
+    // DB가 느리거나 없어도 새 탭이 바로 읽어올 수 있다.
+    try {
+      const tiles = this.state.tiles || {};
+      const packed = Object.keys(tiles).map((k) => {
+        const t = tiles[k];
+        return k + ":" + (t.t || "")[0] + (t.art ? "|" + t.art : "") + (t.c ? "|" + t.c : "");
+      }).join(";");
+      const snapshot = {
+        _ts: Date.now(),
+        wsBy: this.allBlocks ? this.allBlocks() : (this.state.wsBy || {}),
+        scenes: this.state.scenes || [],
+        objectsBy: Object.keys(this.state.objectsBy || {}).reduce((acc, sid) => {
+          acc[sid] = (this.state.objectsBy[sid] || []).map((o) => ({
+            id: o.id, name: o.name, art: o.art,
+            x: Math.round(o.x), y: Math.round(o.y),
+            s: Math.round((o.scale || 1) * 100),
+            on: o.on === false ? 0 : 1,
+            kind: o.kind || null, text: o.text === undefined ? null : o.text,
+            color: o.color || null, fontSize: o.fontSize || null,
+            rot: Math.round(o.rot || 0), player: o.player ? 1 : 0,
+            animShape: o.animShape === undefined ? null : o.animShape,
+          }));
+          return acc;
+        }, {}),
+        tiles: packed,
+        vars: (this.state.varsDef || []).map((v) => [v.name, v.value, v.visible ? 1 : 0]),
+        lists: (this.state.listsDef || []).map((l) => [l.name, l.items || []]),
+        funcs: this.state.funcsDef || [],
+        sigs: this.state.sigsDef || [],
+        shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
+        arts: this.state.imgArts || [],
+        sounds: this.state.soundsDef || [],
+        favs: this.state.favArts || [],
+        hideLayers: this.state.hideLayers || {},
+        mapW: this.state.mapW || 40,
+        mapH: this.state.mapH || 25,
+        mapBound: this.state.mapBound || "map",
+      };
+      localStorage.setItem("dotverse.playtab." + wid, JSON.stringify(snapshot));
+    } catch (e) { /* 용량 초과 등 무시 */ }
     const url = location.href.split("#")[0] + "#play&w=" + wid;
     const w = window.open(url, "_blank");
     if (!w) this.say("팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요.");
@@ -6794,11 +6848,65 @@ class Component extends DCLogic {
       if (document.hidden) return;
       if (window.DotDB && window.DotDB.touch) window.DotDB.touch();
     }, 5 * 60 * 1000);
+    // 네트워크 불안정 감지 시작
+    this._initNetworkMonitor();
     if ((location.hash || "").startsWith("#play")) {
       // w= 파라미터로 플레이할 작품 id를 받는다 (내 작품이든 남의 작품이든 항상 DB에서 로드)
       const m = (location.hash || "").match(/[&#]w=([^&]+)/);
       const pid = m && m[1] ? m[1] : null;
       if (pid) this._playWorldId = pid;
+
+      // 새 탭 스냅샷 먼저 복원 — DB 로드보다 빠르고 오프라인에서도 동작한다
+      // playNewTab이 저장한 전체 상태를 읽어 화면에 바로 적용한다 (60초 이내 것만)
+      if (pid) {
+        try {
+          const raw = localStorage.getItem("dotverse.playtab." + pid);
+          if (raw) {
+            const snap = JSON.parse(raw);
+            if (snap && snap._ts && Date.now() - snap._ts < 60000) {
+              const blocks = snap.wsBy || {};
+              this._model = JSON.parse(JSON.stringify(blocks));
+              const tileStr = snap.tiles || "";
+              const T = { f: "floor", w: "wall", o: "obj", e: "entry", b: "block" };
+              const tilesObj = {};
+              tileStr.split(";").forEach((row) => {
+                if (!row) return;
+                const [key, rest] = row.split(":");
+                if (!rest) return;
+                const parts = rest.split("|");
+                const cell = { t: T[parts[0]] || "floor" };
+                parts.slice(1).forEach((v) => { if (/^#/.test(v)) cell.c = v; else cell.art = v; });
+                tilesObj[key] = cell;
+              });
+              const varsDef = (snap.vars || []).map((v) => ({ name: v[0], value: v[1], visible: !!v[2] }));
+              const listsDef = (snap.lists || []).map((l) => ({ name: l[0], items: l[1] || [] }));
+              this.setState({
+                scenes: snap.scenes || this.state.scenes,
+                objectsBy: snap.objectsBy || this.state.objectsBy,
+                wsBy: blocks,
+                wsRev: (this.state.wsRev || 0) + 1,
+                tiles: tilesObj,
+                varsDef: varsDef,
+                listsDef: listsDef,
+                funcsDef: snap.funcs || [],
+                sigsDef: snap.sigs || [],
+                shapes: snap.shapes || [],
+                imgArts: snap.arts || [],
+                soundsDef: snap.sounds || [],
+                favArts: snap.favs || [],
+                hideLayers: snap.hideLayers || {},
+                mapW: snap.mapW || 40,
+                mapH: snap.mapH || 25,
+                mapBound: snap.mapBound || "map",
+              });
+              // 다 쓴 스냅샷은 지운다 (쌓이지 않게)
+              try { localStorage.removeItem("dotverse.playtab." + pid); } catch (e) {}
+              // 맵 타일을 다시 그린다
+              setTimeout(() => { try { this.drawMap && this.drawMap(); } catch (e) {} }, 100);
+            }
+          }
+        } catch (e) { /* 파싱 오류 무시 */ }
+      }
 
       // DB에서 작품을 로드한다. DotDB가 아직 준비 안 됐으면 준비될 때까지 기다렸다가 로드.
       let _playLoaded = false;
@@ -6826,10 +6934,11 @@ class Component extends DCLogic {
       doPlayLoad();
       document.addEventListener("dv-supabase", () => setTimeout(doPlayLoad, 80), { once: true });
 
-      // 준비 조건: seed 완료 + 스프라이트 로드됨 + DB 로드 완료(또는 pid 없음)
+      // 준비 조건: seed 완료 + 스프라이트 로드됨 + (DB 로드 완료 OR 스냅샷 복원됨 OR pid 없음)
+      const _snapRestored = pid ? Object.keys(this.state.wsBy || {}).length > 0 || (this.state.scenes || []).length > 0 : false;
       const ready = () => this._seeded
         && Object.keys(this.state.sprites || {}).length > 0
-        && (this._studioLoaded || !pid);
+        && (this._studioLoaded || _snapRestored || !pid);
       let waited = 0;
       const wait = setInterval(() => {
         waited += 100;
@@ -6847,7 +6956,7 @@ class Component extends DCLogic {
     this.clearUiTimers();
     clearTimeout(this._emoteT);
     if (this._lobby) { this._lobby.close(); this._lobby = null; }
-    clearInterval(this._sessT); clearTimeout(this._vendorAbort); clearInterval(this._linkT); clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT);
+    clearInterval(this._sessT); clearTimeout(this._vendorAbort); clearInterval(this._linkT); clearInterval(this._t); clearInterval(this._anim); clearInterval(this._nt); clearInterval(this._auto); clearInterval(this._seedT); clearInterval(this._netPingT);
     this.stopAnims();
     clearTimeout(this._toast); clearTimeout(this._menuT);
     if (this._onMouse) {
@@ -7693,8 +7802,66 @@ class Component extends DCLogic {
     if (!msg) return;
     const id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     this.setState((p) => ({ toasts: (p.toasts || []).concat([{ id: id, msg: String(msg), kind: kind || "ok" }]).slice(-5) }));
-    setTimeout(() => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) })), 3400);
+    const dur = (kind === "wifi") ? 6000 : 3400;
+    setTimeout(() => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) })), dur);
   };
+
+  // ── 네트워크 불안정 감지 ─────────────────────────────────────
+  _initNetworkMonitor() {
+    if (this._netMonInit) return;
+    this._netMonInit = true;
+    let _pingFail = 0;
+    let _offlineShown = false;
+    let _slowShown = false;
+    // offline 이벤트
+    window.addEventListener("offline", () => {
+      if (!_offlineShown) {
+        _offlineShown = true;
+        this.say("와이파이가 불안정합니다 — 인터넷 연결을 확인하세요.", "wifi");
+        this.setState({ netUnstable: true });
+      }
+    });
+    window.addEventListener("online", () => {
+      _offlineShown = false;
+      _pingFail = 0;
+      this.setState({ netUnstable: false });
+      this.say("인터넷 연결이 복구되었습니다.", "ok");
+    });
+    // 주기적 ping으로 느린 연결·렉 감지 (30초마다)
+    this._netPingT = setInterval(async () => {
+      if (document.hidden) return;
+      if (!navigator.onLine) return;
+      try {
+        const t0 = Date.now();
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 5000);
+        await fetch(location.href, { method: "HEAD", cache: "no-store", signal: ctrl.signal });
+        clearTimeout(tid);
+        const ms = Date.now() - t0;
+        if (ms > 3500) {
+          _pingFail++;
+          if (_pingFail >= 2 && !_slowShown) {
+            _slowShown = true;
+            this.say("와이파이가 불안정합니다 — 연결이 느려지고 있습니다.", "wifi");
+            this.setState({ netUnstable: true });
+          }
+        } else {
+          if (_pingFail > 0) {
+            _pingFail = 0;
+            _slowShown = false;
+            this.setState({ netUnstable: false });
+          }
+        }
+      } catch (e) {
+        _pingFail++;
+        if (_pingFail >= 2 && !_offlineShown) {
+          _offlineShown = true;
+          this.say("와이파이가 불안정합니다 — 요청이 응답하지 않습니다.", "wifi");
+          this.setState({ netUnstable: true });
+        }
+      }
+    }, 30000);
+  }
 
   dropToast = (id) => this.setState((p) => ({ toasts: (p.toasts || []).filter((t) => t.id !== id) }));
 
@@ -8884,9 +9051,10 @@ class Component extends DCLogic {
       },
       toasts: (st.toasts || []).map((t) => ({
         msg: t.msg,
-        bg: t.kind === "warn" ? "#8A3324" : (t.kind === "notif" ? "#2A2F3A" : "#16181D"),
-        fg: t.kind === "warn" ? "#FFC9B4" : (t.kind === "notif" ? "#F2B23E" : "#6FD3C7"),
-        ic: t.kind === "warn" ? "lucide:alert-triangle" : (t.kind === "notif" ? "lucide:bell" : "lucide:check-circle-2"),
+        bg: t.kind === "warn" ? "#8A3324" : (t.kind === "notif" ? "#2A2F3A" : (t.kind === "wifi" ? "#1A3050" : "#16181D")),
+        fg: t.kind === "warn" ? "#FFC9B4" : (t.kind === "notif" ? "#F2B23E" : (t.kind === "wifi" ? "#7DD3FC" : "#6FD3C7")),
+        ic: t.kind === "warn" ? "lucide:alert-triangle" : (t.kind === "notif" ? "lucide:bell" : (t.kind === "wifi" ? "lucide:wifi-off" : "lucide:check-circle-2")),
+        isWifi: t.kind === "wifi",
         close: () => this.dropToast(t.id),
       })),
       anyHidden: Object.keys(st.hideLayers || {}).length > 0,
