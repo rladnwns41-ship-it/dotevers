@@ -5042,10 +5042,11 @@ class Component extends DCLogic {
     list.splice(idx + 1, 0, item);
     this.setState({ comments: list, replyTo: null, replyDraft: "", lastFiltered: f.hit });
     if (window.DotDB && window.DotDB.isLive) {
+      const _wid = this.state.viewWorldId || this.state.worldId;
       window.DotDB.addComment({
-        worldId: this.state.worldId, body: body,
+        worldId: _wid, body: body,
         parentId: parent && /^[0-9a-f-]{36}$/.test(String(parent.id)) ? parent.id : null,
-      }).then(() => this.loadWorldThread(this.state.worldId));
+      }).then((r) => { if (r) this.loadWorldThread(_wid); });
     }
     this.say(f.hit ? "필터에 걸린 표현을 가려서 답글을 등록했습니다." : "답글을 등록했습니다.");
   };
@@ -8786,8 +8787,8 @@ class Component extends DCLogic {
         });
         this.say(f.hit ? "필터에 걸린 표현을 가려서 등록했습니다." : "댓글을 등록했습니다.");
         if (window.DotDB && window.DotDB.isLive) {
-          window.DotDB.addComment({ worldId: st.worldId, body: f.out })
-            .then(() => this.loadWorldThread(st.viewWorldId || st.worldId));
+          window.DotDB.addComment({ worldId: st.viewWorldId || st.worldId, body: f.out })
+            .then((r) => { if (r) this.loadWorldThread(st.viewWorldId || st.worldId); });
         }
       },
       usedAssets: assets.slice(0, 4),
