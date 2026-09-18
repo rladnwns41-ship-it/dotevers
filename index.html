@@ -7107,8 +7107,7 @@ class Component extends DCLogic {
       try {
         const f = JSON.parse(localStorage.getItem(LS("favs")) || "[]");
         this.setState({ favArts: f });
-      }
-     } catch (e) {}
+      } catch (e) {}
       this._baseKey = null;
       this.drawMap();
       this.loadStudio(true);
