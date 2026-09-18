@@ -212,7 +212,7 @@
       return data;
     },
     // ── 스튜디오 저장/불러오기 (world_versions.scene / blocks)
-    async saveStudio(worldId, payload) {
+    async saveStudio(worldId, payload, options = {}) {
       const c = init();
       // 작품 행이 없으면 쓸 권한이 없다 — 먼저 만든다
       if (c) {
@@ -222,15 +222,16 @@
       if (!c) return { ok: false, reason: "env" };
       const { data: last } = await c
         .from("world_versions")
-        .select("version")
+        .select("id,version")
         .eq("world_id", worldId)
         .order("version", { ascending: false })
         .limit(1);
-      const next = last && last[0] ? last[0].version + 1 : 1;
-      const { error } = await c.from("world_versions").insert({
+      const latest = last && last[0] ? last[0] : null;
+      const next = latest ? latest.version + 1 : 1;
+      const row = {
         world_id: worldId,
         version: next,
-        label: "스튜디오 자동 저장",
+        label: options.autosave ? "스튜디오 자동 저장" : "스튜디오 저장",
         scene: {
           scenes: payload.scenes,
           objectsBy: payload.objectsBy,
@@ -247,13 +248,29 @@
           mapW: payload.mapW,
           mapH: payload.mapH,
           mapBound: payload.mapBound,
+          mapOX: payload.mapOX,
+          mapOY: payload.mapOY,
+          fps: payload.fps,
+          shared: payload.shared,
         },
         blocks: payload.wsBy,
         block_count: Object.keys(payload.wsBy || {}).reduce(
           (a, k) => a + (payload.wsBy[k] || []).length, 0),
-      });
+      };
+
+      // 자동 저장은 30초마다 새 version 행을 만들지 않고 최신 행을 갱신한다.
+      // 사용자가 직접 저장할 때만 새 버전을 만든다.
+      let error = null;
+      if (options.autosave && latest && latest.id) {
+        const r = await c.from("world_versions").update(row).eq("id", latest.id).eq("world_id", worldId);
+        error = r.error;
+        if (!error) return { ok: true, version: latest.version, autosaved: true };
+      } else {
+        const r = await c.from("world_versions").insert(row);
+        error = r.error;
+      }
       if (error) return { ok: false, reason: error.message };
-      return { ok: true, version: next };
+      return { ok: true, version: next, autosaved: false };
     },
     async loadStudio(worldId) {
       const c = init();
@@ -1019,7 +1036,7 @@
         id: newId, owner_id: u.id,
         title: (src.title || "월드") + " (리메이크)",
         summary: src.summary, category: src.category, tags: src.tags,
-        license: src.license, origin_id: srcId, status: "draft",
+        license: src.license, thumb_url: src.thumb_url || null, origin_id: srcId, status: "draft",
       });
       if (error) return null;
       // 저장본과 블록을 함께 복사한다
@@ -1037,6 +1054,27 @@
         await c.from("world_blocks").insert(blks.map((b) => ({
           world_id: newId, obj_key: b.obj_key, stacks: b.stacks, block_count: b.block_count,
         })));
+      }
+      // 작품용 DB 테이블과 행도 리메이크한다. (플레이어별 런타임 값은 복사하지 않는다.)
+      const { data: srcTables } = await c.from("game_tables")
+        .select("id,name,columns,is_per_player").eq("world_id", srcId);
+      if (srcTables && srcTables.length) {
+        const tableRows = srcTables.map((t) => ({
+          world_id: newId, name: t.name, columns: t.columns || [], is_per_player: !!t.is_per_player,
+        }));
+        const { data: newTables } = await c.from("game_tables").insert(tableRows).select("id,name");
+        if (newTables && newTables.length) {
+          const byName = {}; newTables.forEach((t) => { byName[t.name] = t.id; });
+          const oldIds = srcTables.map((t) => t.id);
+          const { data: srcRows } = await c.from("game_rows")
+            .select("table_id,data").in("table_id", oldIds);
+          if (srcRows && srcRows.length) {
+            const oldToName = {}; srcTables.forEach((t) => { oldToName[t.id] = t.name; });
+            await c.from("game_rows").insert(srcRows.map((r) => ({
+              table_id: byName[oldToName[r.table_id]], world_id: newId, data: r.data || {},
+            })).filter((r) => r.table_id));
+          }
+        }
       }
       return { id: newId };
     },
