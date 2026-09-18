@@ -3267,6 +3267,7 @@ class Component extends DCLogic {
 
   // 맵 · 오브젝트 배치를 브라우저에 저장한다
   persistMap = () => {
+    if (window.DotDB && window.DotDB.isLive) return;
     clearTimeout(this._mapSaveT);
     this._mapSaveT = setTimeout(() => {
       try {
@@ -3279,6 +3280,7 @@ class Component extends DCLogic {
   };
 
   restoreMap() {
+    if (window.DotDB && window.DotDB.isLive) return;
     try {
       const j = JSON.parse(localStorage.getItem(LS("map")) || "{}");
       if (j.tiles && Object.keys(j.tiles).length) {
@@ -3763,11 +3765,13 @@ class Component extends DCLogic {
     if (window.DotDB && window.DotDB.isLive) {
       try { await window.DotDB.setVar(this.state.worldId, key, v, !!perPlayer); return true; } catch (e) {}
     }
-    try {
-      const all = JSON.parse(localStorage.getItem(LS("vars")) || "{}");
-      all[key] = v;
-      localStorage.setItem(LS("vars"), JSON.stringify(all));
-    } catch (e) {}
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      try {
+        const all = JSON.parse(localStorage.getItem(LS("vars")) || "{}");
+        all[key] = v;
+        localStorage.setItem(LS("vars"), JSON.stringify(all));
+      } catch (e) {}
+    }
     return false;
   }
 
@@ -5832,11 +5836,6 @@ class Component extends DCLogic {
   // ── Supabase 저장 / 불러오기
   saveStudio = async () => {
     // 용량 절약: 좌표·타일을 짧은 형태로 접고, 사진·소리 같은 큰 데이터는 서버로 보내지 않는다
-    const tiles = this.state.tiles || {};
-    const packed = Object.keys(tiles).map((k) => {
-      const t = tiles[k];
-      return k + ":" + (t.t || "")[0] + (t.art ? "|" + t.art : "") + (t.c ? "|" + t.c : "");
-    }).join(";");
     const blocks = this.allBlocks();
     if (window.DotDB && window.DotDB.isLive) {
       // 작품 행이 없으면 블록·저장본을 쓸 권한이 없다 — 먼저 만든다
@@ -5845,36 +5844,35 @@ class Component extends DCLogic {
         await window.DotDB.saveBlocks(this.state.worldId, blocks);
       } catch (e) {}
     }
+    // 작품 데이터는 일부 필드만 골라 저장하지 않고 JSON 가능한 원본 구조를 통째로 저장한다.
+    // 그래서 도트/프레임/애니메이션 속성이나 나중에 추가되는 오브젝트 속성이 누락되지 않는다.
+    const clone = (v, fallback) => {
+      try { return JSON.parse(JSON.stringify(v)); } catch (e) { return fallback; }
+    };
     const payload = {
-      wsBy: blocks,
-      scenes: this.state.scenes,
-      objectsBy: Object.keys(this.state.objectsBy || {}).reduce((acc, sid) => {
-        acc[sid] = (this.state.objectsBy[sid] || []).map((o) => ({
-          id: o.id, name: o.name, art: o.art,
-          x: Math.round(o.x), y: Math.round(o.y),
-          s: Math.round((o.scale || 1) * 100),
-          on: o.on === false ? 0 : 1,
-          kind: o.kind || null, text: o.text === undefined ? null : o.text,
-          color: o.color || null, fontSize: o.fontSize || null,
-          rot: Math.round(o.rot || 0), player: o.player ? 1 : 0,
-          animShape: o.animShape === undefined ? null : o.animShape,
-        }));
-        return acc;
-      }, {}),
-      tiles: packed,
-      vars: (this.state.varsDef || []).map((v) => [v.name, v.value, v.visible ? 1 : 0]),
-      lists: (this.state.listsDef || []).map((l) => [l.name, l.items || []]),
-      funcs: this.state.funcsDef || [],
-      sigs: this.state.sigsDef || [],
-      // 다른 사람이 그대로 플레이할 수 있게 사진·소리도 함께 올린다
+      wsBy: clone(blocks, {}),
+      scenes: clone(this.state.scenes || [], []),
+      objectsBy: clone(this.state.objectsBy || {}, {}),
+      // 타일의 미래 확장 필드까지 보존한다. (기존 packed 문자열도 loadStudio에서 호환)
+      tiles: clone(this.state.tiles || {}, {}),
+      vars: clone(this.state.varsDef || [], []),
+      lists: clone(this.state.listsDef || [], []),
+      funcs: clone(this.state.funcsDef || [], []),
+      sigs: clone(this.state.sigsDef || [], []),
+      // 사진·소리 메타데이터도 보존하고 실제 파일은 Storage URL을 사용한다.
       arts: await this.uploadMedia(this.state.imgArts || [], "art"),
       sounds: await this.uploadMedia(this.state.soundsDef || [], "sound"),
-      shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
-      favs: this.state.favArts || [],
-      hideLayers: this.state.hideLayers || {},
+      // 도트 모양의 모든 프레임과 추가 속성(speed 등)을 그대로 보존한다.
+      shapes: clone(this.state.shapes || [], []),
+      favs: clone(this.state.favArts || [], []),
+      hideLayers: clone(this.state.hideLayers || {}, {}),
       mapW: this.state.mapW || 40,
       mapH: this.state.mapH || 25,
       mapBound: this.state.mapBound || "map",
+      mapOX: this.state.mapOX || 0,
+      mapOY: this.state.mapOY || 0,
+      fps: this.state.fps,
+      shared: this.state.shared,
     };
     if (!window.DotDB || !window.DotDB.isLive) {
       try { localStorage.setItem(LS("studio"), JSON.stringify(payload)); } catch (e) {}
@@ -5883,14 +5881,14 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ saving: true });
-    let r = await window.DotDB.saveStudio(this.state.worldId, payload);
+    let r = await window.DotDB.saveStudio(this.state.worldId, payload, { autosave: !!this._quietSave });
     // 이 id 가 이미 남의 것이면(로그인 계정이 바뀐 경우 등) 새 id 로 옮겨 담는다.
     // 그러지 않으면 저장할 때마다 409·403 이 반복된다.
     if (!r.ok && (r.reason === "taken" || r.reason === "not_owner")) {
       const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       try { localStorage.setItem(LS("worldId"), id); } catch (e) {}
       await new Promise((res) => this.setState({ worldId: id }, res));
-      r = await window.DotDB.saveStudio(id, payload);
+      r = await window.DotDB.saveStudio(id, payload, { autosave: false });
       if (r.ok) this.say("이 작품을 내 계정의 새 작품으로 옮겨 저장했습니다.");
     }
     this.setState({ saving: false, saved: r.ok ? "v" + r.version : null });
@@ -5923,7 +5921,7 @@ class Component extends DCLogic {
           if (up) url = up;
         } catch (e) {}
       }
-      out.push({ name: it.name, art: key, url: url });
+      out.push(Object.assign({}, it, { name: it.name, art: key, url: url }));
     }
     return out;
   }
@@ -5953,7 +5951,8 @@ class Component extends DCLogic {
       const row = await window.DotDB.loadStudio(this.state.worldId);
       if (row) payload = Object.assign({}, row.scene, { wsBy: row.blocks });
     }
-    if (!payload) {
+    // Supabase가 살아 있으면 절대로 오래된 localStorage 작품 데이터를 대체재로 읽지 않는다.
+    if (!payload && !(window.DotDB && window.DotDB.isLive)) {
       try { payload = JSON.parse(localStorage.getItem(LS("studio")) || "null"); } catch (e) {}
     }
     if (!payload || !payload.scenes) { if (!this._quietLoad) this.say("불러올 저장본이 없습니다."); return; }
@@ -5968,19 +5967,15 @@ class Component extends DCLogic {
     // 짧게 접힌 오브젝트를 원래 형태로
     const objectsBy = {};
     Object.keys(payload.objectsBy || {}).forEach((sid) => {
-      objectsBy[sid] = (payload.objectsBy[sid] || []).map((o) => ({
-        id: o.id, name: o.name, art: o.art,
-        x: o.x || 0, y: o.y || 0,
-        scale: o.scale !== undefined ? o.scale : (o.s || 100) / 100,
-        on: o.on === 0 ? false : true,
-        kind: o.kind || undefined,
-        text: o.text === null ? undefined : o.text,
-        color: o.color || undefined,
-        fontSize: o.fontSize || undefined,
-        rot: o.rot || 0,
-        player: !!o.player,
-        animShape: o.animShape === null ? undefined : o.animShape,
-      }));
+      objectsBy[sid] = (payload.objectsBy[sid] || []).map((o) => {
+        // 저장 당시 존재하던 임의의 오브젝트 속성을 모두 유지한다.
+        const out = Object.assign({}, o);
+        out.x = o.x || 0; out.y = o.y || 0;
+        out.scale = o.scale !== undefined ? o.scale : (o.s || 100) / 100;
+        out.on = o.on === 0 ? false : true;
+        if (o.text === null) delete out.text;
+        return out;
+      });
     });
     const first = (objectsBy[payload.scenes[0].id] || [])[0];
     const arts = payload.arts || [];
@@ -6007,6 +6002,10 @@ class Component extends DCLogic {
     if (payload.mapW) next.mapW = payload.mapW;
     if (payload.mapH) next.mapH = payload.mapH;
     if (payload.mapBound) next.mapBound = payload.mapBound;
+    if (payload.mapOX !== undefined) next.mapOX = payload.mapOX || 0;
+    if (payload.mapOY !== undefined) next.mapOY = payload.mapOY || 0;
+    if (payload.fps !== undefined) next.fps = payload.fps;
+    if (payload.shared !== undefined) next.shared = payload.shared;
     const tiles = typeof payload.tiles === "string" ? this.unpackTiles(payload.tiles) : payload.tiles;
     if (tiles) { next.tiles = tiles; this._baseKey = null; }
     // 사진 오브젝트를 맵 캔버스에도 쓸 수 있게 준비한다
@@ -6607,7 +6606,11 @@ class Component extends DCLogic {
 
   // ── 새 탭 플레이: 현재 작업 중인 전체 상태를 저장해 새 탭으로 전달 ──────
   // localStorage 5MB 한도 대비: 큰 데이터(base64 사진·소리)는 별도 키로 분리 저장
-  playNewTab = () => {
+  playNewTab = async () => {
+    const live = !!(window.DotDB && window.DotDB.isLive);
+    if (live) {
+      try { this._quietSave = true; await this.saveStudio(); } catch (e) {}
+    }
     const wid = this.state.viewWorldId || this.state.worldId;
     const tiles = this.state.tiles || {};
     const packed = Object.keys(tiles).map((k) => {
@@ -6615,62 +6618,29 @@ class Component extends DCLogic {
       return k + ":" + (t.t || "")[0] + (t.art ? "|" + t.art : "") + (t.c ? "|" + t.c : "");
     }).join(";");
 
-    // 작은 메타 스냅샷 (블록·장면·오브젝트·변수·도트 픽셀 등 — 용량이 작은 것)
-    const meta = {
-      _ts: Date.now(),
-      wsBy: this.allBlocks ? this.allBlocks() : (this.state.wsBy || {}),
-      scenes: this.state.scenes || [],
-      objectsBy: Object.keys(this.state.objectsBy || {}).reduce((acc, sid) => {
-        acc[sid] = (this.state.objectsBy[sid] || []).map((o) => ({
-          id: o.id, name: o.name, art: o.art,
-          x: Math.round(o.x), y: Math.round(o.y),
-          s: Math.round((o.scale || 1) * 100),
-          on: o.on === false ? 0 : 1,
-          kind: o.kind || null, text: o.text === undefined ? null : o.text,
-          color: o.color || null, fontSize: o.fontSize || null,
-          rot: Math.round(o.rot || 0), player: o.player ? 1 : 0,
-          animShape: o.animShape === undefined ? null : o.animShape,
-        }));
-        return acc;
-      }, {}),
-      tiles: packed,
-      vars: (this.state.varsDef || []).map((v) => [v.name, v.value, v.visible ? 1 : 0]),
-      lists: (this.state.listsDef || []).map((l) => [l.name, l.items || []]),
-      funcs: this.state.funcsDef || [],
-      sigs: this.state.sigsDef || [],
-      // 도트(shapes)는 픽셀 배열이라 크지 않다 — 함께 저장
-      shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
-      // 사진·소리 이름 목록만 여기, 실제 데이터는 별도 키
-      artNames: (this.state.imgArts || []).map((a) => ({ name: a.name, art: a.art || a.name })),
-      soundNames: (this.state.soundsDef || []).map((s) => s.name),
-      favs: this.state.favArts || [],
-      hideLayers: this.state.hideLayers || {},
-      mapW: this.state.mapW || 40,
-      mapH: this.state.mapH || 25,
-      mapBound: this.state.mapBound || "map",
-    };
-
-    // 사진 데이터 별도 저장 (아트 키 → data:URL or http URL)
-    const artsData = {};
-    (this.state.imgArts || []).forEach((a) => { if (a.url) artsData[a.art || a.name] = a.url; });
-    // 소리 데이터 별도 저장 (이름 → data:URL or http URL)
-    const soundsData = {};
-    (this.state.soundsDef || []).forEach((s) => { if (s.url) soundsData[s.name] = s.url; });
-
-    // localStorage 용량 초과 시 조용히 실패 — 플레이는 어쨌든 열린다
-    const KEY = "dotverse.playtab." + wid;
-    try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".arts"); localStorage.removeItem(KEY + ".sounds"); } catch (e) {}
-    try { localStorage.setItem(KEY, JSON.stringify(meta)); } catch (e) {}
-    try { localStorage.setItem(KEY + ".arts", JSON.stringify(artsData)); } catch (e) {
-      // 용량 초과면 http URL만 저장 (base64 제외)
-      const slim = {};
-      Object.keys(artsData).forEach((k) => { if (/^https?:/.test(artsData[k])) slim[k] = artsData[k]; });
-      try { localStorage.setItem(KEY + ".arts", JSON.stringify(slim)); } catch (e2) {}
-    }
-    try { localStorage.setItem(KEY + ".sounds", JSON.stringify(soundsData)); } catch (e) {
-      const slim = {};
-      Object.keys(soundsData).forEach((k) => { if (/^https?:/.test(soundsData[k])) slim[k] = soundsData[k]; });
-      try { localStorage.setItem(KEY + ".sounds", JSON.stringify(slim)); } catch (e2) {}
+    // Supabase 연결 상태에서는 작품 데이터를 localStorage에 복제하지 않는다.
+    if (!live) {
+      const meta = {
+        _ts: Date.now(), wsBy: this.allBlocks ? this.allBlocks() : (this.state.wsBy || {}),
+        scenes: this.state.scenes || [], objectsBy: this.state.objectsBy || {}, tiles: packed,
+        vars: (this.state.varsDef || []).map((v) => [v.name, v.value, v.visible ? 1 : 0]),
+        lists: (this.state.listsDef || []).map((l) => [l.name, l.items || []]),
+        funcs: this.state.funcsDef || [], sigs: this.state.sigsDef || [],
+        shapes: (this.state.shapes || []).map((sh) => ({ name: sh.name, frames: sh.frames })),
+        artNames: (this.state.imgArts || []).map((a) => ({ name: a.name, art: a.art || a.name })),
+        soundNames: (this.state.soundsDef || []).map((s) => s.name), favs: this.state.favArts || [],
+        hideLayers: this.state.hideLayers || {}, mapW: this.state.mapW || 40, mapH: this.state.mapH || 25,
+        mapBound: this.state.mapBound || "map",
+      };
+      const artsData = {};
+      (this.state.imgArts || []).forEach((a) => { if (a.url) artsData[a.art || a.name] = a.url; });
+      const soundsData = {};
+      (this.state.soundsDef || []).forEach((s) => { if (s.url) soundsData[s.name] = s.url; });
+      const KEY = "dotverse.playtab." + wid;
+      try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".arts"); localStorage.removeItem(KEY + ".sounds"); } catch (e) {}
+      try { localStorage.setItem(KEY, JSON.stringify(meta)); } catch (e) {}
+      try { localStorage.setItem(KEY + ".arts", JSON.stringify(artsData)); } catch (e) {}
+      try { localStorage.setItem(KEY + ".sounds", JSON.stringify(soundsData)); } catch (e) {}
     }
 
     const url = location.href.split("#")[0] + "#play&w=" + wid;
@@ -6878,7 +6848,8 @@ class Component extends DCLogic {
       // playNewTab이 저장한 메타·아트·사운드 데이터를 읽어 화면에 적용한다.
       // 60초 이내 스냅샷만 신뢰한다.
       let _snapOk = false;
-      if (pid) {
+      // Supabase live 모드에서는 플레이 탭도 localStorage 작품 복사본을 읽지 않는다.
+      if (pid && !(window.DotDB && window.DotDB.isLive)) {
         const KEY = "dotverse.playtab." + pid;
         try {
           const rawMeta   = localStorage.getItem(KEY);
@@ -7006,19 +6977,14 @@ class Component extends DCLogic {
             // 오브젝트 확장
             const objectsByDB = {};
             Object.keys(sc.objectsBy || {}).forEach((sid) => {
-              objectsByDB[sid] = (sc.objectsBy[sid] || []).map((o) => ({
-                id: o.id, name: o.name, art: o.art,
-                x: o.x || 0, y: o.y || 0,
-                scale: o.scale !== undefined ? o.scale : (o.s || 100) / 100,
-                on: o.on !== 0,
-                kind: o.kind || undefined,
-                text: o.text === null ? undefined : o.text,
-                color: o.color || undefined,
-                fontSize: o.fontSize || undefined,
-                rot: o.rot || 0,
-                player: !!o.player,
-                animShape: o.animShape === null ? undefined : o.animShape,
-              }));
+              objectsByDB[sid] = (sc.objectsBy[sid] || []).map((o) => {
+                const out = Object.assign({}, o);
+                out.x = o.x || 0; out.y = o.y || 0;
+                out.scale = o.scale !== undefined ? o.scale : (o.s || 100) / 100;
+                out.on = o.on !== 0;
+                if (o.text === null) delete out.text;
+                return out;
+              });
             });
 
             const arts2   = sc.arts    || [];
@@ -7050,9 +7016,9 @@ class Component extends DCLogic {
                 wsRev:     (p.wsRev || 0) + 1,
                 sprites:   Object.assign({}, p.sprites, spriteAddDB),
               };
-              if (arts2.length)   next2.imgArts   = arts2;
-              if (sounds2.length) next2.soundsDef = sounds2.map((sd) => ({ name: sd.name, url: sd.url }));
-              if (sc.shapes && sc.shapes.length) { next2.shapes = sc.shapes; this._myKey = null; }
+              if (Object.prototype.hasOwnProperty.call(sc, "arts"))   next2.imgArts   = arts2;
+              if (Object.prototype.hasOwnProperty.call(sc, "sounds")) next2.soundsDef = sounds2;
+              if (Object.prototype.hasOwnProperty.call(sc, "shapes")) { next2.shapes = sc.shapes || []; this._myKey = null; }
               if (sc.vars)        next2.varsDef   = sc.vars.map((v) => ({ name: v[0], value: v[1], visible: !!v[2] }));
               if (sc.lists)       next2.listsDef  = sc.lists.map((l) => ({ name: l[0], items: l[1] || [] }));
               if (sc.funcs)       next2.funcsDef  = sc.funcs;
@@ -7141,7 +7107,8 @@ class Component extends DCLogic {
       try {
         const f = JSON.parse(localStorage.getItem(LS("favs")) || "[]");
         this.setState({ favArts: f });
-      } catch (e) {}
+      }
+     } catch (e) {}
       this._baseKey = null;
       this.drawMap();
       this.loadStudio(true);
@@ -7179,7 +7146,7 @@ class Component extends DCLogic {
           catName: x.category || "실험실",
           likes: x.like_count || 0, dislikes: x.dislike_count || 0,
           comments: x.comment_count || 0, plays: x.play_count || 0,
-          online: 0, ago: this.agoText(x.published_at || x.created_at), tags: [], art: x.art || "portal",
+          online: 0, ago: this.agoText(x.published_at || x.created_at), tags: x.tags || [], art: x.art || "portal", thumbUrl: x.thumb_url || null,
         }));
       }
       if (a) {
@@ -7890,10 +7857,12 @@ class Component extends DCLogic {
   }
 
   persistArts = () => {
+    if (window.DotDB && window.DotDB.isLive) return;
     try { localStorage.setItem(LS("arts"), JSON.stringify(this.state.imgArts || [])); } catch (e) {}
   };
 
   restoreArts() {
+    if (window.DotDB && window.DotDB.isLive) return;
     try {
       const list = JSON.parse(localStorage.getItem(LS("arts")) || "[]");
       if (!list.length) return;
@@ -7920,6 +7889,7 @@ class Component extends DCLogic {
     this.setState((p) => ({
       favArts: p.favArts.indexOf(art) >= 0 ? p.favArts.filter((x) => x !== art) : p.favArts.concat([art]),
     }), () => {
+      if (window.DotDB && window.DotDB.isLive) return;
       try { localStorage.setItem(LS("favs"), JSON.stringify(this.state.favArts)); } catch (e) {}
     });
   };
@@ -8280,7 +8250,7 @@ class Component extends DCLogic {
       catName: w.catName, online: w.online, ago: w.ago,
       likes: kfmt(w.likes + (st.reacts["w:" + w.id] === "like" ? 1 : 0)),
       dislikes: kfmt(w.dislikes), comments: kfmt(w.comments), playsK: kfmt(w.plays),
-      sprite: spr(w.art), authorSprite: face(w.author, w.handle),
+      sprite: w.thumbUrl ? cssUrl(w.thumbUrl) : spr(w.art), authorSprite: face(w.author, w.handle),
       go: () => {
         this.go("world", { viewWorldId: w.id })();
         this.loadWorldThread(w.id);
@@ -8668,7 +8638,7 @@ class Component extends DCLogic {
           likes: kfmt((w.likes || 0) + (r === "like" ? 1 : 0)),
           dislikes: kfmt((w.dislikes || 0) + (r === "dislike" ? 1 : 0)),
           comments: kfmt(w.comments || 0),
-          sprite: spr(w.art), authorSprite: face(w.author, w.handle),
+          sprite: w.thumbUrl ? cssUrl(w.thumbUrl) : spr(w.art), authorSprite: face(w.author, w.handle),
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
@@ -9811,6 +9781,8 @@ class Component extends DCLogic {
         if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없어 게시할 수 없습니다.");
         // 게시 전에 저장본을 먼저 올려 다른 사람이 그대로 플레이할 수 있게 한다
         await this.saveStudio();
+        // 작품 상세/둘러보기 썸네일도 서버가 원본이 되도록 Storage에 올린다.
+        const thumbUrl = await this.makeWorldThumbnail(st.worldId);
         const title = filterText(st.worldTitle || "").out.trim();
         if (!title) { this.setState({ tab: "publish", _tabDir: "fwd", _tabSeq: ((this.state._tabSeq||0)+1) }); return this.say("작품 이름을 적어주세요."); }
         const r = await window.DotDB.publishWorld(st.worldId, {
@@ -9819,6 +9791,7 @@ class Component extends DCLogic {
           category: st.worldCat || "adventure",
           tags: st.tagsDef || [],
           license: ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
+          thumb_url: thumbUrl || null,
           art: (() => {
             const o = (this.curObjects() || [])[0];
             return (o && o.art) || "portal";
