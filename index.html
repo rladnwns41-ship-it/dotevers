@@ -3374,7 +3374,12 @@ class Component extends DCLogic {
 
   wsRef = (el) => {
     this._ws = el;
-    if (!el || el._wheelBound) return;
+    if (!el) return;
+    if (!el._clipboardSelectBound) {
+      el.addEventListener("click", this._blockClipboardSelect, true);
+      el._clipboardSelectBound = true;
+    }
+    if (el._wheelBound) return;
     el._wheelBound = true;
     // React 는 휠을 소극적으로 등록해 preventDefault 가 막힌다 → 직접 등록한다
     el.addEventListener("wheel", (e) => this.wsWheel(e), { passive: false });
@@ -6780,7 +6785,39 @@ class Component extends DCLogic {
     el.parentNode.removeChild(el);
   }
 
+  // 블록 편집기에서 키보드 복사/붙여넣기 처리 (플레이 모드 키 핸들러와 분리)
+  _blockClipboardKey = (ev) => {
+    if (!(ev.ctrlKey || ev.metaKey)) return;
+    const key = String(ev.key || "").toLowerCase();
+    if (key !== "c" && key !== "v") return;
+    const t = ev.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (!this._ws || !this._ws.isConnected) return;
+    const inside = this._ws.contains(t);
+    if (!inside && !this.state.ctxMenu) return;
+    if (key === "c") {
+      const selected = this._selectedBlockId;
+      if (!selected) return;
+      this.copyBlock(selected, true);
+      ev.preventDefault();
+      ev.stopPropagation();
+    } else if (this._blockClipboard) {
+      this.pasteBlock();
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  };
+
+  _blockClipboardSelect = (ev) => {
+    if (!this._ws || !this._ws.contains(ev.target)) return;
+    const node = ev.target.closest && ev.target.closest("[data-b]");
+    if (node) this._selectedBlockId = node.getAttribute("data-b");
+  };
+
   componentDidMount() {
+    window.addEventListener("keydown", this._blockClipboardKey, true);
+    if (this._ws) this._ws.addEventListener("click", this._blockClipboardSelect, true);
+
     // load 가 끝난 뒤에 붙여야 CDN 이 막힌 곳에서도 문서 로드가 완료된다
     if (document.readyState === "complete") setTimeout(() => this.loadVendors(), 0);
     else window.addEventListener("load", () => setTimeout(() => this.loadVendors(), 0), { once: true });
