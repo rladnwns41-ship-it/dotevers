@@ -3386,6 +3386,7 @@ class Component extends DCLogic {
     e.stopPropagation();
     const host = e.target.closest ? e.target.closest("[data-b]") : null;
     const id = host && host.getAttribute("data-b");
+    if (id) this._selectedBlockId = id;
     const box = this._ws && this._ws.getBoundingClientRect();
     this.setState({
       ctxMenu: {
@@ -3935,6 +3936,34 @@ class Component extends DCLogic {
     this.setState({ uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
     this._keys = new Set();
     this._onKey = (ev) => {
+      // 블록 편집기 전용 복사/붙여넣기. 입력창의 기본 단축키는 가로채지 않는다.
+      const target = ev.target;
+      const typing = target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      if ((ev.ctrlKey || ev.metaKey) && !typing && this.state && this.state.tab === "blocks" && this._ws) {
+        const key = String(ev.key || "").toLowerCase();
+        if (key === "c" && this._selectedBlockId) {
+          const B = window.DotBlocks;
+          const found = B && B.findBlock(this.model(), this._selectedBlockId);
+          if (found && found.block) {
+            this._blockClipboard = B.cloneBlock(found.block, true);
+            ev.preventDefault();
+            this.say("블록과 연결된 아래 블록을 복사했습니다.");
+            return;
+          }
+        }
+        if (key === "v" && this._blockClipboard) {
+          const B = window.DotBlocks;
+          const copy = B && B.cloneBlock(this._blockClipboard, true);
+          if (copy) {
+            const list = this.model();
+            list.push({ root: copy, x: 54 + Math.round(Math.random() * 36), y: 54 + Math.round(Math.random() * 36) });
+            ev.preventDefault();
+            this.touchModel();
+            this.say("복사한 블록을 붙여넣었습니다.");
+            return;
+          }
+        }
+      }
       const m = { ArrowUp: "위쪽", ArrowDown: "아래쪽", ArrowLeft: "왼쪽", ArrowRight: "오른쪽", " ": "스페이스",
         w: "위쪽", s: "아래쪽", a: "왼쪽", d: "오른쪽", W: "위쪽", S: "아래쪽", A: "왼쪽", D: "오른쪽" };
       const k = m[ev.key];
@@ -5715,6 +5744,7 @@ class Component extends DCLogic {
   };
 
   grabExisting = (e, id) => {
+    this._selectedBlockId = id;
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
     const B = window.DotBlocks;
