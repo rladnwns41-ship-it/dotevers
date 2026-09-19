@@ -1370,7 +1370,7 @@
           </span>
           <div ref="{{ wsRef }}" onMouseDown="{{ wsDown }}" onContextMenu="{{ wsMenu }}" style="position:relative;min-height:0;flex:1;overflow:hidden;background:#F7F5EF;background-image:radial-gradient(#DDD5C4 1.2px,transparent 1.2px);background-size:22px 22px;user-select:none;cursor:grab">
             <sc-if value="{{ ctxOn }}" hint-placeholder-val="{{ false }}">
-              <div class="dv-pop" style="position:absolute;left:{{ ctxX }};top:{{ ctxY }};z-index:960;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:5px;box-shadow:0 18px 40px -14px rgba(22,24,29,0.4);display:flex;flex-direction:column;min-width:186px">
+              <div class="dv-pop" onMouseDown="{{ stopIt }}" onClick="{{ stopIt }}" style="position:absolute;left:{{ ctxX }};top:{{ ctxY }};z-index:960;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:11px;padding:5px;box-shadow:0 18px 40px -14px rgba(22,24,29,0.4);display:flex;flex-direction:column;min-width:186px">
                 <sc-for list="{{ ctxItems }}" as="m" hint-placeholder-count="4">
                   <span onClick="{{ m.go }}" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;color:{{ m.fg }};transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#F7F5EF">
                     <iconify-icon icon="{{ m.ic }}" width="13"></iconify-icon><span>{{ m.t }}</span>
@@ -6796,7 +6796,7 @@ class Component extends DCLogic {
     const inside = this._ws.contains(t);
     if (!inside && !this.state.ctxMenu) return;
     if (key === "c") {
-      const selected = this._selectedBlockId;
+      const selected = this._selectedBlockId || (this.state.ctxMenu && this.state.ctxMenu.id);
       if (!selected) return;
       this.copyBlock(selected, true);
       ev.preventDefault();
