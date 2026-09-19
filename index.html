@@ -8442,12 +8442,24 @@ class Component extends DCLogic {
       },
       mapHelp: () => this.say("빈 곳을 끌면 화면 이동 · Alt+드래그도 이동 · 휠은 확대/축소입니다."),
       shareWorld: async () => {
-        const url = (typeof location !== "undefined" ? location.href.split("#")[0] : "") + "#w=" + (st.viewWorldId || st.worldId);
+        const worldId = st.viewWorldId || st.worldId;
+        if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없어 공유할 수 없습니다.", "warn");
+        // 비공개 초안은 링크만 전달해도 다른 사람이 볼 수 없으므로, 먼저 게시 설정으로 안내한다.
+        const world = (st.liveWorlds || []).find((w) => w.id === worldId)
+          || (st.liveMyWorlds || []).find((w) => w.id === worldId);
+        if (!world || world.status !== "published") {
+          this.setState({ route: "studio", tab: "publish", worldId, viewWorldId: null,
+            worldTitle: (world && world.title) || st.worldTitle || "",
+            _tabDir: "fwd", _tabSeq: ((this.state._tabSeq || 0) + 1) });
+          this.say("아직 공개되지 않은 작품입니다. 게시 설정에서 게시한 뒤 공유할 수 있어요.", "warn");
+          return;
+        }
+        const url = (typeof location !== "undefined" ? location.href.split("#")[0] : "") + "#w=" + worldId;
         try {
-          if (navigator.share) { await navigator.share({ title: "Dotverse", url: url }); return; }
+          if (navigator.share) { await navigator.share({ title: world.title || "Dotverse", url }); return; }
           await navigator.clipboard.writeText(url);
-          this.say("공유 링크를 복사했습니다.");
-        } catch (e) { this.say("공유 링크: " + url); }
+          this.say("공개 작품의 공유 링크를 복사했습니다.");
+        } catch (e) { this.say("공개 작품 공유 링크: " + url); }
       },
       undoAll: () => {
         const hist = this._wsHist || [];
