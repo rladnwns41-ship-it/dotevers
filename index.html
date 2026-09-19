@@ -3397,6 +3397,36 @@ class Component extends DCLogic {
     });
   };
 
+  // 선택 블록을 클립보드에 복사한다. 붙여넣을 때 새 ID로 재생성한다.
+  copyBlock(id, deep) {
+    const B = window.DotBlocks;
+    const found = B && id && B.findBlock(this.model(), id);
+    if (!found || !found.block) {
+      this.setState({ ctxMenu: null });
+      return this.say("복사할 블록을 찾지 못했습니다.", "warn");
+    }
+    this._blockClipboard = B.cloneBlock(found.block, !!deep);
+    this._clipboardDeep = !!deep;
+    this.setState({ ctxMenu: null });
+    this.say(deep ? "블록과 아래 연결을 복사했습니다. 붙여넣기를 누르세요." : "블록을 복사했습니다. 붙여넣기를 누르세요.");
+  }
+
+  pasteBlock() {
+    const B = window.DotBlocks;
+    if (!B || !this._blockClipboard) {
+      this.setState({ ctxMenu: null });
+      return this.say("먼저 블록을 복사하세요.", "warn");
+    }
+    const clone = B.cloneBlock(this._blockClipboard, true);
+    if (!clone) return this.say("붙여넣기에 실패했습니다.", "warn");
+    const list = this.model();
+    list.push({ root: clone, x: 58 + Math.round(Math.random() * 34), y: 58 + Math.round(Math.random() * 34) });
+    this.setState({ ctxMenu: null }, () => {
+      this.touchModel();
+      this.say("블록을 붙여넣었습니다.");
+    });
+  }
+
   // 블록 하나(또는 아래까지)를 복제해 옆에 놓는다
   dupBlock(id, deep) {
     const B = window.DotBlocks;
@@ -3936,32 +3966,20 @@ class Component extends DCLogic {
     this.setState({ uiWidgets: [], uiPad: false, uiDialogMsg: "", screenColor: "" });
     this._keys = new Set();
     this._onKey = (ev) => {
-      // 블록 편집기 전용 복사/붙여넣기. 입력창의 기본 단축키는 가로채지 않는다.
+      // 블록 편집기 전용 복사/붙여넣기. 입력창에서는 기본 단축키 유지.
       const target = ev.target;
       const typing = target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
       if ((ev.ctrlKey || ev.metaKey) && !typing && this.state && this.state.tab === "blocks" && this._ws) {
         const key = String(ev.key || "").toLowerCase();
         if (key === "c" && this._selectedBlockId) {
-          const B = window.DotBlocks;
-          const found = B && B.findBlock(this.model(), this._selectedBlockId);
-          if (found && found.block) {
-            this._blockClipboard = B.cloneBlock(found.block, true);
-            ev.preventDefault();
-            this.say("블록과 연결된 아래 블록을 복사했습니다.");
-            return;
-          }
+          this.copyBlock(this._selectedBlockId, true);
+          ev.preventDefault();
+          return;
         }
         if (key === "v" && this._blockClipboard) {
-          const B = window.DotBlocks;
-          const copy = B && B.cloneBlock(this._blockClipboard, true);
-          if (copy) {
-            const list = this.model();
-            list.push({ root: copy, x: 54 + Math.round(Math.random() * 36), y: 54 + Math.round(Math.random() * 36) });
-            ev.preventDefault();
-            this.touchModel();
-            this.say("복사한 블록을 붙여넣었습니다.");
-            return;
-          }
+          this.pasteBlock();
+          ev.preventDefault();
+          return;
         }
       }
       const m = { ArrowUp: "위쪽", ArrowDown: "아래쪽", ArrowLeft: "왼쪽", ArrowRight: "오른쪽", " ": "스페이스",
@@ -8875,8 +8893,11 @@ class Component extends DCLogic {
         if (!m.id) return [{ t: "블록 정리하기", ic: "lucide:align-left", fg: "#3A3F47", go: () => { this.setState({ ctxMenu: null }); this.tidyWs(); } },
           { t: "닫기", ic: "lucide:x", fg: "#8A9099", go: () => this.setState({ ctxMenu: null }) }];
         return [
-          { t: "블록 하나 복사", ic: "lucide:copy", fg: "#3A3F47", go: () => this.dupBlock(m.id, false) },
-          { t: "아래까지 복제", ic: "lucide:copy-plus", fg: "#3A3F47", go: () => this.dupBlock(m.id, true) },
+          { t: "블록 복사", ic: "lucide:copy", fg: "#3A3F47", go: () => this.copyBlock(m.id, false) },
+          { t: "아래까지 복사", ic: "lucide:copy-plus", fg: "#3A3F47", go: () => this.copyBlock(m.id, true) },
+          { t: "복사한 블록 붙여넣기", ic: "lucide:clipboard", fg: "#3A3F47", go: () => this.pasteBlock() },
+          { t: "블록 바로 복제", ic: "lucide:copy-check", fg: "#3A3F47", go: () => this.dupBlock(m.id, false) },
+          { t: "아래까지 바로 복제", ic: "lucide:copy-plus", fg: "#3A3F47", go: () => this.dupBlock(m.id, true) },
           { t: "블록 삭제", ic: "lucide:trash-2", fg: "#C0392B", go: () => this.delBlock(m.id) },
           { t: "닫기", ic: "lucide:x", fg: "#8A9099", go: () => this.setState({ ctxMenu: null }) },
         ];
