@@ -252,6 +252,11 @@
           mapOY: payload.mapOY,
           fps: payload.fps,
           shared: payload.shared,
+          allowRemake: payload.allowRemake,
+          photoPixelate: payload.photoPixelate,
+          chromaKeyEnabled: payload.chromaKeyEnabled,
+          chromaKeyColor: payload.chromaKeyColor,
+          chromaKeyTolerance: payload.chromaKeyTolerance,
         },
         blocks: payload.wsBy,
         block_count: Object.keys(payload.wsBy || {}).reduce(
@@ -915,12 +920,27 @@
       if (!c) return false;
       const u = await this.ensureUser();
       if (!u) return false;
-      const rows = Object.keys(blocksByKey || {}).map((k) => ({
+      const keys = Object.keys(blocksByKey || {});
+      const rows = keys.map((k) => ({
         world_id: worldId, obj_key: k,
         stacks: blocksByKey[k] || [],
         block_count: JSON.stringify(blocksByKey[k] || []).split('"def"').length - 1,
         updated_at: new Date().toISOString(),
       }));
+
+      // 이전 오브젝트의 블록 행을 남겨 두면 다음 저장/불러오기 때
+      // 삭제한 오브젝트의 코드가 다시 나타날 수 있다. 먼저 현재 월드의
+      // 블록 행을 읽고, 이번 스냅샷에 없는 키는 제거한다.
+      const { data: oldRows, error: oldError } = await c
+        .from("world_blocks").select("obj_key").eq("world_id", worldId);
+      if (oldError) return false;
+      const keep = new Set(keys);
+      const stale = (oldRows || []).map((r) => r.obj_key).filter((k) => !keep.has(k));
+      if (stale.length) {
+        const { error } = await c.from("world_blocks")
+          .delete().eq("world_id", worldId).in("obj_key", stale);
+        if (error) return false;
+      }
       if (!rows.length) return true;
       const { error } = await c.from("world_blocks").upsert(rows, { onConflict: "world_id,obj_key" });
       return !error;
@@ -1031,6 +1051,7 @@
       if (!u) return null;
       const { data: src } = await c.from("worlds").select("*").eq("id", srcId).single();
       if (!src) return null;
+      if (src.license === "no_remake") return null;
       const newId = "w" + Math.random().toString(36).slice(2, 10);
       const { error } = await c.from("worlds").insert({
         id: newId, owner_id: u.id,
