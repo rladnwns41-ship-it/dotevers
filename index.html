@@ -8614,6 +8614,17 @@ class Component extends DCLogic {
     const spr = (k) => cssUrl(this.spriteOf(k));
     // 글쓴이·제작자 아바타는 실제 프로필(avatar_art)에서 가져온다
     const mine = this.isMyWorld(st.viewWorldId || st.worldId);
+    // 현재 월드 정보는 world 렌더 블록의 지역변수에 묶이지 않도록 여기서 한 번 확보한다.
+    // renderValsFull()의 반환 객체에서도 동일한 값을 사용해야 ReferenceError가 발생하지 않는다.
+    const currentWorld = (() => {
+      const src = (st.liveWorlds && st.liveWorlds.length) ? st.liveWorlds : [];
+      return src.find((x) => x.id === st.viewWorldId) || src[0] || {
+        id: st.viewWorldId, title: "아직 게시된 작품이 없습니다",
+        summary: "스튜디오에서 만들고 «게시하기» 를 누르면 여기에 나타납니다.",
+        author: "—", handle: "—", catName: "—", online: 0, likes: 0, dislikes: 0, comments: 0, plays: 0,
+        art: "portal", tags: [], license: "CC0"
+      };
+    })();
     const authorArt = {};
     (s.creators || []).forEach((c) => { authorArt[c.name] = c.art; });
     const faceUrl = {}, faceArt = {};
@@ -9106,8 +9117,8 @@ class Component extends DCLogic {
       dislikeFg: st.reacts["w:" + st.viewWorldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
-      remakeLabel: mine ? "수정하기" : (w.license === "no_remake" ? "리메이크 금지" : "리메이크"),
-      remakeIcon: mine ? "lucide:pencil-line" : (w.license === "no_remake" ? "lucide:ban" : "lucide:git-fork"),
+      remakeLabel: mine ? "수정하기" : (currentWorld.license === "no_remake" ? "리메이크 금지" : "리메이크"),
+      remakeIcon: mine ? "lucide:pencil-line" : (currentWorld.license === "no_remake" ? "lucide:ban" : "lucide:git-fork"),
       remakeBg: mine ? "#16181D" : "#FFFFFF",
       remakeFg: mine ? "#FFFFFF" : "#2A2D36",
       remakeBd: mine ? "#16181D" : "#E3DCCC",
@@ -9132,7 +9143,7 @@ class Component extends DCLogic {
           window.scrollTo(0, 0);
           return this.say("내 작품입니다 — 스튜디오에서 그대로 고칠 수 있습니다.");
         }
-        if (w.license === "no_remake") {
+        if (currentWorld.license === "no_remake") {
           return this.say("이 작품은 원작자가 리메이크를 금지했습니다.", "warn");
         }
         if (window.DotDB && window.DotDB.isLive) {
