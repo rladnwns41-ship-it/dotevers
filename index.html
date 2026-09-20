@@ -1040,7 +1040,7 @@
         <button class="dv-press" onClick="{{ saveStudio }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:save" width="15"></iconify-icon><span>{{ saveLabel }}</span>
         </button>
-        <button class="dv-press" onClick="{{ openLoadPicker }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
+        <button class="dv-press" data-dv-load-picker="1" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:folder-open" width="15"></iconify-icon><span>불러오기</span>
         </button>
         <button class="dv-press" onClick="{{ undoAll }}" title="되돌리기" style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:undo-2" width="16"></iconify-icon></button>
@@ -5338,7 +5338,7 @@ class Component extends DCLogic {
     if (owned) this.forceUpdate();
   }
 
-  // «만들기» — 빈 작품에서 새로 시작한다. 앞서 만들던 것은 저장본으로 남는다.
+  // «만들기» — 별도 작품을 불러오기 전에는 항상 Dotverse 기본 템플릿으로 시작한다.
   newWorld = () => {
     const id = "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     this._ownCache = {}; this._ownAsked = {};
@@ -5348,8 +5348,19 @@ class Component extends DCLogic {
     this.setState({
       route: "studio", tab: "blocks", worldId: id,
       worldTitle: "", worldSummary: "", tagsDef: [],
-      scenes: [{ id: "s1", name: "1번 화면" }], sceneId: "s1",
-      objects: {}, objId: null, wsBy: {}, tiles: {},
+      scenes: [{ id: "s1", name: "장면 1" }, { id: "s2", name: "장면 2" }], sceneId: "s1",
+      objectsBy: {
+        s1: [
+          { id: "o1", name: "슬라임", art: "slime", x: -40, y: 20, scale: 1, on: true },
+          { id: "o2", name: "보물상자", art: "chest", x: 60, y: -30, scale: 0.9, on: true },
+          { id: "o3", name: "차원 포탈", art: "portal", x: 0, y: 60, scale: 1.2, on: true },
+        ],
+        s2: [
+          { id: "o4", name: "가로등", art: "lamp", x: -70, y: -10, scale: 1, on: true },
+          { id: "o5", name: "숲 나무", art: "tree", x: 40, y: 30, scale: 1.3, on: true },
+        ],
+      },
+      objId: "o1", wsBy: {}, tiles: {},
       varsDef: [], listsDef: [], funcsDef: [], signalsDef: [],
       tables: [], rowsView: {}, rtVars: {}, rtScope: {},
       shapes: [], imgArts: [], soundsDef: [],
@@ -5359,7 +5370,7 @@ class Component extends DCLogic {
       this.initSeed();
       this.drawMap();
       window.scrollTo(0, 0);
-      this.say("새 작품을 시작했습니다. 앞서 만들던 것은 프로필 › 내 월드에 남아 있습니다.");
+      this.say("기본 템플릿으로 새 작품을 시작했습니다. 다른 작품은 「불러오기」에서 선택하세요.");
     });
   };
 
@@ -6973,6 +6984,17 @@ class Component extends DCLogic {
 
   componentDidMount() {
     window.addEventListener("keydown", this._blockClipboardKey, true);
+    // 불러오기 버튼은 렌더러의 동적 이벤트 해석에 의존하지 않고
+    // 문서 위임으로 직접 연결한다. 리렌더링되어 버튼 DOM이 교체되어도 계속 동작한다.
+    this._loadPickerClick = (ev) => {
+      const target = ev && ev.target && ev.target.closest ? ev.target.closest("[data-dv-load-picker]") : null;
+      if (!target) return;
+      if (!document.body || !document.body.contains(target)) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.openLoadPicker();
+    };
+    document.addEventListener("click", this._loadPickerClick, true);
     if (this._ws) this._ws.addEventListener("click", this._blockClipboardSelect, true);
 
     // load 가 끝난 뒤에 붙여야 CDN 이 막힌 곳에서도 문서 로드가 완료된다
@@ -7009,8 +7031,8 @@ class Component extends DCLogic {
     this.syncMyArts();
     this.ensureSeedSprites();
     this.restoreCommunity();
-    this.restoreMap();
-    this.restoreArts();
+    // 작품은 자동으로 이전 로컬 작업을 끌어오지 않는다.
+    // 별도로 「불러오기」에서 작품을 선택하기 전에는 항상 기본 템플릿으로 시작한다.
     try {
       const f = JSON.parse(localStorage.getItem(LS("favs")) || "[]");
       if (f.length) this.setState({ favArts: f });
@@ -7321,6 +7343,10 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    if (this._loadPickerClick) {
+      document.removeEventListener("click", this._loadPickerClick, true);
+      this._loadPickerClick = null;
+    }
     this.clearUiTimers();
     clearTimeout(this._emoteT);
     if (this._lobby) { this._lobby.close(); this._lobby = null; }
