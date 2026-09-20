@@ -999,6 +999,10 @@
           </sc-if>
         </div>
         <span onMouseDown="{{ startLoadPickerResize }}" title="창 크기 조절" style="position:absolute;right:3px;bottom:3px;width:22px;height:22px;cursor:nwse-resize;z-index:5;border-radius:7px;background:linear-gradient(135deg,transparent 0 46%,#CFC7B6 47% 52%,transparent 53% 62%,#CFC7B6 63% 68%,transparent 69%);opacity:.9"></span>
+        <span onMouseDown="{{ startLoadPickerResizeTop }}" title="위쪽으로 창 크기 조절" style="position:absolute;left:14px;right:14px;top:0;height:10px;cursor:ns-resize;z-index:6"></span>
+        <span onMouseDown="{{ startLoadPickerResizeLeft }}" title="왼쪽으로 창 크기 조절" style="position:absolute;left:0;top:14px;bottom:14px;width:10px;cursor:ew-resize;z-index:6"></span>
+        <span onMouseDown="{{ startLoadPickerResizeTopRight }}" title="위쪽·오른쪽으로 창 크기 조절" style="position:absolute;right:0;top:0;width:14px;height:14px;cursor:nesw-resize;z-index:7"></span>
+        <span onMouseDown="{{ startLoadPickerResizeTopLeft }}" title="위쪽·왼쪽으로 창 크기 조절" style="position:absolute;left:0;top:0;width:14px;height:14px;cursor:nwse-resize;z-index:7"></span>
       </div>
     </div>
   </sc-if>
@@ -1786,7 +1790,7 @@
                 <span style="font-size:10px;color:#8A9099;margin-left:auto">허용 오차</span>
                 <input type="number" min="0" max="255" value="{{ chromaKeyTolerance }}" onChange="{{ setChromaKeyTolerance }}" style="width:54px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:10.5px;text-align:center" />
                 <sc-if value="{{ chromaPickerOpen }}" hint-placeholder-val="{{ false }}">
-                  <div onClick="{{ stopModalClick }}" style="position:absolute;left:0;top:calc(100% + 9px);width:274px;padding:12px;background:#FFFFFF;border:1px solid #DED7CA;border-radius:16px;box-shadow:0 22px 50px -16px rgba(22,24,29,.34);z-index:500;display:flex;flex-direction:column;gap:10px">
+                  <div onClick="{{ stopModalClick }}" style="position:fixed;left:{{ chromaPickerLeft }}px;top:{{ chromaPickerTop }}px;width:274px;padding:12px;background:#FFFFFF;border:1px solid #DED7CA;border-radius:16px;box-shadow:0 22px 50px -16px rgba(22,24,29,.34);z-index:500;display:flex;flex-direction:column;gap:10px">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
                       <span style="font-size:12.5px;font-weight:800;color:#2A2D36">색상 선택</span>
                       <span onClick="{{ toggleChromaPicker }}" style="width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#8A9099;cursor:pointer" style-hover="background:#F7F5EF;color:#16181D"><iconify-icon icon="lucide:x" width="13"></iconify-icon></span>
@@ -3317,6 +3321,8 @@ class Component extends DCLogic {
     chromaKeyColor: "#00FF00",
     chromaKeyTolerance: 70,
     chromaPickerOpen: false,
+    chromaPickerLeft: 0,
+    chromaPickerTop: 0,
     loadPickerW: 760,
     loadPickerH: 520,
     replyTo: null,
@@ -6182,7 +6188,19 @@ class Component extends DCLogic {
 
   toggleChromaPicker = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    this.setState((p) => ({ chromaPickerOpen: !p.chromaPickerOpen }));
+    if (this.state.chromaPickerOpen) {
+      this.setState({ chromaPickerOpen: false });
+      return;
+    }
+    const target = e && e.currentTarget ? e.currentTarget : null;
+    const rect = target && target.getBoundingClientRect ? target.getBoundingClientRect() : null;
+    const pw = 300, ph = 360, gap = 9;
+    let left = rect ? rect.left : 24;
+    let top = rect ? rect.bottom + gap : 80;
+    if (rect && rect.bottom + ph + gap > window.innerHeight) top = rect.top - ph - gap;
+    left = Math.max(10, Math.min(window.innerWidth - pw - 10, left));
+    top = Math.max(10, Math.min(window.innerHeight - ph - 10, top));
+    this.setState({ chromaPickerOpen: true, chromaPickerLeft: Math.round(left), chromaPickerTop: Math.round(top) });
   };
   chromaSvRef = (el) => { this._chromaSvEl = el; };
   chromaHueRef = (el) => { this._chromaHueEl = el; };
@@ -6252,6 +6270,29 @@ class Component extends DCLogic {
     window.addEventListener("mousemove", move);
     window.addEventListener("mouseup", up);
   };
+
+  _resizeLoadPicker = (e, mode) => {
+    if (!e) return;
+    e.preventDefault(); e.stopPropagation();
+    const sx = e.clientX, sy = e.clientY;
+    const sw = Number(this.state.loadPickerW) || 760, sh = Number(this.state.loadPickerH) || 520;
+    const move = (ev) => {
+      const maxW = Math.max(520, window.innerWidth - 32), maxH = Math.max(300, window.innerHeight - 48);
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      let w = sw, h = sh;
+      if (mode.indexOf("r") >= 0) w = sw + dx;
+      if (mode.indexOf("l") >= 0) w = sw - dx;
+      if (mode.indexOf("t") >= 0) h = sh - dy * 2;
+      if (mode.indexOf("b") >= 0) h = sh + dy;
+      this.setState({ loadPickerW: Math.round(Math.max(520, Math.min(maxW, w))), loadPickerH: Math.round(Math.max(300, Math.min(maxH, h))) });
+    };
+    const up = () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+    window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
+  };
+  startLoadPickerResizeTop = (e) => this._resizeLoadPicker(e, "t");
+  startLoadPickerResizeLeft = (e) => this._resizeLoadPicker(e, "l");
+  startLoadPickerResizeTopRight = (e) => this._resizeLoadPicker(e, "tr");
+  startLoadPickerResizeTopLeft = (e) => this._resizeLoadPicker(e, "tl");
 
   openLoadPicker = () => {
     this.setState({ loadPickerOpen: true, loadPickerLoading: true });
@@ -9230,6 +9271,10 @@ class Component extends DCLogic {
       closeLoadPicker: this.closeLoadPicker,
       stopModalClick: this.stopModalClick,
       startLoadPickerResize: this.startLoadPickerResize,
+      startLoadPickerResizeTop: this.startLoadPickerResizeTop,
+      startLoadPickerResizeLeft: this.startLoadPickerResizeLeft,
+      startLoadPickerResizeTopRight: this.startLoadPickerResizeTopRight,
+      startLoadPickerResizeTopLeft: this.startLoadPickerResizeTopLeft,
       loadPickerW: Math.max(520, Number(st.loadPickerW) || 760),
       loadPickerH: Math.max(300, Number(st.loadPickerH) || 520),
       loadPickerHasItems: Array.isArray(st.liveMyWorlds) && st.liveMyWorlds.length > 0,
@@ -9948,6 +9993,8 @@ class Component extends DCLogic {
       setChromaKeyTolerance: (e) => this.setState({ chromaKeyTolerance: Math.max(0, Math.min(255, Number(e.target.value) || 0)) }, () => { this.saveStudio(); }),
       toggleChromaPicker: this.toggleChromaPicker,
       chromaPickerOpen: !!st.chromaPickerOpen,
+      chromaPickerLeft: Math.max(10, Number(st.chromaPickerLeft) || 10),
+      chromaPickerTop: Math.max(10, Number(st.chromaPickerTop) || 10),
       chromaSvRef: this.chromaSvRef,
       chromaHueRef: this.chromaHueRef,
       chromaSVDown: this.chromaSVDown,
