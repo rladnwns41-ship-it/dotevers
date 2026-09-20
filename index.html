@@ -5686,8 +5686,9 @@ class Component extends DCLogic {
     if (window.DotDB && window.DotDB.isLive && !/^p[0-9a-z]{6,}$/.test(String(postId))) {
       const r = await window.DotDB.addComment({ postId: postId, body: b });
       this.setState({ commentDraft: "" });
-      if (r) { await this.loadThread(postId); return; }
+      if (r) { await this.loadThread(postId); await this.loadPosts(); return; }
       this.warnGuest("댓글", window.DotDB.lastError);
+      return;
     }
     this.setState((p) => ({
       threads: Object.assign({}, p.threads, {
@@ -5701,44 +5702,46 @@ class Component extends DCLogic {
     }), this.persistCommunity);
   };
 
-  // 작품 추천 · 비추천을 데이터베이스에 남긴다
-  reactWorld(dir) {
+  // 작품 추천 · 비추천 — 서버 저장 성공이 확인된 경우에만 UI 상태를 확정한다.
+  reactWorld = async (dir) => {
     const wid = this.state.viewWorldId || this.state.worldId;
     const key = "w:" + wid;
-    const prev = this.state.reacts[key];
+    const prev = this.state.reacts[key] || null;
     const next = prev === dir ? null : dir;
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      return this.say("서버에 연결된 상태에서만 추천을 저장할 수 있습니다.", "warn");
+    }
+    const ok = await window.DotDB.vote("world", wid, next === null ? null : (next === "like" ? 1 : -1));
+    if (!ok) return this.warnGuest("추천", window.DotDB.lastError);
     this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: next }) }));
-    if (!(window.DotDB && window.DotDB.isLive)) return;
-    window.DotDB.vote("world", wid, next === null ? null : (next === "like" ? 1 : -1))
-      .then((ok) => {
-        if (ok === false || ok === null) {
-          // 서버가 받지 않았으면 눌린 채로 두지 않는다
-          this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: prev }) }));
-          return this.warnGuest("추천");
-        }
-        this.loadLive();
-      });
+    await this.loadLive();
   }
 
-  // 오브젝트 추천도 같은 방식으로 남긴다
-  reactAsset(id, dir) {
+  // 오브젝트 추천도 서버 저장 성공 후 확정한다.
+  reactAsset = async (id, dir) => {
     const key = "a:" + id;
-    const next = this.state.reacts[key] === dir ? null : dir;
-    this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: next }) }));
-    if (window.DotDB && window.DotDB.isLive) {
-      window.DotDB.vote("asset", id, next === null ? null : (next === "like" ? 1 : -1))
-        .then(() => this.loadLive());
+    const prev = this.state.reacts[key] || null;
+    const next = prev === dir ? null : dir;
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      return this.say("서버에 연결된 상태에서만 추천을 저장할 수 있습니다.", "warn");
     }
+    const ok = await window.DotDB.vote("asset", id, next === null ? null : (next === "like" ? 1 : -1));
+    if (!ok) return this.warnGuest("추천", window.DotDB.lastError);
+    this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: next }) }));
+    await this.loadLive();
   }
 
-  votePost(id, dir) {
-    const next = this.state.postVotes[id] === dir ? null : dir;
-    this.setState((p) => ({
-      postVotes: Object.assign({}, p.postVotes, { [id]: next }),
-    }), this.persistCommunity);
-    if (window.DotDB && window.DotDB.isLive) {
-      window.DotDB.vote("post", id, next === null ? null : (next === "like" ? 1 : -1));
+  votePost = async (id, dir) => {
+    const prev = this.state.postVotes[id] || null;
+    const next = prev === dir ? null : dir;
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      this.setState((p) => ({ postVotes: Object.assign({}, p.postVotes, { [id]: next }) }), this.persistCommunity);
+      return;
     }
+    const ok = await window.DotDB.vote("post", id, next === null ? null : (next === "like" ? 1 : -1));
+    if (!ok) return this.warnGuest("추천", window.DotDB.lastError);
+    this.setState((p) => ({ postVotes: Object.assign({}, p.postVotes, { [id]: next }) }), this.persistCommunity);
+    await this.loadPosts();
   }
 
   persistCommunity = () => {
@@ -7314,6 +7317,16 @@ class Component extends DCLogic {
           license: x.license || "cc_by", online: 0, ago: this.agoText(x.published_at || x.created_at), tags: x.tags || [], art: x.art || "portal", thumbUrl: x.thumb_url || null,
         }));
       }
+      // 현재 로그인 사용자의 월드 추천 상태를 서버에서 다시 읽는다.
+      // localStorage의 값은 보조 표시일 뿐 서버값을 덮어쓰지 않는다.
+      if (w && w.length && mp) {
+        const mine = await window.DotDB.myVotes("world", w.map((x) => x.id));
+        const rv = {};
+        (mine || []).forEach((v) => {
+          rv["w:" + v.subject_id] = v.value > 0 ? "like" : "dislike";
+        });
+        next.reacts = rv;
+      }
       if (a) {
         const spriteAdd = {};
         next.liveAssets = a.map((x) => Object.assign({}, {
@@ -7480,17 +7493,21 @@ class Component extends DCLogic {
     if (!window.DotDB || !window.DotDB.isLive) return;
     const rows = await window.DotDB.listComments(null, worldId);
     if (!rows) return;
-    this.setState({
+    const ids = rows.map((r) => String(r.id));
+    const mine = await window.DotDB.myVotes("comment", ids);
+    const rv = {};
+    (mine || []).forEach((v) => { rv["c:" + v.subject_id] = v.value > 0 ? "like" : "dislike"; });
+    this.setState((p) => ({
+      reacts: Object.assign({}, p.reacts, rv),
       comments: rows.map((r) => ({
         id: r.id,
         author: (r.profiles && r.profiles.display_name) || "손님",
         handle: (r.profiles && r.profiles.handle) || "unknown",
-        // 글쓴이의 진짜 프로필 사진 (없으면 화면에서 첫 글자 동그라미로 대신한다)
         avatarUrl: (r.profiles && r.profiles.avatar_url) || "",
         body: r.body, ago: this.agoText(r.created_at),
-        likes: 0, dislikes: 0, depth: r.parent_id ? 1 : 0,
+        likes: r.like_count || 0, dislikes: r.dislike_count || 0, depth: r.parent_id ? 1 : 0,
       })),
-    });
+    }));
   }
 
   // 글을 펼치면 그 글의 댓글을 데이터베이스에서 읽는다
@@ -7498,13 +7515,19 @@ class Component extends DCLogic {
     if (!window.DotDB || !window.DotDB.isLive) return;
     const rows = await window.DotDB.listComments(postId, null);
     if (!rows) return;
+    const ids = rows.map((r) => String(r.id));
+    const mine = await window.DotDB.myVotes("comment", ids);
+    const rv = {};
+    (mine || []).forEach((v) => { rv["c:" + v.subject_id] = v.value > 0 ? "like" : "dislike"; });
     this.setState((p) => ({
+      reacts: Object.assign({}, p.reacts, rv),
       threads: Object.assign({}, p.threads, {
         [postId]: rows.map((r) => ({
           id: r.id,
           author: (r.profiles && r.profiles.display_name) || "손님",
           avatarUrl: (r.profiles && r.profiles.avatar_url) || "",
           body: r.body, ago: this.agoText(r.created_at),
+          likes: r.like_count || 0, dislikes: r.dislike_count || 0,
         })),
       }),
     }));
@@ -8950,18 +8973,30 @@ class Component extends DCLogic {
         { k: "E", d: "감정 표현 휠" }, { k: "T", d: "채팅 (필터 적용)" },
       ],
       threadComments: (st.route !== "world" ? [] : baseThread).map((c, i) => {
-        const key = "c:" + i;
+        const key = "c:" + (c.id || i);
         const r = st.reacts[key];
         return {
           author: c.author, handle: c.handle, body: c.body, ago: c.ago,
           indent: (c.depth || 0) * 46 + "px", isOwner: !!c.owner,
           sprite: c.avatarUrl ? cssUrl(c.avatarUrl) : spr(authorArt[c.author] || "slime"),
-          likes: (c.likes || 0) + (r === "like" ? 1 : 0),
-          dislikes: (c.dislikes || 0) + (r === "dislike" ? 1 : 0),
+          likes: c.likes || 0,
+          dislikes: c.dislikes || 0,
           likeColor: r === "like" ? "#B8496F" : "#8A9099",
           dislikeColor: r === "dislike" ? "#16181D" : "#8A9099",
-          like: () => this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: p.reacts[key] === "like" ? null : "like" }) })),
-          dislike: () => this.setState((p) => ({ reacts: Object.assign({}, p.reacts, { [key]: p.reacts[key] === "dislike" ? null : "dislike" }) })),
+          like: async () => {
+            if (!c.id || !(window.DotDB && window.DotDB.isLive)) return;
+            const next = r === "like" ? null : "like";
+            const ok = await window.DotDB.vote("comment", c.id, next === "like" ? 1 : null);
+            if (!ok) return this.warnGuest("댓글 추천", window.DotDB.lastError);
+            await this.loadWorldThread(st.viewWorldId || st.worldId);
+          },
+          dislike: async () => {
+            if (!c.id || !(window.DotDB && window.DotDB.isLive)) return;
+            const next = r === "dislike" ? null : "dislike";
+            const ok = await window.DotDB.vote("comment", c.id, next === "dislike" ? -1 : null);
+            if (!ok) return this.warnGuest("댓글 추천", window.DotDB.lastError);
+            await this.loadWorldThread(st.viewWorldId || st.worldId);
+          },
           replying: st.replyTo === i,
           replyLabel: st.replyTo === i ? "답글 취소" : "답글",
           replyColor: st.replyTo === i ? "#16181D" : "#4A5FD1",
@@ -9004,7 +9039,11 @@ class Component extends DCLogic {
         this.say(f.hit ? "필터에 걸린 표현을 가려서 등록했습니다." : "댓글을 등록했습니다.");
         if (window.DotDB && window.DotDB.isLive) {
           window.DotDB.addComment({ worldId: st.viewWorldId || st.worldId, body: f.out })
-            .then((r) => { if (r) this.loadWorldThread(st.viewWorldId || st.worldId); });
+            .then((r) => {
+              if (r) return this.loadWorldThread(st.viewWorldId || st.worldId);
+              this.warnGuest("댓글", window.DotDB.lastError);
+              this.loadWorldThread(st.viewWorldId || st.worldId);
+            });
         }
       },
       usedAssets: assets.slice(0, 4),
