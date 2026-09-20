@@ -553,7 +553,7 @@
       const c = init();
       if (!c) return null;
       let q = c.from("comments")
-        .select("id,body,parent_id,created_at,profiles!comments_author_id_fkey(display_name,handle,avatar_url)")
+        .select("id,body,parent_id,created_at,like_count,dislike_count,profiles!comments_author_id_fkey(display_name,handle,avatar_url)")
         .order("created_at", { ascending: true })
         .limit(200);
       q = postId ? q.eq("post_id", postId) : q.eq("world_id", worldId);
@@ -586,22 +586,53 @@
       }
       return data;
     },
-    // 추천 · 비추천 · 투표를 한 표로 기록한다 (같은 값을 다시 보내면 취소)
+    // 추천 · 비추천 · 투표를 서버에 확정 저장한다.
+    // upsert의 복합 UNIQUE 인덱스가 없는 오래된 DB에서도 동작하도록
+    // 조회 → update/insert 방식으로 저장하고, 실패하면 절대로 UI를 성공 상태로 두지 않는다.
     async vote(subjectType, subjectId, value) {
       const c = init();
-      if (!c) return null;
+      if (!c) return false;
       const u = await this.ensureUser();
-      if (!u) return null;
-      if (value === null) {
-        await c.from("votes").delete()
-          .eq("subject_type", subjectType).eq("subject_id", String(subjectId)).eq("voter_id", u.id);
+      if (!u) return false;
+      const sid = String(subjectId);
+      try {
+        const q = await c.from("votes").select("id,value")
+          .eq("subject_type", subjectType).eq("subject_id", sid).eq("voter_id", u.id)
+          .maybeSingle();
+        if (q.error) {
+          this.lastError = q.error;
+          return false;
+        }
+        if (value === null) {
+          if (!q.data) return true;
+          const r = await c.from("votes").delete().eq("id", q.data.id).eq("voter_id", u.id);
+          if (r.error) { this.lastError = r.error; return false; }
+          return true;
+        }
+        if (q.data) {
+          const r = await c.from("votes").update({ value: value }).eq("id", q.data.id).eq("voter_id", u.id);
+          if (r.error) { this.lastError = r.error; return false; }
+          return true;
+        }
+        const r = await c.from("votes").insert({
+          subject_type: subjectType, subject_id: sid, voter_id: u.id, value: value,
+        });
+        if (r.error) {
+          // 동시 클릭/중복 삽입 경쟁이 발생하면 마지막 값을 update로 확정한다.
+          const q2 = await c.from("votes").select("id").eq("subject_type", subjectType)
+            .eq("subject_id", sid).eq("voter_id", u.id).maybeSingle();
+          if (!q2.error && q2.data) {
+            const r2 = await c.from("votes").update({ value: value }).eq("id", q2.data.id).eq("voter_id", u.id);
+            if (!r2.error) return true;
+          }
+          this.lastError = r.error;
+          return false;
+        }
         return true;
+      } catch (e) {
+        this.lastError = e;
+        return false;
       }
-      const { error } = await c.from("votes").upsert({
-        subject_type: subjectType, subject_id: String(subjectId),
-        voter_id: u.id, value: value,
-      }, { onConflict: "subject_type,subject_id,voter_id" });
-      return !error;
     },
     async myVotes(subjectType, ids) {
       const c = init();
@@ -619,11 +650,12 @@
     async pollTally(postIds) {
       const c = init();
       if (!c || !postIds || !postIds.length) return null;
-      const { data, error } = await c.from("votes")
-        .select("subject_id,value")
-        .eq("subject_type", "poll")
-        .in("subject_id", postIds.map(String));
-      return error ? null : data;
+      const { data, error } = await c.rpc("dv_poll_tally", { p_ids: postIds.map(String) });
+      return error ? null : (data || []).map((x) => ({
+        subject_id: String(x.subject_id), value: Number(x.value), count: Number(x.count || 0),
+      })).flatMap((x) => Array.from({ length: x.count }, () => ({
+        subject_id: x.subject_id, value: x.value,
+      })));
     },
     // ── 신고 ─────────────────────────────────────────────────
     async report({ subjectType, subjectId, subjectLabel, reason, detail, email, url }) {
@@ -698,6 +730,9 @@
         id: worldId, owner_id: u.id, status: "published",
         published_at: new Date().toISOString(),
       }, fields || {});
+      // 클라이언트가 fields로 owner_id를 덮어쓰지 못하게 한다.
+      row.owner_id = u.id;
+      row.id = worldId;
       let { error } = await c.from("worlds").upsert(row, { onConflict: "id" });
       if (error) {
         const safe = {
@@ -712,9 +747,16 @@
     },
     async countPlay(worldId) {
       const c = init();
-      if (!c) return;
-      const { data } = await c.from("worlds").select("play_count").eq("id", worldId).single();
-      if (data) await c.from("worlds").update({ play_count: (data.play_count || 0) + 1 }).eq("id", worldId);
+      if (!c) return false;
+      const u = await this.me();
+      // 플레이 기록이 있으면 DB trigger가 play_count를 계산한다.
+      const { error } = await c.from("plays").insert({
+        world_id: worldId,
+        player_id: u ? u.id : null,
+        seconds: 0,
+      });
+      if (error) { this.lastError = error; return false; }
+      return true;
     },
     // ── 크리에이터 · 프로필 ──────────────────────────────────
     async listCreators(limit = 12) {
