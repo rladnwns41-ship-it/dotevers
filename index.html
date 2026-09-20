@@ -981,13 +981,20 @@
             <span onClick="{{ closeLoadPicker }}" style="width:30px;height:30px;border-radius:99px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8A9099" style-hover="background:#F7F5EF;color:#16181D"><iconify-icon icon="lucide:x" width="16"></iconify-icon></span>
           </div>
           <div style="flex:1;min-height:0;overflow:auto;padding:14px">
-            <sc-if value="{{ loadPickerEmpty }}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{ loadPickerLoading }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:36px 18px;text-align:center;color:#8A9099">
+                <iconify-icon icon="lucide:loader-circle" width="26" style="margin-bottom:10px"></iconify-icon>
+                <div style="font-size:13.5px;font-weight:700;color:#5B616C">내 작품을 불러오는 중입니다.</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ !loadPickerLoading && loadPickerEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="padding:36px 18px;text-align:center;color:#8A9099">
                 <iconify-icon icon="lucide:folder-x" width="28" style="margin-bottom:10px"></iconify-icon>
                 <div style="font-size:13.5px;font-weight:700;color:#5B616C">저장된 작품이 없습니다.</div>
                 <div style="font-size:11.5px;margin-top:5px">새 작품을 만든 뒤 저장하면 여기에 나타납니다.</div>
               </div>
             </sc-if>
+            <sc-if value="{{ !loadPickerLoading }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:8px">
               <sc-for list="{{ loadCandidates }}" as="w" hint-placeholder-count="4">
                 <div style="display:flex;align-items:center;gap:12px;border:1px solid #E3DCCC;border-radius:12px;padding:11px 12px;background:#FFFFFF;cursor:pointer" style-hover="border-color:#2F6F5E;background:#F7FBF9" onClick="{{ w.load }}">
@@ -1000,6 +1007,7 @@
                 </div>
               </sc-for>
             </div>
+            </sc-if>
           </div>
         </div>
       </div>
@@ -1713,7 +1721,9 @@
             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #EFEADE;background:#FAFAF8">
               <iconify-icon icon="lucide:scaling" width="13" style="color:#2F6F5E;flex-shrink:0"></iconify-icon>
               <span style="font-size:11.5px;font-weight:600;color:#5B616C;flex-shrink:0">크기</span>
+              <span onClick="{{ decreasePlaceScale }}" title="사진/오브젝트 크기 줄이기" style="width:24px;height:24px;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;color:#5B616C;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;flex-shrink:0">▼</span>
               <input type="range" min="25" max="300" step="5" value="{{ placeScalePct }}" onChange="{{ setPlaceScale }}" style="flex:1;height:4px;accent-color:#2F6F5E;cursor:pointer" />
+              <span onClick="{{ increasePlaceScale }}" title="사진/오브젝트 크기 키우기" style="width:24px;height:24px;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;color:#5B616C;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;flex-shrink:0">▲</span>
               <span style="font-family:Galmuri11,monospace;font-size:11px;color:#2F6F5E;min-width:36px;text-align:right">{{ placeScalePct }}%</span>
               <span onClick="{{ resetPlaceScale }}" title="1배로 초기화" style="font-size:10.5px;color:#8A9099;cursor:pointer;border:1px solid #E3DCCC;border-radius:5px;padding:2px 6px;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">초기화</span>
             </div>
@@ -1782,10 +1792,15 @@
                 </span>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
-                <input type="color" value="{{ chromaKeyColor }}" onChange="{{ setChromaKeyColor }}" title="투명하게 만들 색" style="width:34px;height:28px;padding:0;border:1px solid #E3DCCC;border-radius:9px;overflow:hidden;background:#FFFFFF;cursor:pointer;appearance:none;-webkit-appearance:none" />
-                <span style="font-size:11px;font-family:Galmuri11,monospace;color:#5B616C">{{ chromaKeyColor }}</span>
-                <span style="font-size:10px;color:#8A9099;margin-left:auto">허용 오차</span>
-                <input type="number" min="0" max="255" value="{{ chromaKeyTolerance }}" onChange="{{ setChromaKeyTolerance }}" style="width:54px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:10.5px;text-align:center" />
+                <span onClick="{{ openChromaColorPicker }}" title="투명하게 만들 색 선택" style="width:34px;height:28px;border:1px solid #E3DCCC;border-radius:9px;overflow:hidden;background:{{ chromaKeyColor }};cursor:pointer;display:block;flex-shrink:0;box-sizing:border-box"></span>
+                <input ref="{{ chromaColorInputRef }}" type="color" value="#00FF00" onChange="{{ setChromaKeyColor }}" aria-label="투명하게 만들 색" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" />
+                <span style="font-size:11px;font-family:Galmuri11,monospace;color:#5B616C;min-width:58px">{{ chromaKeyColor }}</span>
+                <span style="font-size:10px;color:#8A9099;margin-left:auto;white-space:nowrap">허용 오차</span>
+                <span style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+                  <span onClick="{{ decreaseChromaTolerance }}" title="허용 오차 낮추기" style="width:22px;height:24px;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;color:#5B616C;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700">−</span>
+                  <input type="text" inputmode="numeric" value="{{ chromaKeyTolerance }}" onChange="{{ setChromaKeyTolerance }}" aria-label="허용 오차" style="width:44px;height:24px;box-sizing:border-box;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:3px 5px;font-family:Galmuri11,monospace;font-size:10.5px;text-align:center;outline:none" />
+                  <span onClick="{{ increaseChromaTolerance }}" title="허용 오차 높이기" style="width:22px;height:24px;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;color:#5B616C;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700">＋</span>
+                </span>
               </div>
             </div>
             <button class="dv-press" onClick="{{ goAssets }}" style="width:100%;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#16181D">공유 라이브러리에서 가져오기</button>
@@ -6109,11 +6124,19 @@ class Component extends DCLogic {
 
   stopModalClick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
 
-  openLoadPicker = async () => {
-    if (window.DotDB && window.DotDB.isLive) {
-      try { await this.loadMyWorlds(); } catch (e) {}
+  openLoadPicker = () => {
+    // 모달은 서버 응답을 기다리기 전에 즉시 연다.
+    // 기존에는 loadMyWorlds()가 Supabase에서 지연되면 버튼을 눌러도
+    // 아무 반응이 없는 것처럼 보였다.
+    this.setState({ loadPickerOpen: true, loadPickerLoading: true });
+    if (!(window.DotDB && window.DotDB.isLive)) {
+      this.setState({ loadPickerLoading: false });
+      return;
     }
-    this.setState({ loadPickerOpen: true });
+    Promise.resolve()
+      .then(() => this.loadMyWorlds())
+      .catch(() => {})
+      .finally(() => this.setState({ loadPickerLoading: false }));
   };
 
   closeLoadPicker = () => this.setState({ loadPickerOpen: false });
@@ -9831,8 +9854,24 @@ class Component extends DCLogic {
       photoPixelateX: st.photoPixelate === false ? "3px" : "23px",
       toggleRemake: () => this.setState((p) => ({ allowRemake: !(p.allowRemake !== false) }), () => { this.saveStudio(); this.say(this.state.allowRemake ? "리메이크를 허용했습니다." : "리메이크를 금지했습니다."); }),
       toggleChromaKey: () => this.setState((p) => ({ chromaKeyEnabled: !p.chromaKeyEnabled }), () => { this.saveStudio(); }),
-      setChromaKeyColor: (e) => this.setState({ chromaKeyColor: e.target.value }, () => { this.saveStudio(); }),
-      setChromaKeyTolerance: (e) => this.setState({ chromaKeyTolerance: Math.max(0, Math.min(255, Number(e.target.value) || 0)) }, () => { this.saveStudio(); }),
+      openChromaColorPicker: () => {
+        const el = this._chromaColorInput;
+        if (el) { el.value = /^#[0-9A-Fa-f]{6}$/.test(String(this.state.chromaKeyColor || "")) ? this.state.chromaKeyColor : "#00FF00"; el.click(); }
+      },
+      chromaColorInputRef: (el) => {
+        this._chromaColorInput = el;
+        if (el) el.value = /^#[0-9A-Fa-f]{6}$/.test(String(this.state.chromaKeyColor || "")) ? this.state.chromaKeyColor : "#00FF00";
+      },
+      setChromaKeyColor: (e) => {
+        const v = /^#[0-9A-Fa-f]{6}$/.test(String(e.target.value || "")) ? e.target.value.toUpperCase() : "#00FF00";
+        this.setState({ chromaKeyColor: v }, () => { if (this._chromaColorInput) this._chromaColorInput.value = v; this.saveStudio(); });
+      },
+      setChromaKeyTolerance: (e) => {
+        const n = Math.max(0, Math.min(255, Math.round(Number(String(e.target.value).replace(/[^0-9]/g, "")) || 0)));
+        this.setState({ chromaKeyTolerance: n }, () => { this.saveStudio(); });
+      },
+      decreaseChromaTolerance: () => this.setState((p) => ({ chromaKeyTolerance: Math.max(0, Number(p.chromaKeyTolerance) - 5) }), () => { this.saveStudio(); }),
+      increaseChromaTolerance: () => this.setState((p) => ({ chromaKeyTolerance: Math.min(255, Number(p.chromaKeyTolerance) + 5) }), () => { this.saveStudio(); }),
       chromaKeyEnabled: !!st.chromaKeyEnabled,
       chromaKeyColor: st.chromaKeyColor || "#00FF00",
       chromaKeyTolerance: Number(st.chromaKeyTolerance) || 70,
@@ -9928,7 +9967,9 @@ class Component extends DCLogic {
       objPanelFg: st.objPanelOpen === false ? "#3A3F49" : "#2F6F5E",
       isObjMode: st.mapMode === "object",
       placeScalePct: Math.round((st.placeScale || 1) * 100),
-      setPlaceScale: (e) => this.setState({ placeScale: Math.round(Number(e.target.value)) / 100 }, () => this.drawMap()),
+      setPlaceScale: (e) => this.setState({ placeScale: Math.max(0.25, Math.min(3, Math.round(Number(e.target.value) / 5) * 5 / 100)) }, () => this.drawMap()),
+      decreasePlaceScale: () => this.setState((p) => ({ placeScale: Math.max(0.25, Math.round(((p.placeScale || 1) - 0.05) * 100) / 100) }), () => this.drawMap()),
+      increasePlaceScale: () => this.setState((p) => ({ placeScale: Math.min(3, Math.round(((p.placeScale || 1) + 0.05) * 100) / 100) }), () => this.drawMap()),
       resetPlaceScale: () => this.setState({ placeScale: 1 }, () => this.drawMap()),
       openLoadPicker: this.openLoadPicker,
       closeLoadPicker: this.closeLoadPicker,
