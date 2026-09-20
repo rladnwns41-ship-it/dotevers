@@ -1047,7 +1047,7 @@
               </sc-if>
               <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
                 <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-                  <canvas ref="{{ bgRefA }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block"></canvas>
+                  <canvas ref="{{ bgRefA }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:{{ stageImageRendering }};display:block"></canvas>
                 </sc-if>
                 <sc-if value="{{ noStageBg }}" hint-placeholder-val="{{ true }}">
                   <span style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,24,29,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,29,0.05) 1px,transparent 1px);background-size:12.5% 16.6%"></span>
@@ -1081,6 +1081,9 @@
                     </sc-if>
                     <sc-if value="{{ o.isSprite }}" hint-placeholder-val="{{ true }}">
                       <span role="img" aria-label="{{ o.name }}" style="width:100%;aspect-ratio:1;box-shadow:{{ o.ring }};border-radius:4px;image-rendering:pixelated;filter:{{ o.filter }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                    </sc-if>
+                    <sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}">
+                      <span style="position:absolute;left:{{ o.hitLeft }};top:{{ o.hitTop }};width:{{ o.hitWidth }};height:{{ o.hitHeight }};border:2px dashed #C0392B;background:rgba(192,57,43,0.12);box-sizing:border-box;pointer-events:none;border-radius:3px"></span>
                     </sc-if>
                     <sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}">
                       <span onMouseDown="{{ o.resize }}" title="끌어서 크기 바꾸기" style="position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:99px;background:#FFFFFF;border:2px solid #2F6F5E;cursor:nwse-resize;box-shadow:0 1px 3px rgba(22,24,29,0.3)"></span>
@@ -1226,6 +1229,10 @@
                   </span>
                 </sc-for>
               </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;background:#F7F5EF;border-radius:8px;padding:7px 9px">
+                <span style="font-size:10.5px;font-weight:700;color:#8A9099">히트박스 사용</span>
+                <button onClick="{{ toggleSelectedHitbox }}" style="border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;background:{{ selectedHitboxBg }};color:{{ selectedHitboxFg }};font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer">{{ selectedHitboxLabel }}</button>
+              </div>
               <sc-if value="{{ selText }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:7px;background:#FFF7E6;border:1px solid #F3E2BE;border-radius:10px;padding:10px">
                   <span style="font-size:11px;font-weight:700;color:#D97706">글상자 속성</span>
@@ -1246,6 +1253,12 @@
                   <iconify-icon icon="{{ playerIcon }}" width="13"></iconify-icon><span>{{ playerLabel }}</span>
                 </span>
                 <span style="font-size:10.5px;color:#A0A6AF;line-height:1.5">플레이어로 지정하면 멀티플레이에서 이 오브젝트로 함께 돌아다닙니다. 지정하지 않으면 기본 코스튬이 쓰입니다.</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:5px;background:#F1F7F4;border:1px solid #CFE0D8;border-radius:10px;padding:9px 10px">
+                <span style="font-size:11px;font-weight:700;color:#2F6F5E">히트박스 / 충돌 영역</span>
+                <span style="font-size:10.5px;color:#6E7480;line-height:1.5">X·Y는 오브젝트 안쪽 시작점, W·H는 영역 크기입니다. 모두 % 기준이라 크기를 바꿔도 같이 따라갑니다.</span>
               </div>
             </sc-if>
             <sc-for list="{{ sceneObjects }}" as="o" hint-placeholder-count="3">
@@ -1639,7 +1652,7 @@
 
         <!-- 캔버스 -->
         <div style="position:relative;flex:1;min-width:0;padding:66px 20px 20px 78px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;height:calc(100vh - 176px);min-height:520px">
-          <canvas ref="{{ mapRef }}" width="1280" height="800" onMouseDown="{{ mapDown }}" onMouseMove="{{ mapMove }}" onMouseUp="{{ mapUp }}" onMouseLeave="{{ mapUp }}" style="width:100%;max-width:1040px;aspect-ratio:8/5;image-rendering:pixelated;border-radius:10px;border:1px solid #CFC7B6;box-shadow:0 18px 40px -26px rgba(22,24,29,0.45);background:#E7EFE9;cursor:crosshair"></canvas>
+          <canvas ref="{{ mapRef }}" width="1280" height="800" onMouseDown="{{ mapDown }}" onMouseMove="{{ mapMove }}" onMouseUp="{{ mapUp }}" onMouseLeave="{{ mapUp }}" style="width:100%;max-width:1040px;aspect-ratio:8/5;image-rendering:{{ stageImageRendering }};border-radius:10px;border:1px solid #CFC7B6;box-shadow:0 18px 40px -26px rgba(22,24,29,0.45);background:#E7EFE9;cursor:crosshair"></canvas>
 
           <!-- 좌표 HUD -->
           <div style="position:absolute;left:78px;right:20px;bottom:18px;display:flex;align-items:center;gap:8px;pointer-events:none;z-index:7">
@@ -1693,7 +1706,7 @@
             <sc-for list="{{ panelObjects }}" as="o" hint-placeholder-count="6">
               <div onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:11px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:10px;padding:9px 11px;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E">
                 <span style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:#F7F5EF;display:flex;align-items:center;justify-content:center;padding:5px">
-                  <span role="img" aria-label="{{ o.name }}" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  <span role="img" aria-label="{{ o.name }}" style="width:100%;height:100%;image-rendering:{{ o.rendering }};flex-shrink:0;background-image:{{ o.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
                 </span>
                 <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
                   <span style="font-size:12.5px;font-weight:600;color:#16181D">{{ o.name }}</span>
@@ -1713,7 +1726,33 @@
               <iconify-icon icon="lucide:image-plus" width="15"></iconify-icon><span>사진으로 오브젝트 만들기</span>
               <input type="file" accept="image/*" onChange="{{ uploadArt }}" style="display:none" />
             </label>
-            <span style="font-size:11px;color:#A0A6AF;line-height:1.5">올린 사진은 32×32 도트로 줄여 이 브라우저에 저장합니다 (서버 용량을 쓰지 않습니다)</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F7F5EF;border-radius:10px;padding:10px 11px">
+              <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-size:12px;font-weight:700;color:#3A3F49">사진을 픽셀로 변환</span>
+                <span style="font-size:10.5px;color:#8A9099">끄면 원본 느낌을 유지합니다</span>
+              </div>
+              <span onClick="{{ togglePhotoPixelate }}" role="switch" aria-checked="{{ photoPixelate }}" style="width:44px;height:24px;border-radius:99px;background:{{ photoPixelateBg }};position:relative;cursor:pointer;flex-shrink:0;transition:background-color 160ms ease">
+                <span style="position:absolute;top:3px;left:{{ photoPixelateX }};width:18px;height:18px;border-radius:99px;background:#FFFFFF;transition:left 160ms ease"></span>
+              </span>
+            </div>
+            <span style="font-size:11px;color:#A0A6AF;line-height:1.5">켜짐: 32×32 도트화 · 꺼짐: 원본 비율을 유지해 사진 오브젝트로 사용</span>
+            <div style="display:flex;flex-direction:column;gap:8px;background:#F7F5EF;border-radius:10px;padding:10px 11px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:12px;font-weight:700;color:#3A3F49">지정 색 투명화</span>
+                  <span style="font-size:10.5px;color:#8A9099">PNG 크로마키처럼 고른 색을 투명하게 제거합니다.</span>
+                </div>
+                <span onClick="{{ toggleChromaKey }}" role="switch" aria-checked="{{ chromaKeyEnabled }}" style="width:44px;height:24px;border-radius:99px;background:{{ chromaKeyBg }};position:relative;cursor:pointer;flex-shrink:0">
+                  <span style="position:absolute;top:3px;left:{{ chromaKeyX }};width:18px;height:18px;border-radius:99px;background:#FFFFFF"></span>
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="color" value="{{ chromaKeyColor }}" onChange="{{ setChromaKeyColor }}" title="투명하게 만들 색" style="width:34px;height:28px;padding:0;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;cursor:pointer" />
+                <span style="font-size:11px;font-family:Galmuri11,monospace;color:#5B616C">{{ chromaKeyColor }}</span>
+                <span style="font-size:10px;color:#8A9099;margin-left:auto">허용 오차</span>
+                <input type="number" min="0" max="255" value="{{ chromaKeyTolerance }}" onChange="{{ setChromaKeyTolerance }}" style="width:54px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:10.5px;text-align:center" />
+              </div>
+            </div>
             <button class="dv-press" onClick="{{ goAssets }}" style="width:100%;background:#2F6F5E;color:#FFFFFF;border:0;border-radius:10px;padding:12px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#16181D">공유 라이브러리에서 가져오기</button>
           </div>
         </div>
@@ -1900,10 +1939,10 @@
           <span style="font-size:14px;font-weight:700">리메이크 허용</span>
           <span style="font-size:12.5px;line-height:1.65;color:#5B616C">허용하면 다른 사람이 사본을 만들어 수정할 수 있고, 그 작품 상단에는 이 원본으로 가는 링크가 항상 표시됩니다.</span>
           <div style="display:flex;align-items:center;justify-content:space-between;background:#F7F5EF;border-radius:11px;padding:12px 14px">
-            <span style="font-size:13.5px;font-weight:600">리메이크 허용</span>
-            <span style="width:44px;height:24px;border-radius:99px;background:#2F6F5E;position:relative">
-              <span style="position:absolute;top:3px;left:23px;width:18px;height:18px;border-radius:99px;background:#FFFFFF"></span>
-            </span>
+            <span style="font-size:13.5px;font-weight:600">리메이크 {{ allowRemake ? "허용" : "금지" }}</span>
+            <button onClick="{{ toggleRemake }}" role="switch" aria-checked="{{ allowRemake }}" style="width:44px;height:24px;border:0;border-radius:99px;background:{{ remakeToggleBg }};position:relative;cursor:pointer;flex-shrink:0;padding:0;transition:background-color 160ms ease">
+              <span style="position:absolute;top:3px;left:{{ remakeToggleX }};width:18px;height:18px;border-radius:99px;background:#FFFFFF;transition:left 160ms ease"></span>
+            </button>
           </div>
         </div>
       </div>
@@ -2636,7 +2675,7 @@
           <div style="position:relative;width:min(100%,calc(100vh * 4/3));height:min(100%,calc(100vw * 3/4));flex-shrink:0;pointer-events:auto">
         <div style="position:absolute;inset:0;transform:{{ camT }};transform-origin:50% 50%">
           <sc-if value="{{ hasStageBg }}" hint-placeholder-val="{{ false }}">
-            <canvas ref="{{ bgRefB }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;display:block"></canvas>
+            <canvas ref="{{ bgRefB }}" width="640" height="400" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:{{ stageImageRendering }};display:block"></canvas>
           </sc-if>
           <canvas ref="{{ penRefB }}" width="480" height="360" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
           <sc-for list="{{ peers }}" as="pp" hint-placeholder-count="0">
@@ -3165,6 +3204,11 @@ class Component extends DCLogic {
     worldSummary: "",
     tagDraft: "",
     licenseIdx: 1,
+    allowRemake: true,
+    photoPixelate: true,
+    chromaKeyEnabled: false,
+    chromaKeyColor: "#00FF00",
+    chromaKeyTolerance: 70,
     replyTo: null,
     replyDraft: "",
     reportOn: null,
@@ -4034,7 +4078,8 @@ class Component extends DCLogic {
       touching: (self, name) => {
         const t = (this._live || []).find((o) => o.name === name);
         if (!t || t === self) return false;
-        return Math.hypot(t.x - self.x, t.y - self.y) < 28;
+        // 실제 오브젝트의 저장된 히트박스를 사용한다. 이름만 같은 다른 오브젝트와는 충돌하지 않는다.
+        return this.hitboxOverlap(self, t);
       },
       clone: (self) => {
         const c = JSON.parse(JSON.stringify(self));
@@ -5926,9 +5971,14 @@ class Component extends DCLogic {
       mapOY: this.state.mapOY || 0,
       fps: this.state.fps,
       shared: this.state.shared,
+    allowRemake: this.state.allowRemake !== false,
+      photoPixelate: this.state.photoPixelate !== false,
+      chromaKeyEnabled: !!this.state.chromaKeyEnabled,
+      chromaKeyColor: this.state.chromaKeyColor || "#00FF00",
+      chromaKeyTolerance: Number(this.state.chromaKeyTolerance) || 70,
     };
     if (!window.DotDB || !window.DotDB.isLive) {
-      try { localStorage.setItem(LS("studio"), JSON.stringify(payload)); } catch (e) {}
+      try { localStorage.setItem(LS("studio." + this.state.worldId), JSON.stringify(payload)); } catch (e) {}
       this.setState({ saved: "로컬" });
       this.say("환경 변수가 없어 이 브라우저에 저장했습니다.");
       return;
@@ -5960,13 +6010,34 @@ class Component extends DCLogic {
     }
   };
 
+  // 게시용 썸네일을 만든다. 예전에는 publish()에서 존재하지 않는
+  // makeWorldThumbnail()을 호출해 저장 직후 TypeError가 발생했다.
+  makeWorldThumbnail = async (worldId) => {
+    try {
+      const src = this._stageCv || this._bg || this._stageCanvas;
+      if (!src || !src.width || !src.height || !window.DotDB || !window.DotDB.uploadMedia) return null;
+      const cv = document.createElement("canvas");
+      cv.width = 640; cv.height = 360;
+      const g = cv.getContext("2d");
+      if (!g) return null;
+      g.imageSmoothingEnabled = false;
+      g.fillStyle = "#F4F1EA";
+      g.fillRect(0, 0, cv.width, cv.height);
+      g.drawImage(src, 0, 0, cv.width, cv.height);
+      const dataUrl = cv.toDataURL("image/png");
+      return await window.DotDB.uploadMedia(worldId, "thumb/world", dataUrl);
+    } catch (e) {
+      return null;
+    }
+  };
+
   // 사진·소리를 Storage 에 올려 링크만 저장한다 (테이블 용량을 쓰지 않음)
   // 올리지 못하면 데이터를 그대로 저장해 어디서든 플레이되게 한다
   async uploadMedia(list, kind) {
     const out = [];
     for (const it of list) {
       const key = it.art || it.name;
-      if (/^https?:/.test(it.url)) { out.push({ name: it.name, art: key, url: it.url }); continue; }
+      if (/^https?:/.test(it.url)) { out.push(Object.assign({}, it, { name: it.name, art: key, url: it.url })); continue; }
       let url = it.url;
       if (window.DotDB && window.DotDB.isLive && window.DotDB.uploadMedia) {
         try {
@@ -6006,16 +6077,12 @@ class Component extends DCLogic {
     }
     // Supabase가 살아 있으면 절대로 오래된 localStorage 작품 데이터를 대체재로 읽지 않는다.
     if (!payload && !(window.DotDB && window.DotDB.isLive)) {
-      try { payload = JSON.parse(localStorage.getItem(LS("studio")) || "null"); } catch (e) {}
+      try { payload = JSON.parse(localStorage.getItem(LS("studio." + this.state.worldId)) || localStorage.getItem(LS("studio")) || "null"); } catch (e) {}
     }
     if (!payload || !payload.scenes) { if (!this._quietLoad) this.say("불러올 저장본이 없습니다."); return; }
-    // 블록은 전용 테이블에서 먼저 읽는다 (없으면 저장본 안의 것을 쓴다)
-    if (window.DotDB && window.DotDB.isLive) {
-      try {
-        const b = await window.DotDB.loadBlocks(this.state.worldId);
-        if (b && Object.keys(b).length) payload.wsBy = b;
-      } catch (e) {}
-    }
+    // 저장본(world_versions)의 블록 스냅샷을 그대로 사용한다.
+    // world_blocks에는 과거 오브젝트가 남을 수 있으므로 여기서 덮어쓰면
+    // 저장한 버전과 다른 블록이 섞여 불러와진다.
     this._model = JSON.parse(JSON.stringify(payload.wsBy || {}));
     // 짧게 접힌 오브젝트를 원래 형태로
     const objectsBy = {};
@@ -6059,6 +6126,11 @@ class Component extends DCLogic {
     if (payload.mapOY !== undefined) next.mapOY = payload.mapOY || 0;
     if (payload.fps !== undefined) next.fps = payload.fps;
     if (payload.shared !== undefined) next.shared = payload.shared;
+    if (payload.allowRemake !== undefined) next.allowRemake = payload.allowRemake !== false;
+    if (payload.photoPixelate !== undefined) next.photoPixelate = payload.photoPixelate !== false;
+    if (payload.chromaKeyEnabled !== undefined) next.chromaKeyEnabled = !!payload.chromaKeyEnabled;
+    if (payload.chromaKeyColor) next.chromaKeyColor = payload.chromaKeyColor;
+    if (payload.chromaKeyTolerance !== undefined) next.chromaKeyTolerance = Number(payload.chromaKeyTolerance) || 70;
     const tiles = typeof payload.tiles === "string" ? this.unpackTiles(payload.tiles) : payload.tiles;
     if (tiles) { next.tiles = tiles; this._baseKey = null; }
     // 사진 오브젝트를 맵 캔버스에도 쓸 수 있게 준비한다
@@ -6069,8 +6141,11 @@ class Component extends DCLogic {
       im.crossOrigin = "anonymous";
       im.onload = () => {
         const c = document.createElement("canvas");
-        c.width = 32; c.height = 32;
-        c.getContext("2d").drawImage(im, 0, 0, 32, 32);
+        const pixelated = a.pixelated !== false;
+        if (pixelated) { c.width = 32; c.height = 32; }
+        else { const scale = Math.min(1, 1024 / Math.max(im.width || 1, im.height || 1)); c.width = Math.max(1, Math.round(im.width * scale)); c.height = Math.max(1, Math.round(im.height * scale)); }
+        const g = c.getContext("2d"); g.imageSmoothingEnabled = !pixelated;
+        g.drawImage(im, 0, 0, c.width, c.height);
         this._spriteCanvas[a.art] = c;
         this.invalidateStage();
         this.drawMap();
@@ -6259,6 +6334,8 @@ class Component extends DCLogic {
       if (c.t === "obj") {
         const spc = (this._spriteCanvas || {})[c.art];
         if (spc) {
+          const meta = (this.state.imgArts || []).find((a) => a.art === c.art);
+          g.imageSmoothingEnabled = !(meta && meta.pixelated !== false);
           const s = c.scale || 1;
           const sw = u * s, sh = u * s;
           const ox2 = (u - sw) / 2;
@@ -6376,7 +6453,8 @@ class Component extends DCLogic {
         const sw = u * s, sh = u * s;
         const ox2 = (u - sw) / 2;
         const oy2 = (u - sh) * 0.85;
-        g.imageSmoothingEnabled = false;
+        const meta = (this.state.imgArts || []).find((a) => a.art === this.state.placeArt);
+        g.imageSmoothingEnabled = !(meta && meta.pixelated !== false);
         g.globalAlpha = 0.55;
         g.drawImage(spc, h.x * u + ox2, h.y * u - u * 0.15 + oy2, sw, sh);
         g.globalAlpha = 1;
@@ -7125,9 +7203,12 @@ class Component extends DCLogic {
                 const im = new Image();
                 im.crossOrigin = "anonymous";
                 im.onload = () => {
+                  const pixelated = a.pixelated !== false;
                   const c3 = document.createElement("canvas");
-                  c3.width = 32; c3.height = 32;
-                  c3.getContext("2d").drawImage(im, 0, 0, 32, 32);
+                  if (pixelated) { c3.width = 32; c3.height = 32; }
+                  else { const scale = Math.min(1, 1024 / Math.max(im.width || 1, im.height || 1)); c3.width = Math.max(1, Math.round(im.width * scale)); c3.height = Math.max(1, Math.round(im.height * scale)); }
+                  const g3 = c3.getContext("2d"); g3.imageSmoothingEnabled = !pixelated;
+                  g3.drawImage(im, 0, 0, c3.width, c3.height);
                   this._spriteCanvas[a.art || a.name] = c3;
                   this.invalidateStage();
                   this.drawMap();
@@ -7230,7 +7311,7 @@ class Component extends DCLogic {
           catName: x.category || "실험실",
           likes: x.like_count || 0, dislikes: x.dislike_count || 0,
           comments: x.comment_count || 0, plays: x.play_count || 0,
-          online: 0, ago: this.agoText(x.published_at || x.created_at), tags: x.tags || [], art: x.art || "portal", thumbUrl: x.thumb_url || null,
+          license: x.license || "cc_by", online: 0, ago: this.agoText(x.published_at || x.created_at), tags: x.tags || [], art: x.art || "portal", thumbUrl: x.thumb_url || null,
         }));
       }
       if (a) {
@@ -7240,7 +7321,7 @@ class Component extends DCLogic {
           author: (x.profiles && x.profiles.display_name) || "익명",
           handle: (x.profiles && x.profiles.handle) || "unknown",
           uses: x.use_count || 0, likes: x.like_count || 0, dislikes: x.dislike_count || 0,
-          license: x.license === "cc0" ? "CC0" : (x.license === "cc_by" ? "CC BY" : "리메이크 전용"),
+          license: x.license === "cc0" ? "CC0" : (x.license === "cc_by" ? "CC BY" : (x.license === "no_remake" ? "리메이크 금지" : "리메이크 전용")),
           frames: (x.frames || []).length || 1,
           size: (x.width || 16) + "×" + (x.height || 16),
           tags: x.tags || [],
@@ -7650,9 +7731,13 @@ class Component extends DCLogic {
     const im = new Image();
     im.crossOrigin = "anonymous";
     im.onload = () => {
+      const meta = (this.state.imgArts || []).find((a) => a.art === key);
+      const pixelated = !meta || meta.pixelated !== false;
       const c = document.createElement("canvas");
-      c.width = 32; c.height = 32;
-      c.getContext("2d").drawImage(im, 0, 0, 32, 32);
+      if (pixelated) { c.width = 32; c.height = 32; }
+      else { const scale = Math.min(1, 1024 / Math.max(im.width || 1, im.height || 1)); c.width = Math.max(1, Math.round(im.width * scale)); c.height = Math.max(1, Math.round(im.height * scale)); }
+      const g = c.getContext("2d"); g.imageSmoothingEnabled = !pixelated;
+      g.drawImage(im, 0, 0, c.width, c.height);
       this._spriteCanvas[key] = c;
       delete this._spriteMaking[key];
       this.invalidateStage();   // 늦게 온 그림이 실행화면에도 나오게 한다
@@ -7850,46 +7935,69 @@ class Component extends DCLogic {
     }
   }
 
-  // 사진을 32×32 도트로 줄여 오브젝트로 쓴다 (서버가 아니라 이 브라우저에 저장)
+  // 사진을 오브젝트로 만든다. 설정에 따라 도트화하거나 원본 느낌을 유지한다.
   uploadArt = (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    // 캔버스 읽기가 막힌 브라우저 대비 — 원본 파일도 함께 읽어 둔다
-    try {
-      const fr = new FileReader();
-      fr.onload = () => { this._lastFileData = fr.result; };
-      fr.readAsDataURL(f);
-    } catch (err) {}
+    const pixelated = this.state.photoPixelate !== false;
     const url = URL.createObjectURL(f);
     const img = new Image();
     img.onload = () => {
-      const N = 32;
-      const c = document.createElement("canvas");
-      c.width = N; c.height = N;
-      const g = c.getContext("2d");
-      g.imageSmoothingEnabled = true;
-      const s = Math.min(img.width, img.height);
-      g.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, N, N);
-      URL.revokeObjectURL(url);
       let data = "";
+      let c = document.createElement("canvas");
+      if (pixelated) {
+        const N = 32;
+        c.width = N; c.height = N;
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        const s = Math.min(img.width, img.height);
+        g.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, N, N);
+      } else {
+        const max = 1024;
+        const scale = Math.min(1, max / Math.max(img.width || 1, img.height || 1));
+        c.width = Math.max(1, Math.round(img.width * scale));
+        c.height = Math.max(1, Math.round(img.height * scale));
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = true;
+        g.drawImage(img, 0, 0, c.width, c.height);
+      }
+      // 지정한 색을 투명하게 만드는 크로마키. 사진을 픽셀화하지 않아도 동일하게 적용된다.
+      if (this.state.chromaKeyEnabled) {
+        try {
+          const g = c.getContext("2d");
+          const raw = String(this.state.chromaKeyColor || "#00FF00").replace("#", "");
+          const rr = parseInt(raw.slice(0, 2), 16);
+          const gg = parseInt(raw.slice(2, 4), 16);
+          const bb = parseInt(raw.slice(4, 6), 16);
+          const tol = Math.max(0, Math.min(255, Number(this.state.chromaKeyTolerance) || 70));
+          const imgd = g.getImageData(0, 0, c.width, c.height);
+          const d = imgd.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const dr = d[i] - rr, dg = d[i + 1] - gg, db = d[i + 2] - bb;
+            if (Math.sqrt(dr * dr + dg * dg + db * db) <= tol) d[i + 3] = 0;
+          }
+          g.putImageData(imgd, 0, 0);
+        } catch (err) {}
+      }
+      URL.revokeObjectURL(url);
       try { data = c.toDataURL("image/png"); } catch (err) { data = ""; }
-      if (!data || data.length < 40) data = this._lastFileData || "";
-      if (!data) { this.say("이 브라우저에서는 사진을 변환할 수 없습니다.", "warn"); return; }
+      if (!data || data.length < 40) { this.say("이 브라우저에서는 사진을 변환할 수 없습니다.", "warn"); return; }
       const name = f.name.replace(/\.[^.]+$/, "").slice(0, 14);
       const key = "img" + Date.now().toString(36);
       this._spriteCanvas = this._spriteCanvas || {};
       this._spriteCanvas[key] = c;
       this.setState((p) => ({
-        imgArts: (p.imgArts || []).concat([{ name: name, art: key, url: data }]),
+        imgArts: (p.imgArts || []).concat([{ name: name, art: key, url: data, pixelated: pixelated, chromaKey: this.state.chromaKeyEnabled ? (this.state.chromaKeyColor || "#00FF00") : null, chromaTolerance: Number(this.state.chromaKeyTolerance) || 70 }]),
         sprites: Object.assign({}, p.sprites, { [key]: data }),
         placeArt: key, mapMode: "object", objTab: 1,
       }), () => {
         this.persistArts();
-        this.say("«" + name + "» 오브젝트를 만들었습니다.");
-        this.addObjectToScene(key, name);
+        this.say("«" + name + "» " + (pixelated ? "도트 오브젝트" : "사진 오브젝트") + "를 만들었습니다.");
+        this.addObjectToScene(key, name, { hitbox: { x: 0, y: 0, w: 1, h: 1, enabled: true } });
         this.saveArtToServer(key, name, data);
       });
     };
+    img.onerror = () => { URL.revokeObjectURL(url); this.say("사진을 읽지 못했습니다.", "warn"); };
     img.src = url;
     e.target.value = "";
   };
@@ -7918,6 +8026,38 @@ class Component extends DCLogic {
       else this.say("서버에 저장하지 못했습니다 — 로그인 상태를 확인하세요.", "warn");
     } catch (e) { this.say("서버에 저장하지 못했습니다.", "warn"); }
   }
+
+  // 오브젝트의 충돌/히트박스. 좌표는 스프라이트 기준 0~1 정규화 값이다.
+  objectHitbox(o) {
+    const h = o && o.hitbox ? o.hitbox : { x: 0, y: 0, w: 1, h: 1, enabled: true };
+    return {
+      x: Number(h.x) || 0, y: Number(h.y) || 0,
+      w: Math.max(0, Number(h.w) || 0), h: Math.max(0, Number(h.h) || 0),
+      enabled: h.enabled !== false,
+    };
+  }
+
+  hitboxOverlap(a, b) {
+    const A = this.objectHitbox(a), B = this.objectHitbox(b);
+    if (!A.enabled || !B.enabled) return false;
+    const as = Number(a.scale) || 1, bs = Number(b.scale) || 1;
+    const ax = (Number(a.x) || 0) + (A.x + A.w / 2 - 0.5) * as * 64;
+    const ay = (Number(a.y) || 0) + (A.y + A.h / 2 - 0.5) * as * 64;
+    const bx = (Number(b.x) || 0) + (B.x + B.w / 2 - 0.5) * bs * 64;
+    const by = (Number(b.y) || 0) + (B.y + B.h / 2 - 0.5) * bs * 64;
+    return Math.abs(ax - bx) < ((A.w * as * 64) + (B.w * bs * 64)) / 2
+      && Math.abs(ay - by) < ((A.h * as * 64) + (B.h * bs * 64)) / 2;
+  }
+
+  // 선택한 오브젝트의 히트박스를 갱신한다.
+  setHitboxField = (key, value) => {
+    const o = this.curObjects().find((x) => x.id === this.state.objId);
+    if (!o) return;
+    const v = key === "enabled" ? !!value : Math.max(0, Math.min(1, Number(value) || 0));
+    this.setObjects((list) => list.map((x) => x.id === o.id
+      ? Object.assign({}, x, { hitbox: Object.assign({}, this.objectHitbox(x), { [key]: v }) })
+      : x));
+  };
 
   // 현재 장면에 오브젝트 한 개를 놓는다 (도트·사진 공용)
   addObjectToScene(artKey, name, extra) {
@@ -7956,9 +8096,12 @@ class Component extends DCLogic {
         add[a.art] = a.url;
         const im = new Image();
         im.onload = () => {
+          const pixelated = a.pixelated !== false;
           const c = document.createElement("canvas");
-          c.width = 32; c.height = 32;
-          c.getContext("2d").drawImage(im, 0, 0, 32, 32);
+          if (pixelated) { c.width = 32; c.height = 32; }
+          else { const scale = Math.min(1, 1024 / Math.max(im.width || 1, im.height || 1)); c.width = Math.max(1, Math.round(im.width * scale)); c.height = Math.max(1, Math.round(im.height * scale)); }
+          const g = c.getContext("2d"); g.imageSmoothingEnabled = !pixelated;
+          g.drawImage(im, 0, 0, c.width, c.height);
           this._spriteCanvas[a.art] = c;
           this.invalidateStage();
           this.drawMap();
@@ -8193,6 +8336,10 @@ class Component extends DCLogic {
           filter: (o.alpha !== undefined && o.alpha !== 1 ? "opacity(" + o.alpha + ") " : "")
             + (o.hue ? "hue-rotate(" + o.hue + "deg)" : "") || "none",
           ring: st.objId === o.id ? "0 0 0 2px rgba(47,111,94,0.55)" : "none",
+          hitLeft: Math.round(this.objectHitbox(o).x * 100) + "%",
+          hitTop: Math.round(this.objectHitbox(o).y * 100) + "%",
+          hitWidth: Math.round(this.objectHitbox(o).w * 100) + "%",
+          hitHeight: Math.round(this.objectHitbox(o).h * 100) + "%",
           click: () => this.fireClick(o.id),
           grab: (e) => this.grabObject(e, o.id),
           selected: st.objId === o.id && !st.running,
@@ -8755,8 +8902,8 @@ class Component extends DCLogic {
       dislikeFg: st.reacts["w:" + st.viewWorldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
-      remakeLabel: mine ? "수정하기" : "리메이크",
-      remakeIcon: mine ? "lucide:pencil-line" : "lucide:git-fork",
+      remakeLabel: mine ? "수정하기" : (w.license === "no_remake" ? "리메이크 금지" : "리메이크"),
+      remakeIcon: mine ? "lucide:pencil-line" : (w.license === "no_remake" ? "lucide:ban" : "lucide:git-fork"),
       remakeBg: mine ? "#16181D" : "#FFFFFF",
       remakeFg: mine ? "#FFFFFF" : "#2A2D36",
       remakeBd: mine ? "#16181D" : "#E3DCCC",
@@ -8780,6 +8927,9 @@ class Component extends DCLogic {
           this.setState({ route: "studio", tab: "blocks", worldId: wid }, () => this.loadStudio());
           window.scrollTo(0, 0);
           return this.say("내 작품입니다 — 스튜디오에서 그대로 고칠 수 있습니다.");
+        }
+        if (w.license === "no_remake") {
+          return this.say("이 작품은 원작자가 리메이크를 금지했습니다.", "warn");
         }
         if (window.DotDB && window.DotDB.isLive) {
           const r = await window.DotDB.remakeWorld(wid);
@@ -9399,6 +9549,7 @@ class Component extends DCLogic {
           const v = num ? (parseFloat(raw) || 0) : raw;
           this.setObjects((list) => list.map((x) => (x.id === o.id ? Object.assign({}, x, { [key]: v }) : x)));
         };
+        const hb = this.objectHitbox(o);
         return [
           { k: "X", v: String(Math.round(o.x)), set: set("x", true) },
           { k: "Y", v: String(Math.round(o.y)), set: set("y", true) },
@@ -9408,6 +9559,10 @@ class Component extends DCLogic {
               this.setObjects((list) => list.map((x) => (x.id === o.id ? Object.assign({}, x, { scale: v }) : x)));
             } },
           { k: "방향 °", v: String(Math.round(o.rot || 0)), set: set("rot", true) },
+          { k: "히트 X %", v: String(Math.round(hb.x * 100)), set: (e) => this.setHitboxField("x", Number(e.target.value) / 100) },
+          { k: "히트 Y %", v: String(Math.round(hb.y * 100)), set: (e) => this.setHitboxField("y", Number(e.target.value) / 100) },
+          { k: "히트 W %", v: String(Math.round(hb.w * 100)), set: (e) => this.setHitboxField("w", Number(e.target.value) / 100) },
+          { k: "히트 H %", v: String(Math.round(hb.h * 100)), set: (e) => this.setHitboxField("h", Number(e.target.value) / 100) },
         ];
       })(),
       sceneObjects: this.curObjects().map((o, i, arr) => ({
@@ -9546,6 +9701,31 @@ class Component extends DCLogic {
       toggleShare: () => this.setState((p) => ({ shared: !p.shared })),
       shareBg: st.shared === false ? "#CFC7B6" : "#2F6F5E",
       shareX: st.shared === false ? "3px" : "23px",
+      toggleSelectedHitbox: () => {
+        const o = this.curObjects().find((x) => x.id === this.state.objId);
+        if (!o) return;
+        this.setHitboxField("enabled", !this.objectHitbox(o).enabled);
+        this.saveStudio();
+      },
+      selectedHitboxLabel: (() => { const o = this.curObjects().find((x) => x.id === st.objId); return this.objectHitbox(o || {}).enabled ? "켜짐" : "꺼짐"; })(),
+      selectedHitboxBg: (() => { const o = this.curObjects().find((x) => x.id === st.objId); return this.objectHitbox(o || {}).enabled ? "#F1F7F4" : "#FFFFFF"; })(),
+      selectedHitboxFg: (() => { const o = this.curObjects().find((x) => x.id === st.objId); return this.objectHitbox(o || {}).enabled ? "#2F6F5E" : "#8A9099"; })(),
+      togglePhotoPixelate: () => this.setState((p) => ({ photoPixelate: p.photoPixelate === false }), () => { this.saveStudio(); }),
+      photoPixelate: st.photoPixelate !== false,
+      photoPixelateBg: st.photoPixelate === false ? "#CFC7B6" : "#2F6F5E",
+      photoPixelateX: st.photoPixelate === false ? "3px" : "23px",
+      toggleRemake: () => this.setState((p) => ({ allowRemake: !(p.allowRemake !== false) }), () => { this.saveStudio(); this.say(this.state.allowRemake ? "리메이크를 허용했습니다." : "리메이크를 금지했습니다."); }),
+      toggleChromaKey: () => this.setState((p) => ({ chromaKeyEnabled: !p.chromaKeyEnabled }), () => { this.saveStudio(); }),
+      setChromaKeyColor: (e) => this.setState({ chromaKeyColor: e.target.value }, () => { this.saveStudio(); }),
+      setChromaKeyTolerance: (e) => this.setState({ chromaKeyTolerance: Math.max(0, Math.min(255, Number(e.target.value) || 0)) }, () => { this.saveStudio(); }),
+      chromaKeyEnabled: !!st.chromaKeyEnabled,
+      chromaKeyColor: st.chromaKeyColor || "#00FF00",
+      chromaKeyTolerance: Number(st.chromaKeyTolerance) || 70,
+      chromaKeyBg: st.chromaKeyEnabled ? "#2F6F5E" : "#CFC7B6",
+      chromaKeyX: st.chromaKeyEnabled ? "23px" : "3px",
+      allowRemake: st.allowRemake !== false,
+      remakeToggleBg: st.allowRemake === false ? "#CFC7B6" : "#2F6F5E",
+      remakeToggleX: st.allowRemake === false ? "3px" : "23px",
       licenses: [
         { t: "CC0 · 완전 자유", d: "표기 없이 누구나 자유롭게 사용" },
         { t: "CC BY · 원작자 표기", d: "가져다 쓸 때 내 이름과 원본 링크 표기" },
@@ -9566,7 +9746,7 @@ class Component extends DCLogic {
         const r = await window.DotDB.saveAsset({
           name: sh.name || "이름 없는 오브젝트", kind: "object",
           width: 16, height: 16, frames: sh.frames || [],
-          license: ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
+          license: st.allowRemake === false ? "no_remake" : ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
           tags: st.tagsDef || [],
         });
         this.say(r ? "공유 라이브러리에 올렸습니다. 다른 사람이 가져다 쓰면 알림이 옵니다." : "올리지 못했습니다.");
@@ -9606,6 +9786,7 @@ class Component extends DCLogic {
         go: () => this.setState({ mapTool: t.k }),
       })),
       mapRef: this.mapRef,
+      stageImageRendering: (st.imgArts || []).some((a) => a.pixelated === false) ? "auto" : "pixelated",
       mapDown: (e) => {
         if (st.mapTool === "hand" || st.mapTool === "select" || e.button === 1 || e.altKey) { if (e.cancelable) e.preventDefault(); this.panMap(e); return; }
         this._painting = true; this.paintMap(e);
@@ -9666,6 +9847,7 @@ class Component extends DCLogic {
           name: a.name, handle: a.handle,
           usesK: a.uses ? kfmt(a.uses) : "내가 만든 도트",
           sprite: (st.sprites || {})[a.art] ? spr(a.art) : (a.imageUrl ? cssUrl(a.imageUrl) : spr(a.baseArt || a.art)),
+          rendering: a.pixelated === false ? "auto" : "pixelated",
           on: st.placeArt === a.art,
           fav: (st.favArts || []).indexOf(a.art) >= 0,
           favIcon: (st.favArts || []).indexOf(a.art) >= 0 ? "lucide:star" : "lucide:star-off",
@@ -9880,16 +10062,19 @@ class Component extends DCLogic {
         if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없어 게시할 수 없습니다.");
         // 게시 전에 저장본을 먼저 올려 다른 사람이 그대로 플레이할 수 있게 한다
         await this.saveStudio();
+        // saveStudio가 소유권 충돌로 worldId를 새 값으로 바꿀 수 있으므로
+        // 게시 직전의 실제 state 값을 사용한다.
+        const publishWorldId = this.state.worldId;
         // 작품 상세/둘러보기 썸네일도 서버가 원본이 되도록 Storage에 올린다.
-        const thumbUrl = await this.makeWorldThumbnail(st.worldId);
+        const thumbUrl = await this.makeWorldThumbnail(publishWorldId);
         const title = filterText(st.worldTitle || "").out.trim();
         if (!title) { this.setState({ tab: "publish", _tabDir: "fwd", _tabSeq: ((this.state._tabSeq||0)+1) }); return this.say("작품 이름을 적어주세요."); }
-        const r = await window.DotDB.publishWorld(st.worldId, {
+        const r = await window.DotDB.publishWorld(publishWorldId, {
           title: title,
           summary: filterText(st.worldSummary || "").out.trim(),
           category: st.worldCat || "adventure",
           tags: st.tagsDef || [],
-          license: ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
+          license: st.allowRemake === false ? "no_remake" : ["cc0", "cc_by", "remix_only"][st.licenseIdx === undefined ? 1 : st.licenseIdx],
           thumb_url: thumbUrl || null,
           art: (() => {
             const o = (this.curObjects() || [])[0];
@@ -9901,7 +10086,7 @@ class Component extends DCLogic {
         }
         const fresh = await this.loadLive();
         await this.loadMyWorlds();
-        const up = (fresh || []).some((w) => w.id === st.worldId);
+        const up = (fresh || []).some((w) => w.id === publishWorldId);
         if (up) {
           this.setState({ route: "home" }, () => window.scrollTo(0, 0));
           this.say("«" + title + "» 을 게시했습니다. 둘러보기 목록에 올라갔습니다.");
