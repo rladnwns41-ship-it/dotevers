@@ -969,6 +969,41 @@
   <!-- ══════════ 스튜디오 ══════════ -->
   <sc-if value="{{ r_studio }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1720px;margin:0 auto;padding:10px 16px 14px;display:flex;flex-direction:column;gap:9px;height:calc(100vh - 86px);min-height:700px">
+    <sc-if value="{{ loadPickerOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;z-index:300;background:rgba(22,24,29,0.34);display:flex;align-items:center;justify-content:center;padding:24px" onClick="{{ closeLoadPicker }}">
+        <div onClick="{{ stopModalClick }}" style="width:min(680px,calc(100vw - 32px));max-height:min(720px,calc(100vh - 48px));background:#FFFFFF;border:1px solid #E3DCCC;border-radius:18px;box-shadow:0 28px 80px rgba(22,24,29,0.24);display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:17px 18px;border-bottom:1px solid #EFEADE;flex-shrink:0">
+            <iconify-icon icon="lucide:folder-open" width="18" style="color:#2F6F5E"></iconify-icon>
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+              <span style="font-size:15px;font-weight:700">내 작품 불러오기</span>
+              <span style="font-size:11.5px;color:#8A9099">저장된 작품을 하나 선택하면 그 작품의 블록·맵·오브젝트·사진을 불러옵니다.</span>
+            </div>
+            <span onClick="{{ closeLoadPicker }}" style="width:30px;height:30px;border-radius:99px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8A9099" style-hover="background:#F7F5EF;color:#16181D"><iconify-icon icon="lucide:x" width="16"></iconify-icon></span>
+          </div>
+          <div style="flex:1;min-height:0;overflow:auto;padding:14px">
+            <sc-if value="{{ loadPickerEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:36px 18px;text-align:center;color:#8A9099">
+                <iconify-icon icon="lucide:folder-x" width="28" style="margin-bottom:10px"></iconify-icon>
+                <div style="font-size:13.5px;font-weight:700;color:#5B616C">저장된 작품이 없습니다.</div>
+                <div style="font-size:11.5px;margin-top:5px">새 작품을 만든 뒤 저장하면 여기에 나타납니다.</div>
+              </div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ loadCandidates }}" as="w" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;border:1px solid #E3DCCC;border-radius:12px;padding:11px 12px;background:#FFFFFF;cursor:pointer" style-hover="border-color:#2F6F5E;background:#F7FBF9" onClick="{{ w.load }}">
+                  <span role="img" aria-label="" style="width:46px;height:46px;border-radius:10px;background:#F7F5EF;image-rendering:pixelated;flex-shrink:0;background-image:{{ w.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
+                  <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                    <span style="font-size:13px;font-weight:700;color:#16181D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.title }}</span>
+                    <span style="font-size:11px;color:#8A9099">{{ w.meta }}</span>
+                  </span>
+                  <button class="dv-press" onClick="{{ w.load }}" style="border:0;background:#2F6F5E;color:#FFFFFF;border-radius:8px;padding:8px 12px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">불러오기</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
     <!-- 툴바 -->
     <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:13px;padding:9px 13px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:9px">
@@ -997,7 +1032,7 @@
         <button class="dv-press" onClick="{{ saveStudio }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:save" width="15"></iconify-icon><span>{{ saveLabel }}</span>
         </button>
-        <button class="dv-press" onClick="{{ loadStudio }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
+        <button class="dv-press" onClick="{{ openLoadPicker }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:folder-open" width="15"></iconify-icon><span>불러오기</span>
         </button>
         <button class="dv-press" onClick="{{ undoAll }}" title="되돌리기" style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:undo-2" width="16"></iconify-icon></button>
@@ -1721,7 +1756,7 @@
               </div>
             </sc-for>
           </div>
-          <div style="padding:12px;border-top:1px solid #EFEADE;display:flex;flex-direction:column;gap:8px">
+          <div style="padding:12px;border-top:1px solid #EFEADE;display:flex;flex-direction:column;gap:8px;flex-shrink:0;max-height:292px;overflow-y:auto">
             <label style="display:flex;align-items:center;justify-content:center;gap:7px;border:1px dashed #CFC7B6;border-radius:10px;padding:11px;font-size:13px;font-weight:700;color:#2F6F5E;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;background:#F1F7F4">
               <iconify-icon icon="lucide:image-plus" width="15"></iconify-icon><span>사진으로 오브젝트 만들기</span>
               <input type="file" accept="image/*" onChange="{{ uploadArt }}" style="display:none" />
@@ -1747,7 +1782,7 @@
                 </span>
               </div>
               <div style="display:flex;align-items:center;gap:8px">
-                <input type="color" value="{{ chromaKeyColor }}" onChange="{{ setChromaKeyColor }}" title="투명하게 만들 색" style="width:34px;height:28px;padding:0;border:1px solid #E3DCCC;border-radius:7px;background:#FFFFFF;cursor:pointer" />
+                <input type="color" value="{{ chromaKeyColor }}" onChange="{{ setChromaKeyColor }}" title="투명하게 만들 색" style="width:34px;height:28px;padding:0;border:1px solid #E3DCCC;border-radius:9px;overflow:hidden;background:#FFFFFF;cursor:pointer;appearance:none;-webkit-appearance:none" />
                 <span style="font-size:11px;font-family:Galmuri11,monospace;color:#5B616C">{{ chromaKeyColor }}</span>
                 <span style="font-size:10px;color:#8A9099;margin-left:auto">허용 오차</span>
                 <input type="number" min="0" max="255" value="{{ chromaKeyTolerance }}" onChange="{{ setChromaKeyTolerance }}" style="width:54px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 6px;font-family:Galmuri11,monospace;font-size:10.5px;text-align:center" />
@@ -3209,6 +3244,7 @@ class Component extends DCLogic {
     chromaKeyEnabled: false,
     chromaKeyColor: "#00FF00",
     chromaKeyTolerance: 70,
+    loadPickerOpen: false,
     replyTo: null,
     replyDraft: "",
     reportOn: null,
@@ -6071,6 +6107,23 @@ class Component extends DCLogic {
     return out;
   }
 
+  stopModalClick = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+
+  openLoadPicker = async () => {
+    if (window.DotDB && window.DotDB.isLive) {
+      try { await this.loadMyWorlds(); } catch (e) {}
+    }
+    this.setState({ loadPickerOpen: true });
+  };
+
+  closeLoadPicker = () => this.setState({ loadPickerOpen: false });
+
+  loadWorldFromPicker = (id) => {
+    if (!id) return;
+    const row = (this.state.liveMyWorlds || []).find((w) => w.id === id);
+    this.setState({ loadPickerOpen: false, route: "studio", tab: "blocks", worldId: id, worldTitle: row ? row.title : this.state.worldTitle }, () => this.loadStudio());
+  };
+
   loadStudio = async (quiet) => {
     let payload = null;
     this._quietLoad = !!quiet;
@@ -7975,6 +8028,16 @@ class Component extends DCLogic {
         g.imageSmoothingEnabled = false;
         const s = Math.min(img.width, img.height);
         g.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, N, N);
+        // 실제 픽셀 변환: 32×32 셀 단위 + 색상 단계 축소까지 적용한다.
+        try {
+          const px = g.getImageData(0, 0, N, N);
+          for (let i = 0; i < px.data.length; i += 4) {
+            px.data[i] = Math.round(px.data[i] / 32) * 32;
+            px.data[i + 1] = Math.round(px.data[i + 1] / 32) * 32;
+            px.data[i + 2] = Math.round(px.data[i + 2] / 32) * 32;
+          }
+          g.putImageData(px, 0, 0);
+        } catch (e) {}
       } else {
         const max = 1024;
         const scale = Math.min(1, max / Math.max(img.width || 1, img.height || 1));
@@ -8460,6 +8523,19 @@ class Component extends DCLogic {
     });
     if (st.liveMe && st.liveMe.name) authorArt[st.liveMe.name] = st.liveMe.art || "slime";
 
+    // 월드 상세 영역 밖에서도 사용할 현재 월드 참조를 미리 만든다.
+    // world IIFE 내부의 `w`를 외부에서 참조하면 renderValsFull()에서
+    // ReferenceError: w is not defined가 발생하므로 현재 월드를 별도로 고정한다.
+    const currentWorld = (() => {
+      const src = (st.liveWorlds && st.liveWorlds.length) ? st.liveWorlds : [];
+      return src.find((x) => x.id === st.viewWorldId) || src[0] || {
+        id: st.viewWorldId, title: "아직 게시된 작품이 없습니다",
+        summary: "스튜디오에서 만들고 «게시하기» 를 누르면 여기에 나타납니다.",
+        author: "—", handle: "—", catName: "—", online: 0, likes: 0,
+        dislikes: 0, comments: 0, plays: 0, art: "portal", tags: [], license: "CC0"
+      };
+    })();
+
     const baseThread = st.comments || [];
 
 
@@ -8925,8 +9001,8 @@ class Component extends DCLogic {
       dislikeFg: st.reacts["w:" + st.viewWorldId] === "dislike" ? "#FFFFFF" : "#6E7480",
       likeWorld: () => this.reactWorld("like"),
       dislikeWorld: () => this.reactWorld("dislike"),
-      remakeLabel: mine ? "수정하기" : (w.license === "no_remake" ? "리메이크 금지" : "리메이크"),
-      remakeIcon: mine ? "lucide:pencil-line" : (w.license === "no_remake" ? "lucide:ban" : "lucide:git-fork"),
+      remakeLabel: mine ? "수정하기" : (currentWorld.license === "no_remake" ? "리메이크 금지" : "리메이크"),
+      remakeIcon: mine ? "lucide:pencil-line" : (currentWorld.license === "no_remake" ? "lucide:ban" : "lucide:git-fork"),
       remakeBg: mine ? "#16181D" : "#FFFFFF",
       remakeFg: mine ? "#FFFFFF" : "#2A2D36",
       remakeBd: mine ? "#16181D" : "#E3DCCC",
@@ -8951,7 +9027,7 @@ class Component extends DCLogic {
           window.scrollTo(0, 0);
           return this.say("내 작품입니다 — 스튜디오에서 그대로 고칠 수 있습니다.");
         }
-        if (w.license === "no_remake") {
+        if (currentWorld.license === "no_remake") {
           return this.say("이 작품은 원작자가 리메이크를 금지했습니다.", "warn");
         }
         if (window.DotDB && window.DotDB.isLive) {
@@ -9854,6 +9930,16 @@ class Component extends DCLogic {
       placeScalePct: Math.round((st.placeScale || 1) * 100),
       setPlaceScale: (e) => this.setState({ placeScale: Math.round(Number(e.target.value)) / 100 }, () => this.drawMap()),
       resetPlaceScale: () => this.setState({ placeScale: 1 }, () => this.drawMap()),
+      openLoadPicker: this.openLoadPicker,
+      closeLoadPicker: this.closeLoadPicker,
+      stopModalClick: this.stopModalClick,
+      loadPickerEmpty: !(st.liveMyWorlds || []).length,
+      loadCandidates: (st.liveMyWorlds || []).map((w) => ({
+        title: w.title || "이름 없는 월드",
+        meta: (w.status === "published" ? "게시됨" : "초안") + " · " + (w.ago || "저장된 작품"),
+        sprite: spr(w.art || "portal"),
+        load: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.loadWorldFromPicker(w.id); },
+      })),
       objTabs: ["기본", "내 오브젝트", "즐겨찾기"].map((t, i) => ({
         t: t,
         bg: st.objTab === i ? "#F0ECE1" : "transparent",
@@ -9869,15 +9955,18 @@ class Component extends DCLogic {
         go: () => this.setState({ objCat: c }),
       })),
       panelObjects: (() => {
-        const baseSrc = st.liveAssets || [];
+        const seedAssets = ((SEED() && SEED().assets) || []).map((a) => ({ name: a.name, handle: a.handle || "Dotverse", uses: a.uses || 0, art: a.art, baseArt: a.art, imageUrl: null, tags: a.tags || [] }));
+        const sharedAssets = st.liveAssets || [];
+        const baseSrc = seedAssets;
         const base = baseSrc.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art, baseArt: a.baseArt, imageUrl: a.imageUrl || null, tags: a.tags || [] }));
+        const shared = sharedAssets.map((a) => ({ name: a.name, handle: a.handle, uses: a.uses, art: a.art, baseArt: a.baseArt, imageUrl: a.imageUrl || null, tags: a.tags || [] }));
         const mine = (st.shapes || []).map((sh, i) => ({
           name: sh.name, handle: "나", uses: 0, art: "my" + i, tags: ["전체"],
         })).concat((st.imgArts || []).map((a) => ({
           name: a.name, handle: "나 · 사진", uses: 0, art: a.art, tags: ["전체"],
         })));
         let list = st.objTab === 1 ? mine : (st.objTab === 2
-          ? base.concat(mine).filter((a) => (st.favArts || []).indexOf(a.art) >= 0)
+          ? base.concat(shared).concat(mine).filter((a) => (st.favArts || []).indexOf(a.art) >= 0)
           : base);
         list = list
           .filter((a) => !st.objQuery || a.name.indexOf(st.objQuery) > -1)
