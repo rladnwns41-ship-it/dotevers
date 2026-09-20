@@ -1040,7 +1040,7 @@
         <button class="dv-press" onClick="{{ saveStudio }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:save" width="15"></iconify-icon><span>{{ saveLabel }}</span>
         </button>
-        <button class="dv-press" data-dv-load-picker="1" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
+        <button type="button" class="dv-press" onClick="{{ openLoadPicker }}" style="display:flex;align-items:center;gap:7px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E;color:#2F6F5E">
           <iconify-icon icon="lucide:folder-open" width="15"></iconify-icon><span>불러오기</span>
         </button>
         <button class="dv-press" onClick="{{ undoAll }}" title="되돌리기" style="width:38px;height:38px;border-radius:10px;border:1px solid #E3DCCC;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E"><iconify-icon icon="lucide:undo-2" width="16"></iconify-icon></button>
@@ -6984,17 +6984,6 @@ class Component extends DCLogic {
 
   componentDidMount() {
     window.addEventListener("keydown", this._blockClipboardKey, true);
-    // 불러오기 버튼은 렌더러의 동적 이벤트 해석에 의존하지 않고
-    // 문서 위임으로 직접 연결한다. 리렌더링되어 버튼 DOM이 교체되어도 계속 동작한다.
-    this._loadPickerClick = (ev) => {
-      const target = ev && ev.target && ev.target.closest ? ev.target.closest("[data-dv-load-picker]") : null;
-      if (!target) return;
-      if (!document.body || !document.body.contains(target)) return;
-      ev.preventDefault();
-      ev.stopPropagation();
-      this.openLoadPicker();
-    };
-    document.addEventListener("click", this._loadPickerClick, true);
     if (this._ws) this._ws.addEventListener("click", this._blockClipboardSelect, true);
 
     // load 가 끝난 뒤에 붙여야 CDN 이 막힌 곳에서도 문서 로드가 완료된다
@@ -7343,10 +7332,6 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
-    if (this._loadPickerClick) {
-      document.removeEventListener("click", this._loadPickerClick, true);
-      this._loadPickerClick = null;
-    }
     this.clearUiTimers();
     clearTimeout(this._emoteT);
     if (this._lobby) { this._lobby.close(); this._lobby = null; }
