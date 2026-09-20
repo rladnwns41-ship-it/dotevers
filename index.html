@@ -8699,6 +8699,8 @@ class Component extends DCLogic {
       r_community: st.route === "community",
       r_profile: st.route === "profile",
       r_terms: st.route === "terms",
+      loadPickerOpen: !!st.loadPickerOpen,
+      loadPickerLoading: !!st.loadPickerLoading,
       goLanding: this.go("landing"), goStudio: this.newWorld, goAssets: this.go("assets"),
       goTerms: this.go("terms", { legalDoc: "terms" }),
       goPrivacy: this.go("terms", { legalDoc: "privacy" }),
