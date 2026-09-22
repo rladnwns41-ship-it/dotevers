@@ -930,7 +930,9 @@
             <span style="font-size:15px;font-weight:700;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="color:#2F6F5E">{{ world.author }}</span>
             <span style="font-size:12px;color:#8A9099">@{{ world.handle }}</span>
           </span>
-          <button class="dv-press" onClick="{{ world.followAuthor }}" style="margin-left:auto;background:{{ world.followBg }};color:#FFFFFF;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ world.followText }}</button>
+          <sc-if value="{{ world.canFollow }}" hint-placeholder-val="{{ false }}">
+            <button class="dv-press" onClick="{{ world.followAuthor }}" style="margin-left:auto;background:{{ world.followBg }};color:#FFFFFF;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ world.followText }}</button>
+          </sc-if>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px">
           <sc-for list="{{ world.stats }}" as="s" hint-placeholder-count="4">
@@ -2295,9 +2297,16 @@
             <button class="dv-press" onClick="{{ me.follow }}" style="background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#2F6F5E">{{ me.followLabel }}</button>
           </sc-if>
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-            <sc-for list="{{ profileTabs }}" as="t" hint-placeholder-count="4">
-              <span onClick="{{ t.go }}" style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
-            </sc-for>
+            <sc-if value="{{ isMyProfile }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ profileOwnerTabs }}" as="t" hint-placeholder-count="4">
+                <span onClick="{{ t.go }}" style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ isOtherProfile }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ profilePublicTabs }}" as="t" hint-placeholder-count="2">
+                <span onClick="{{ t.go }}" style="font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }};border:1px solid #E3DCCC;border-radius:10px;padding:11px 16px;cursor:pointer">{{ t.t }}</span>
+              </sc-for>
+            </sc-if>
           </div>
         </span>
       </div>
@@ -2394,16 +2403,18 @@
     <sc-if value="{{ p_worlds }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:15px">
       <div style="display:flex;align-items:center;gap:12px">
-        <h2 style="margin:0;font-size:20px;font-weight:700">내 월드</h2>
+        <h2 style="margin:0;font-size:20px;font-weight:700">{{ profileWorldsTitle }}</h2>
         <span style="font-size:13px;color:#8A9099">{{ myWorldsSummary }}</span>
-        <span onClick="{{ goStudioNew }}" style="margin-left:auto;font-size:13px;font-weight:700;color:#2F6F5E;cursor:pointer">+ 새 월드 만들기</span>
+        <sc-if value="{{ isMyProfile }}" hint-placeholder-val="{{ true }}"><span onClick="{{ goStudioNew }}" style="margin-left:auto;font-size:13px;font-weight:700;color:#2F6F5E;cursor:pointer">+ 새 월드 만들기</span></sc-if>
       </div>
       <sc-if value="{{ noMyWorlds }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:16px;padding:52px 24px">
           <iconify-icon icon="lucide:layout-grid" width="26" style="color:#CFC7B6"></iconify-icon>
           <span style="font-size:15px;font-weight:700;color:#3A3F49">만든 작품이 없습니다</span>
           <span style="font-size:13px;color:#8A9099;line-height:1.7;max-width:360px">스튜디오에서 블록을 조립하고 «저장»을 누르면 여기에 나타납니다.</span>
-          <button class="dv-press" onClick="{{ goStudioNew }}" style="margin-top:4px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">만들기 시작</button>
+          <sc-if value="{{ isMyProfile }}" hint-placeholder-val="{{ true }}">
+            <button class="dv-press" onClick="{{ goStudioNew }}" style="margin-top:4px;background:#16181D;color:#FFFFFF;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">만들기 시작</button>
+          </sc-if>
         </div>
       </sc-if>
       <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:16px;overflow:hidden">
@@ -2427,17 +2438,19 @@
             <span style="padding:13px 12px;font-family:Galmuri11,monospace;font-size:12px">{{ w.likes }} / {{ w.dislikes }}</span>
             <span style="padding:13px 12px;display:flex;align-items:center;gap:7px">
               <span style="font-family:Galmuri11,monospace;font-size:12px;color:#4A5FD1">{{ w.comments }}</span>
-              <span onClick="{{ w.edit }}" title="스튜디오에서 고치기" style="margin-left:auto;display:flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E">
-                <iconify-icon icon="lucide:pencil-line" width="11"></iconify-icon><span>수정</span>
-              </span>
-              <sc-if value="{{ w.isDraft }}" hint-placeholder-val="{{ false }}">
-                <span onClick="{{ w.publish }}" title="공개하기" style="display:flex;align-items:center;gap:4px;background:#2F6F5E;color:#FFFFFF;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#16181D">
-                  <iconify-icon icon="lucide:globe" width="11"></iconify-icon><span>공개</span>
+              <sc-if value="{{ w.canEdit }}" hint-placeholder-val="{{ false }}">
+                <span onClick="{{ w.edit }}" title="스튜디오에서 고치기" style="margin-left:auto;display:flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#2F6F5E">
+                  <iconify-icon icon="lucide:pencil-line" width="11"></iconify-icon><span>수정</span>
+                </span>
+                <sc-if value="{{ w.isDraft }}" hint-placeholder-val="{{ false }}">
+                  <span onClick="{{ w.publish }}" title="공개하기" style="display:flex;align-items:center;gap:4px;background:#2F6F5E;color:#FFFFFF;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="background:#16181D">
+                    <iconify-icon icon="lucide:globe" width="11"></iconify-icon><span>공개</span>
+                  </span>
+                </sc-if>
+                <span onClick="{{ w.del }}" title="월드 삭제" style="display:flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;color:#C0392B;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#C0392B;background:#FFF5F5">
+                  <iconify-icon icon="lucide:trash-2" width="11"></iconify-icon><span>삭제</span>
                 </span>
               </sc-if>
-              <span onClick="{{ w.del }}" title="월드 삭제" style="display:flex;align-items:center;gap:4px;background:#FFFFFF;border:1px solid #E3DCCC;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;color:#C0392B;white-space:nowrap;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#C0392B;background:#FFF5F5">
-                <iconify-icon icon="lucide:trash-2" width="11"></iconify-icon><span>삭제</span>
-              </span>
             </span>
           </div>
         </sc-for>
@@ -2448,7 +2461,7 @@
 
     <sc-if value="{{ p_assets }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:15px">
-      <h2 style="margin:0;font-size:20px;font-weight:700">내가 공유한 오브젝트</h2>
+      <h2 style="margin:0;font-size:20px;font-weight:700">{{ profileAssetsTitle }}</h2>
       <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px">
         <sc-if value="{{ noAssets }}" hint-placeholder-val="{{ false }}">
           <div style="grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:#FFFFFF;border:1px dashed #CFC7B6;border-radius:16px;padding:44px 24px">
@@ -2457,7 +2470,7 @@
             <span style="font-size:13px;color:#8A9099;line-height:1.7;max-width:340px">도트 오브젝트를 만들어 공유해 보세요.</span>
           </div>
         </sc-if>
-        <sc-for list="{{ assets }}" as="a" hint-placeholder-count="8">
+        <sc-for list="{{ profileAssets }}" as="a" hint-placeholder-count="8">
           <div style="background:#FFFFFF;border:1px solid #E3DCCC;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:9px;transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease" style-hover="border-color:#E0653A;transform:translateY(-2px)">
             <span style="aspect-ratio:1;background:repeating-conic-gradient(#F7F5EF 0% 25%,#EFEADE 0% 50%) 50%/14px 14px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:11px">
               <span role="img" aria-label="" style="width:100%;height:100%;image-rendering:pixelated;flex-shrink:0;background-image:{{ a.sprite }};background-size:contain;background-position:center;background-repeat:no-repeat;display:block"></span>
@@ -3204,6 +3217,10 @@ class Component extends DCLogic {
       } catch (e) { return "w" + Math.random().toString(36).slice(2, 10); }
     })(),
     viewWorldId: null,  // 작품 페이지에서 보고 있는 남의 작품 id (내 worldId와 분리)
+    viewUser: null,     // 프로필 페이지에서 보고 있는 핸들
+    viewedProfile: null,
+    viewedWorlds: [],
+    viewedAssets: [],
     board: "tips",
     assetKind: "전체",
     picked: "#4f9e7f",
@@ -5577,6 +5594,7 @@ class Component extends DCLogic {
 
   // 팔로우를 실제로 반영하고, 서버가 거부하면 화면도 되돌린다
   async doFollow(handle, on) {
+    if (!this.state.signedIn || !handle) return;
     this.setState((p) => ({ follows: Object.assign({}, p.follows, { [handle]: on }) }));
     if (!(window.DotDB && window.DotDB.isLive)) {
       this.say("서버 연결이 없어 이 브라우저에만 기억합니다.", "warn");
@@ -7526,6 +7544,9 @@ class Component extends DCLogic {
   // 데이터베이스에서 실제 데이터를 읽어와 화면 데이터를 대체한다
   async loadLive() {
     if (!window.DotDB || !window.DotDB.isLive) return;
+    const profileRequest = this.state.route === "profile";
+    const requestedViewUser = profileRequest ? (this.state.viewUser || null) : null;
+    const requestSeq = profileRequest ? (this._profileLoadSeq || 0) : null;
     try {
       const [w, a, t, cr, rc, cnt, mp, nt, db, fl, bc, dp, rp] = await Promise.all([
         window.DotDB.recentWorlds(12),
@@ -7544,6 +7565,22 @@ class Component extends DCLogic {
       ]);
       const next = { dbLoaded: true };
       next.liveWorlds = [];
+      // 프로필 페이지는 현재 로그인 사용자(myProfile)가 아니라 URL/라우트의 viewUser를 기준으로 읽는다.
+      // creator 목록(12개 제한)에 없는 계정을 보더라도 현재 계정 정보로 fallback 하지 않는다.
+      if (this.state.viewUser) {
+        const vp = await window.DotDB.profileByHandle(this.state.viewUser);
+        if (vp) {
+          const [vws, vas, vst] = await Promise.all([
+            window.DotDB.profileWorlds(vp.id),
+            window.DotDB.profileAssets(vp.id),
+            window.DotDB.creatorStats([vp.id]),
+          ]);
+          next.viewedProfile = vp;
+          next.viewedWorlds = vws || [];
+          next.viewedAssets = vas || [];
+          next.viewedProfileStats = (vst && vst[vp.id]) || { followers: 0, worlds: 0 };
+        }
+      }
       next.liveAssets = [];
       if (w) {
         next.liveWorlds = w.map((x) => ({
@@ -7661,6 +7698,13 @@ class Component extends DCLogic {
         status: { open: "검토 중", closed: "처리 완료", rejected: "반영 안 됨" }[r.status] || r.status,
         color: r.status === "closed" ? "#2F6F5E" : (r.status === "rejected" ? "#8A9099" : "#D97706"),
       }));
+      // 프로필을 빠르게 연속 이동하면 이전 요청이 늦게 도착할 수 있다.
+      // 그 응답이 새 프로필 화면을 덮지 못하도록 요청 시점의 핸들과 순번을 검증한다.
+      if (profileRequest && (
+        this.state.route !== "profile" ||
+        (this.state.viewUser || null) !== requestedViewUser ||
+        (this._profileLoadSeq || 0) !== requestSeq
+      )) return null;
       // 모양은 «지금 상태» 위에 얹는다 — 읽는 동안 새로 만든 도트를 덮어쓰지 않게
       const spriteAdd2 = next.__spriteAdd;
       delete next.__spriteAdd;
@@ -8391,8 +8435,22 @@ class Component extends DCLogic {
   };
 
   go = (route, extra) => () => {
-    this.setState(Object.assign({ route, menu: null, notifOpen: false }, extra || {}));
-    window.scrollTo(0, 0);
+    const patch = Object.assign({ route, menu: null, notifOpen: false }, extra || {});
+    if (route === "profile") {
+      const h = (extra && extra.viewUser) ? String(extra.viewUser).trim() : null;
+      // 프로필 이동마다 이전 사람의 데이터/탭을 완전히 끊는다.
+      patch.viewUser = h || null;
+      patch.viewedProfile = null;
+      patch.viewedWorlds = [];
+      patch.viewedAssets = [];
+      patch.viewedProfileStats = null;
+      patch.profileTab = 0;
+      this._profileLoadSeq = (this._profileLoadSeq || 0) + 1;
+    }
+    this.setState(patch, () => {
+      window.scrollTo(0, 0);
+      if (route === "profile" && window.DotDB && window.DotDB.isLive) this.loadLive();
+    });
   };
 
   say = (msg, kind) => {
@@ -8750,8 +8808,8 @@ class Component extends DCLogic {
       const on = !!st.follows[c.handle];
       const isMe = !!(st.liveMe && st.liveMe.handle === c.handle);
       return {
-        canFollow: !isMe,
-        cantFollow: isMe,
+        canFollow: !!st.signedIn && !isMe,
+        cantFollow: !st.signedIn || isMe,
         name: c.name, handle: c.handle, memo: c.memo || "", growth: c.growth || "CREATOR", worlds: c.worlds || 0,
         followersK: kfmt(c.followers + (on ? 1 : 0)), sprite: spr(c.art),
         goUser: (e) => { e.stopPropagation(); this.go("profile", { viewUser: c.handle })(); },
@@ -9141,9 +9199,11 @@ class Component extends DCLogic {
           isRemake: !!w.remakeOf, origin: w.remakeOf || "",
           goUser: this.go("profile", { viewUser: w.handle }),
           followAuthor: () => {
+            if (!st.signedIn) return;
             if (st.liveMe && st.liveMe.handle === w.handle) return this.say("내 작품입니다.");
             this.doFollow(w.handle, !fOn);
           },
+          canFollow: !!st.signedIn && !(st.liveMe && st.liveMe.handle === w.handle),
           followBg: fOn ? "#2F6F5E" : "#16181D",
           followText: fOn ? "팔로잉" : "팔로우",
           stats: [
@@ -10531,38 +10591,43 @@ class Component extends DCLogic {
       // ───────── 프로필 / 대시보드
       me: (() => {
         const h = st.viewUser;
-        const c = h ? creatorsSrc.find((x) => x.handle === h) : (st.dbLoaded ? (st.liveMe || null) : null);
-        // 보고 있는 핸들이 없거나 내 핸들이면 «내 프로필»
-        const mine = !h || (st.liveMe && st.liveMe.handle === h);
+        const mine = !h || !!(st.liveMe && st.liveMe.handle === h);
+        // 남의 프로필이면 반드시 viewedProfile만 사용한다. creatorsSrc에 없다고 현재 계정으로 대체하지 않는다.
+        const c = h ? (mine ? st.liveMe : st.viewedProfile) : (st.dbLoaded ? (st.liveMe || null) : null);
+        const stats = h && !mine ? (st.viewedProfileStats || {}) : null;
         return {
-          name: c ? c.name : (st.dbLoaded ? "손님" : "밤샘개발자"),
-          handle: c ? c.handle : (st.dbLoaded ? "guest" : "nightowl"),
-          memo: c ? (c.memo || "소개를 적어보세요.") : (st.dbLoaded ? "소개를 적어보세요." : "새벽 3시에 만든 건 다 방탈출이 된다."),
-          sprite: (mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : (c && c.avatarUrl))
-            ? cssUrl(mine ? (st.avatarUrl || (st.liveMe && st.liveMe.avatarUrl)) : c.avatarUrl)
-            : spr((c && c.art) || st.avatarArt || "slime"),
-          bannerBg: (mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : (c && c.bannerUrl))
-            ? cssUrl(mine ? (st.bannerUrl || (st.liveMe && st.liveMe.bannerUrl)) : c.bannerUrl)
-            : "linear-gradient(120deg,#2F6F5E 0%,#6FD3C7 100%)",
-          followersK: kfmt(c ? (c.followers || 0) : (st.dbLoaded ? 0 : 24100)),
-          worlds: c ? (c.worlds || 0) : (st.dbLoaded ? 0 : 38),
+          name: c ? (c.display_name || c.name || "손님") : (st.dbLoaded ? "프로필을 찾을 수 없습니다" : "밤샘개발자"),
+          handle: c ? c.handle : (h || (st.dbLoaded ? "guest" : "nightowl")),
+          memo: c ? (c.memo || "소개가 없습니다.") : "해당 핸들의 프로필 정보를 불러오지 못했습니다.",
+          sprite: c && c.avatar_url ? cssUrl(c.avatar_url) : spr((c && c.avatar_art) || (c && c.art) || "slime"),
+          bannerBg: c && c.banner_url ? cssUrl(c.banner_url) : "linear-gradient(120deg,#2F6F5E 0%,#6FD3C7 100%)",
+          followersK: kfmt(mine ? ((st.liveMe && st.liveMe.followers) || 0) : (stats.followers || 0)),
+          worlds: mine ? ((st.liveMe && st.liveMe.worlds) || 0) : (stats.worlds || 0),
           isMine: mine,
-          canFollow: !mine,
+          canFollow: !!st.signedIn && !mine && !!c,
           badge: mine ? "ME" : (st.follows[h] ? "FOLLOWING" : "CREATOR"),
-          followLabel: mine ? "프로필 편집" : (st.follows[h] ? "팔로잉" : "팔로우"),
+          followLabel: st.follows[h] ? "팔로잉" : "팔로우",
           follow: () => {
-            if (mine) { this.say("프로필 편집은 설정에서 할 수 있습니다."); return; }
+            if (!st.signedIn || mine || !c) return;
             this.doFollow(h, !st.follows[h]);
           },
         };
       })(),
-      profileTabs: ["대시보드", "내 월드", "오브젝트", "설정"].map((t, i) => ({
+      isOtherProfile: !!st.viewUser && !(st.liveMe && st.liveMe.handle === st.viewUser),
+      profileOwnerTabs: ["대시보드", "내 월드", "오브젝트", "설정"].map((t, i) => ({
+        t: t,
+        bg: (st.profileTab || 0) === i ? "#16181D" : "#FFFFFF",
+        fg: (st.profileTab || 0) === i ? "#FFFFFF" : "#2A2D36",
+        go: () => this.setState({ profileTab: i }),
+      })),
+      profilePublicTabs: ["작품", "오브젝트"].map((t, i) => ({
         t: t,
         bg: (st.profileTab || 0) === i ? "#16181D" : "#FFFFFF",
         fg: (st.profileTab || 0) === i ? "#FFFFFF" : "#2A2D36",
         go: () => this.setState({ profileTab: i }),
       })),
       saveProfile: async (name, memo) => {
+        if (!st.signedIn || !((!st.viewUser) || (st.liveMe && st.liveMe.handle === st.viewUser))) return;
         if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없습니다.");
         const ok = await window.DotDB.updateProfile({
           display_name: filterText(name || "플레이어").out,
@@ -10571,10 +10636,17 @@ class Component extends DCLogic {
         this.say(ok ? "프로필을 저장했습니다." : "저장하지 못했습니다.");
         if (ok) this.loadLive();
       },
-      p_dash: (st.profileTab || 0) === 0,
-      p_worlds: (st.profileTab || 0) === 1,
-      p_assets: (st.profileTab || 0) === 2,
-      p_settings: (st.profileTab || 0) === 3,
+      isMyProfile: !st.viewUser || !!(st.liveMe && st.liveMe.handle === st.viewUser),
+      profileWorldsTitle: st.viewUser ? "공개 월드" : "내 월드",
+      profileAssetsTitle: st.viewUser ? "공개 오브젝트" : "내가 공유한 오브젝트",
+      profileAssets: (st.viewUser && !(st.liveMe && st.liveMe.handle === st.viewUser) ? (st.viewedAssets || []) : assetsSrc.filter((a) => !st.liveMe || a.handle === st.liveMe.handle)).map((a) => ({
+        id: a.id, name: a.name, usesK: kfmt(a.use_count != null ? a.use_count : (a.uses || 0)), likesK: kfmt(a.like_count != null ? a.like_count : (a.likes || 0)),
+        sprite: a.image_url ? cssUrl(a.image_url) : spr(a.art || "slime"),
+      })),
+      p_dash: !st.viewUser && (st.profileTab || 0) === 0,
+      p_worlds: st.viewUser ? (st.profileTab || 0) === 0 : (st.profileTab || 0) === 1,
+      p_assets: st.viewUser ? (st.profileTab || 0) === 1 : (st.profileTab || 0) === 2,
+      p_settings: !st.viewUser && (st.profileTab || 0) === 3,
       uploadBanner: this.uploadBanner,
       uploadAvatar: this.uploadAvatar,
       goStudioNew: this.newWorld,
@@ -10588,6 +10660,7 @@ class Component extends DCLogic {
         go: () => this.setState({ avatarArt: k }),
       })),
       doSaveProfile: async () => {
+        if (!st.signedIn || !((!st.viewUser) || (st.liveMe && st.liveMe.handle === st.viewUser))) return;
         if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없습니다.");
         const name = filterText(st.setName || (st.liveMe && st.liveMe.name) || "플레이어").out.trim();
         if (name.length < 2) return this.say("닉네임은 2자 이상으로 적어주세요.");
@@ -10602,11 +10675,15 @@ class Component extends DCLogic {
       dbStatusText: st.live ? (st.dbLoaded ? "서버 연결됨" : "연결 중") : "환경 변수 없음",
       myAssetCount: (st.imgArts || []).length + (st.shapes || []).length,
       myWorldsSummary: (() => {
+        const other = !!st.viewUser && !(st.liveMe && st.liveMe.handle === st.viewUser);
+        if (other) return "공개 " + (st.viewedWorlds || []).length + "개";
         const src = st.liveMyWorlds || [];
         const pub = src.filter((w) => w.status === "published").length;
         return src.length + "개 · 공개 " + pub + " · 비공개 " + (src.length - pub);
       })(),
-      noMyWorlds: st.dbLoaded && !(st.liveMyWorlds || []).length,
+      noMyWorlds: st.dbLoaded && (st.viewUser && !(st.liveMe && st.liveMe.handle === st.viewUser)
+        ? !(st.viewedWorlds || []).length
+        : !(st.liveMyWorlds || []).length),
       myReports: st.myReports || [],
       hasReports: !!(st.myReports || []).length,
       noReports: !(st.myReports || []).length,
@@ -10624,22 +10701,26 @@ class Component extends DCLogic {
         }));
       })(),
       noDays: st.dbLoaded && !(st.liveDays || []).length,
-      myWorlds: (st.dbLoaded ? (st.liveMyWorlds || []) : worlds).map((w) => ({
-        title: w.title, catName: w.catName, ago: w.ago,
-        sprite: spr(w.art || "portal"),
-        playsK: kfmt(w.plays || 0), online: w.online || 0,
-        likes: kfmt(w.likes || 0), dislikes: w.dislikes || 0,
-        comments: kfmt(w.comments || 0),
-        stText: w.status === "published" ? "공개" : "비공개",
-        stBg: w.status === "published" ? "#E4EFE9" : "#F0ECE1",
-        stFg: w.status === "published" ? "#2F6F5E" : "#8A9099",
-        isDraft: w.status !== "published",
+      myWorlds: (st.viewUser && !(st.liveMe && st.liveMe.handle === st.viewUser)
+        ? (st.viewedWorlds || [])
+        : (st.dbLoaded ? (st.liveMyWorlds || []) : worlds)
+      ).map((w) => ({
+        title: w.title, catName: w.category || w.catName || "실험실", ago: this.agoText(w.published_at || w.created_at),
+        sprite: w.thumb_url ? cssUrl(w.thumb_url) : spr(w.art || "portal"),
+        playsK: kfmt(w.plays != null ? w.plays : (w.play_count || 0)), online: w.online || 0,
+        likes: kfmt(w.likes != null ? w.likes : (w.like_count || 0)), dislikes: w.dislikes != null ? w.dislikes : (w.dislike_count || 0),
+        comments: kfmt(w.comments != null ? w.comments : (w.comment_count || 0)),
+        stText: "공개", stBg: "#E4EFE9", stFg: "#2F6F5E",
+        isDraft: false,
+        canEdit: !st.viewUser || !!(st.liveMe && st.liveMe.handle === st.viewUser),
         edit: (e) => {
+          if (!((!st.viewUser) || (st.liveMe && st.liveMe.handle === st.viewUser))) return;
           if (e) e.stopPropagation();
           this.setState({ route: "studio", tab: "blocks", worldId: w.id }, () => this.loadStudio());
           window.scrollTo(0, 0);
         },
         publish: (e) => {
+          if (!((!st.viewUser) || (st.liveMe && st.liveMe.handle === st.viewUser))) return;
           if (e) e.stopPropagation();
           this.setState({ route: "studio", tab: "publish", worldId: w.id, worldTitle: w.title, _tabDir: "fwd", _tabSeq: ((this.state._tabSeq||0)+1) }, () => this.loadStudio());
           window.scrollTo(0, 0);
@@ -10655,6 +10736,7 @@ class Component extends DCLogic {
           }
         },
         del: async (e) => {
+          if (!((!st.viewUser) || (st.liveMe && st.liveMe.handle === st.viewUser))) return;
           if (e) e.stopPropagation();
           if (!confirm("«" + w.title + "» 을 정말 삭제할까요?\n\n이 작업은 되돌릴 수 없습니다.")) return;
           if (!(window.DotDB && window.DotDB.isLive)) return this.say("서버 연결이 없습니다.");
