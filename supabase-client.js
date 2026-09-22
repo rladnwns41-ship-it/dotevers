@@ -782,9 +782,39 @@
     },
     async profileByHandle(handle) {
       const c = init();
-      if (!c) return null;
-      const { data } = await c.from("profiles").select("*").eq("handle", handle).single();
+      if (!c || !handle) return null;
+      const { data, error } = await c.from("profiles").select("*").eq("handle", handle).maybeSingle();
+      if (error) { console.warn("[dotverse] profileByHandle 실패:", error.message); return null; }
       return data || null;
+    },
+    async profileWorlds(profileId) {
+      const c = init();
+      if (!c || !profileId) return [];
+      // 남의 프로필에서는 공개(published) 월드만 보여준다. owner_id는 현재 로그인 사용자와 무관하게 대상 프로필로 고정한다.
+      const { data, error } = await c.from("worlds")
+        .select("*")
+        .eq("owner_id", profileId)
+        .eq("status", "published")
+        .order("published_at", { ascending: false });
+      if (error) { console.warn("[dotverse] profileWorlds 실패:", error.message); return []; }
+      return data || [];
+    },
+    async profileAssets(profileId) {
+      const c = init();
+      if (!c || !profileId) return [];
+      // 남의 프로필에서는 공개 오브젝트만 보여준다.
+      let { data, error } = await c.from("assets")
+        .select("*")
+        .eq("owner_id", profileId)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false });
+      if (error) {
+        // is_public 컬럼이 없는 구형 스키마를 위한 최소 fallback
+        const r = await c.from("assets").select("*").eq("owner_id", profileId).order("created_at", { ascending: false });
+        if (r.error) { console.warn("[dotverse] profileAssets 실패:", r.error.message); return []; }
+        data = r.data;
+      }
+      return data || [];
     },
     async updateProfile(fields) {
       const c = init();
@@ -1062,9 +1092,11 @@
     async follow(handle, on) {
       const c = init();
       if (!c) return false;
-      const u = await this.ensureUser();
-      if (!u) return false;
-      const { data: p } = await c.from("profiles").select("id").eq("handle", handle).single();
+      // 팔로우는 로그인 사용자만 허용한다. 익명 세션을 자동 생성하면
+      // 로그인하지 않은 상태에서도 팔로우가 저장되는 문제가 생긴다.
+      const u = await this.me();
+      if (!u || u.is_anonymous) return false;
+      const { data: p } = await c.from("profiles").select("id").eq("handle", handle).maybeSingle();
       if (!p) return false;
       if (on) {
         const { error } = await c.from("follows")
