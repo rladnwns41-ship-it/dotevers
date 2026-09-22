@@ -3357,6 +3357,7 @@ class Component extends DCLogic {
     avatarUrl: null,
     avatarArt: "slime",
     liveMyWorlds: [],
+    loadPickerHasItems: false,
     // 올린 소리 (이름 · 데이터 URL)
     soundsDef: [],
     // 커뮤니티 · 약관
@@ -5447,18 +5448,31 @@ class Component extends DCLogic {
 
   // 내가 만든 작품을 읽는다
   async loadMyWorlds() {
-    if (!window.DotDB || !window.DotDB.isLive) return;
-    const rows = await window.DotDB.myWorlds();
-    if (!rows) return;
-    this.setState({
-      liveMyWorlds: rows.map((x) => ({
+    if (!window.DotDB || !window.DotDB.isLive) {
+      this.setState({ liveMyWorlds: [], loadPickerHasItems: false });
+      return;
+    }
+    try {
+      const rows = await window.DotDB.myWorlds();
+      if (!Array.isArray(rows)) {
+        this.setState({ liveMyWorlds: [], loadPickerHasItems: false });
+        return;
+      }
+      const mapped = rows.map((x) => ({
         id: x.id, title: x.title || "이름 없는 월드",
         catName: x.category || "실험실", ago: this.agoText(x.created_at),
         plays: x.play_count || 0, likes: x.like_count || 0,
         dislikes: x.dislike_count || 0, comments: x.comment_count || 0,
         status: x.status || "draft", art: "portal",
-      })),
-    });
+      }));
+      this.setState({
+        liveMyWorlds: mapped,
+        loadPickerHasItems: mapped.length > 0,
+      });
+    } catch (e) {
+      this.setState({ liveMyWorlds: [], loadPickerHasItems: false });
+      console.warn("[dotverse] 내 작품 불러오기 실패:", e && e.message ? e.message : e);
+    }
   }
 
   addTag = () => {
@@ -6313,12 +6327,18 @@ class Component extends DCLogic {
   startLoadPickerResizeTopLeft = (e) => this._resizeLoadPicker(e, "tl");
 
   openLoadPicker = () => {
-    this.setState({ loadPickerOpen: true, loadPickerLoading: true });
+    this.setState({ loadPickerOpen: true, loadPickerLoading: true, loadPickerHasItems: false, liveMyWorlds: [] });
     if (!(window.DotDB && window.DotDB.isLive)) {
-      this.setState({ loadPickerLoading: false });
+      this.setState({ loadPickerLoading: false, loadPickerHasItems: false });
       return;
     }
-    Promise.resolve().then(() => this.loadMyWorlds()).catch(() => {}).finally(() => this.setState({ loadPickerLoading: false }));
+    Promise.resolve()
+      .then(() => this.loadMyWorlds())
+      .catch((e) => {
+        console.warn("[dotverse] 작품 목록 불러오기 실패:", e && e.message ? e.message : e);
+        this.setState({ liveMyWorlds: [], loadPickerHasItems: false });
+      })
+      .finally(() => this.setState({ loadPickerLoading: false }));
   };
 
   closeLoadPicker = () => this.setState({ loadPickerOpen: false });
@@ -9337,7 +9357,7 @@ class Component extends DCLogic {
       startLoadPickerResizeTopLeft: this.startLoadPickerResizeTopLeft,
       loadPickerW: Math.max(520, Number(st.loadPickerW) || 760),
       loadPickerH: Math.max(300, Number(st.loadPickerH) || 520),
-      loadPickerHasItems: Array.isArray(st.liveMyWorlds) && st.liveMyWorlds.length > 0,
+      loadPickerHasItems: !!st.loadPickerHasItems,
       loadCandidates: (st.liveMyWorlds || []).map((w) => ({
         title: w.title || "이름 없는 월드",
         meta: (w.status === "published" ? "게시됨" : "초안") + " · " + (w.ago || "저장된 작품"),
